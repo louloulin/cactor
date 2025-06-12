@@ -106,3 +106,4 @@ tmp/
 CangjieMagic
 # 特定于项目的忽略
 # 如果有其他需要忽略的文件，可以在这里添加
+**/*.macrocall
