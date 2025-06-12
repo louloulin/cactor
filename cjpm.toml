@@ -13,3 +13,6 @@ output-type = "executable"
 
 [package.package-configuration."cactor.examples.ping_pong"]
 output-type = "executable"
+
+[package.package-configuration."cactor.tests.ringbuffer"]
+output-type = "executable"
