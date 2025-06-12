@@ -86,4 +86,9 @@ output-type = "executable"
 [package.package-configuration."cactor.tests.cjpm_macro_test"]
 output-type = "executable"
 
+[package.package-configuration."cactor.tests.plan3_macro_test"]
+output-type = "executable"
+
+
+
 
