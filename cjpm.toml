@@ -1,0 +1,18 @@
+[package]
+name = "cangjie-actor"
+version = "0.1.0"
+description = "Actor system implementation for Cangjie programming language"
+cjc-version = "0.56.4"
+output-type = "dynamic"
+
+[package.package-configuration."cangjie_actor.examples.ping_pong"]
+output-type = "executable"
+
+[package.package-configuration."cangjie_actor.examples.calculator"]
+output-type = "executable"
+
+[package.package-configuration."cangjie_actor.examples.basic_demo"]
+output-type = "executable"
+
+[package.package-configuration."cangjie_actor.tests.actor_tests"]
+output-type = "executable"
