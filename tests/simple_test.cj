@@ -182,7 +182,7 @@ func testWorkerManager(): Bool {
     let manager = WorkerManager()
     
     // 添加多个worker
-    for (i in 1..3) {
+    for (i in 0..3) {
         let worker = SimpleWorker("Worker-${i}")
         manager.addWorker(worker)
     }
@@ -196,13 +196,13 @@ func testWorkerManager(): Bool {
     manager.startAll()
     
     // 分配工作
-    for (i in 1..9) {
+    for (i in 0..9) {
         manager.assignWork(i)
     }
-    
+
     // 等待工作完成
     sleep(Duration.millisecond * 500)
-    
+
     let totalTasks = manager.getTotalTasks()
     if (totalTasks != 9) {
         println("✗ 总任务数错误: ${totalTasks}")
@@ -222,7 +222,7 @@ func testConcurrentWorkers(): Bool {
     let manager = WorkerManager()
     
     // 添加worker
-    for (i in 1..5) {
+    for (i in 0..5) {
         let worker = SimpleWorker("ConcurrentWorker-${i}")
         manager.addWorker(worker)
     }
@@ -230,7 +230,7 @@ func testConcurrentWorkers(): Bool {
     manager.startAll()
     
     // 并发分配工作
-    for (i in 1..20) {
+    for (i in 0..20) {
         spawn {
             manager.assignWork(i)
         }
@@ -259,9 +259,9 @@ func testAtomicOperations(): Bool {
     let incrementsPerThread = 100
     
     // 并发增加计数器
-    for (i in 1..numThreads) {
+    for (i in 0..numThreads) {
         spawn {
-            for (j in 1..incrementsPerThread) {
+            for (j in 0..incrementsPerThread) {
                 counter.fetchAdd(1)
             }
         }
