@@ -65,4 +65,7 @@ output-type = "executable"
 [package.package-configuration."cactor.examples.ping_pong_demo"]
 output-type = "executable"
 
+[package.package-configuration."cactor.examples.stream_demo"]
+output-type = "executable"
+
 
