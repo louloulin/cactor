@@ -350,8 +350,10 @@ func testRouterActorRef(): Bool {
     let routerRef = RouterActorRef(router, "test-router")
     
     // 测试路径
-    if (routerRef.path.toString() != "cactor://router/test-router") {
-        println("✗ 路由器ActorRef路径不正确")
+    let actualPath = routerRef.path.toString()
+    let expectedPath = "cactor://router/test-router"
+    if (actualPath != expectedPath) {
+        println("✗ 路由器ActorRef路径不正确，期望: ${expectedPath}，实际: ${actualPath}")
         return false
     }
     

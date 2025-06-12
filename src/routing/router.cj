@@ -282,7 +282,7 @@ public class RouterActorRef <: ActorRef {
 
     public init(router: Router, path: String) {
         this.router = router
-        this.routerPath = ActorPath("router", path)
+        this.routerPath = ActorPath("router", "/${path}")
     }
 
     public prop path: ActorPath {
