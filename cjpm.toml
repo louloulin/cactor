@@ -71,4 +71,7 @@ output-type = "executable"
 [package.package-configuration."cactor.examples.persistent_demo"]
 output-type = "executable"
 
+[package.package-configuration."cactor.tests.persistence_test"]
+output-type = "executable"
+
 
