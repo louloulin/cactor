@@ -2,7 +2,7 @@
  * 仓颉Actor系统 - Actor核心模块
  * 基于仓颉语言特性实现的Actor模型
  */
-package default
+package cactor
 
 import std.sync.*
 import std.collection.*

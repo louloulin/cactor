@@ -1,5 +1,5 @@
 [package]
-name = "cangjie-actor"
+name = "cactor"
 version = "0.1.0"
 description = "Actor system implementation for Cangjie programming language"
 cjc-version = "0.56.4"
