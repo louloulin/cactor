@@ -16,16 +16,19 @@ import cactor.core.actor.ActorRef
 /**
  * 工作窃取队列
  * 支持本地LIFO访问和远程FIFO窃取
+ * 使用ArrayList实现双端队列行为
  */
 public class WorkStealingQueue<T> {
-    private let deque: NonBlockingQueue<T>
+    private let items: ArrayList<T>
     private let size: AtomicInt64
     private let maxSize: Int64
+    private let mutex: ReentrantMutex
 
     public init(maxSize: Int64) {
-        this.deque = NonBlockingQueue<T>()
+        this.items = ArrayList<T>()
         this.size = AtomicInt64(0)
         this.maxSize = maxSize
+        this.mutex = ReentrantMutex()
     }
 
     /**
@@ -35,37 +38,54 @@ public class WorkStealingQueue<T> {
         if (size.load() >= maxSize) {
             return false
         }
-        
-        if (deque.enqueue(item)) {
+
+        mutex.lock()
+        try {
+            if (size.load() >= maxSize) {
+                return false
+            }
+            items.append(item)  // 添加到末尾
             size.fetchAdd(1)
             return true
+        } finally {
+            mutex.unlock()
         }
-        return false
     }
 
     /**
-     * 本地弹出任务 (LIFO)
+     * 本地弹出任务 (LIFO) - 从末尾取
      */
     public func pop(): Option<T> {
-        match (deque.dequeue()) {
-            case Some(item) => 
-                size.fetchAdd(-1)
-                Some(item)
-            case None => None
+        mutex.lock()
+        try {
+            if (items.isEmpty()) {
+                return None
+            }
+            let lastIndex = items.size - 1
+            let item = items[lastIndex]
+            items.remove(lastIndex)  // 从末尾移除（LIFO）
+            size.fetchAdd(-1)
+            Some(item)
+        } finally {
+            mutex.unlock()
         }
     }
 
     /**
-     * 远程窃取任务 (FIFO)
+     * 远程窃取任务 (FIFO) - 从开头取
      */
     public func steal(): Option<T> {
-        // 简化实现：使用相同的dequeue操作
-        // 实际实现中可以使用双端队列优化
-        match (deque.dequeue()) {
-            case Some(item) => 
-                size.fetchAdd(-1)
-                Some(item)
-            case None => None
+        mutex.lock()
+        try {
+            if (items.isEmpty()) {
+                return None
+            }
+            let item = items[0]
+            items.remove(0)  // 从开头移除（FIFO）
+            size.fetchAdd(-1)
+            Some(item)
+        } finally {
+            mutex.unlock()
         }
     }
 

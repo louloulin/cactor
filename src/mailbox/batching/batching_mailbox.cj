@@ -346,7 +346,7 @@ public class BatchProcessor {
     }
 
     private func getCurrentTimeNanos(): Int64 {
-        System.currentTimeMillis() * 1_000_000
+        DateTime.now().toUnixTimeStamp().toMilliseconds() * 1_000_000
     }
 }
 
