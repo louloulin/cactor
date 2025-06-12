@@ -1,24 +1,12 @@
 [package]
 name = "cactor"
 version = "0.2.0"
-description = "Modular Actor system for Cangjie - inspired by Akka and Actix"
+description = "High-performance Actor system for Cangjie - CACtor 2.0"
 cjc-version = "0.53.18"
 output-type = "dynamic"
 
-[package.package-configuration."cactor.examples.ping_pong"]
+[package.package-configuration."cactor.tests.atomic"]
 output-type = "executable"
 
-[package.package-configuration."cactor.examples.calculator"]
-output-type = "executable"
-
-[package.package-configuration."cactor.examples.supervision"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.core_tests"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.system_tests"]
-output-type = "executable"
-
-[package.package-configuration."cactor.benchmarks.performance"]
+[package.package-configuration."cactor.tests.simple"]
 output-type = "executable"

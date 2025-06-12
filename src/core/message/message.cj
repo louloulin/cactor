@@ -88,8 +88,12 @@ public enum MessageResult {
 public struct StopMessage <: SystemMessage {
     private let reason: String
 
-    public init(reason: String = "Normal stop") {
+    public init(reason: String) {
         this.reason = reason
+    }
+
+    public init() {
+        this.reason = "Normal stop"
     }
 
     public func messageType(): String {

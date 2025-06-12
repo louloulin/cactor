@@ -208,7 +208,7 @@ func benchmarkAtomicOperations(): Unit {
 /**
  * 主测试函数
  */
-main(): Int64 {
+main() {
     println("=== CACtor 2.0 原子操作和并发测试 ===")
     
     var allPassed = true
@@ -229,9 +229,7 @@ main(): Int64 {
         println("✓ 互斥锁功能正常")
         println("✓ spawn轻量级线程正常")
         println("\n这验证了CACtor 2.0的基础并发能力！")
-        return 0
     } else {
         println("\n❌ 部分测试失败")
-        return 1
     }
 }

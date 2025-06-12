@@ -120,37 +120,10 @@ public interface ActorSelection {
 }
 
 /**
- * Future接口
+ * 简化的Future接口
  * 表示异步计算的结果
  */
 public interface Future<T> {
-    /**
-     * 注册完成回调
-     * @param callback 完成时的回调函数
-     */
-    func onComplete(callback: (Result<T>) -> Unit): Unit
-
-    /**
-     * 映射结果
-     * @param f 映射函数
-     * @return 新的Future
-     */
-    func map<U>(f: (T) -> U): Future<U>
-
-    /**
-     * 平铺映射
-     * @param f 映射函数
-     * @return 新的Future
-     */
-    func flatMap<U>(f: (T) -> Future<U>): Future<U>
-
-    /**
-     * 错误恢复
-     * @param f 恢复函数
-     * @return 新的Future
-     */
-    func recover(f: (Exception) -> T): Future<T>
-
     /**
      * 检查是否已完成
      * @return 是否已完成
@@ -201,13 +174,7 @@ public class SimpleFuture<T> <: Future<T> {
 
     public func map<U>(f: (T) -> U): Future<U> {
         match (result) {
-            case Some(Result.Success(value)) => {
-                try {
-                    SimpleFuture<U>(Result.Success(f(value)))
-                } catch (e: Exception) {
-                    SimpleFuture<U>(Result.Failure(e))
-                }
-            }
+            case Some(Result.Success(value)) => SimpleFuture<U>(Result.Success(f(value)))
             case Some(Result.Failure(e)) => SimpleFuture<U>(Result.Failure(e))
             case None => SimpleFuture<U>()
         }
