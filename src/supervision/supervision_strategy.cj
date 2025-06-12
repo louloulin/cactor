@@ -64,20 +64,25 @@ public class RetryInfo {
     }
 
     public func shouldRetry(maxRetries: Int32, withinTimeRange: Duration): Bool {
-        let currentRetries = retryCount.load()
-        if (currentRetries >= Int64(maxRetries)) {
-            return false
-        }
-
         let now = DateTime.now().toUnixTimeStamp().toMilliseconds()
         let firstFailure = firstFailureTime.load()
-        
+
+        // 如果是第一次失败，允许重试
         if (firstFailure == 0) {
             return true
         }
 
         let timeElapsed = now - firstFailure
-        return timeElapsed <= withinTimeRange.toMilliseconds()
+
+        // 如果超出时间窗口，重置计数器并允许重试
+        if (timeElapsed > withinTimeRange.toMilliseconds()) {
+            reset()
+            return true
+        }
+
+        // 在时间窗口内，检查重试次数
+        let currentRetries = retryCount.load()
+        return currentRetries < Int64(maxRetries)
     }
 
     public func reset(): Unit {
