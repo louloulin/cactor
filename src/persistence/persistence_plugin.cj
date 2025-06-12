@@ -151,7 +151,9 @@ public class DefaultPersistencePlugin <: PersistencePlugin {
                 var maxSeq: Int64 = 0
                 for (event in events) {
                     onEvent(event)
-                    maxSeq = maxSeq.max(1) // 简化序列号处理
+                    if (maxSeq < 1) {
+                        maxSeq = 1
+                    }
                 }
                 
                 mutex.lock()
@@ -228,7 +230,8 @@ public class PersistEventMessage <: Message {
     
     public func getEventType(): String { eventType }
     public func getEventData(): String { eventData }
-    
+    public func messageType(): String { "PersistEventMessage" }
+
     public func toString(): String {
         "PersistEventMessage(${eventType}, ${eventData})"
     }
@@ -242,7 +245,8 @@ public class TakeSnapshotMessage <: Message {
     }
     
     public func getStateData(): String { stateData }
-    
+    public func messageType(): String { "TakeSnapshotMessage" }
+
     public func toString(): String {
         "TakeSnapshotMessage"
     }
@@ -250,7 +254,9 @@ public class TakeSnapshotMessage <: Message {
 
 public class RecoveryCompleteMessage <: Message {
     public init() {}
-    
+
+    public func messageType(): String { "RecoveryCompleteMessage" }
+
     public func toString(): String {
         "RecoveryCompleteMessage"
     }
