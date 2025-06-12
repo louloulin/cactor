@@ -47,5 +47,8 @@ output-type = "executable"
 [package.package-configuration."cactor.tests.integration_test"]
 output-type = "executable"
 
-[package.package-configuration."cactor.tests.remote"]
+[package.package-configuration."cactor.tests.remote_simple"]
+output-type = "executable"
+
+[package.package-configuration."cactor.tests.remote_demo"]
 output-type = "executable"

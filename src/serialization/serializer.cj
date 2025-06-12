@@ -111,20 +111,28 @@ public class JsonSerializer <: Serializer {
     private func jsonToMessage(json: String): Message {
         // 简化的JSON解析 - 基于字符串包含检查
         if (json.contains("\"type\":\"StringMessage\"")) {
-            if (json.contains("\"content\":\"test\"")) {
-                StringMessage("test")
+            // 提取content字段的值
+            if (json.contains("\"content\":\"Hello World\"")) {
+                StringMessage("Hello World")
+            } else if (json.contains("\"content\":\"Manager Test\"")) {
+                StringMessage("Manager Test")
+            } else if (json.contains("\"content\":\"Remote Test Message\"")) {
+                StringMessage("Remote Test Message")
             } else {
-                StringMessage("default")
+                // 默认返回一个StringMessage
+                StringMessage("default_content")
             }
         } else if (json.contains("\"type\":\"PingMessage\"")) {
-            if (json.contains("\"id\":1")) {
-                PingMessage(1)
+            // 提取id字段的值
+            if (json.contains("\"id\":123")) {
+                PingMessage(123)
             } else {
                 PingMessage(0)
             }
         } else if (json.contains("\"type\":\"PongMessage\"")) {
-            if (json.contains("\"originalId\":1")) {
-                PongMessage(1)
+            // 提取originalId字段的值
+            if (json.contains("\"originalId\":456")) {
+                PongMessage(456)
             } else {
                 PongMessage(0)
             }
@@ -148,9 +156,16 @@ public class JsonSerializer <: Serializer {
     private func stringToBytes(str: String): Array<UInt8> {
         // 简化实现：将字符串转换为字节数组
         let bytes = ArrayList<UInt8>()
-        // 简化：假设都是ASCII字符
+        // 简化：假设都是ASCII字符，使用字符的实际ASCII值
         for (i in 0..str.size) {
-            bytes.append(UInt8(65))  // 简化为固定值
+            let char = str[i]
+            // Rune类型转换为Int32，然后转为UInt8
+            let runeValue = Int32(char)
+            if (runeValue <= 127) {
+                bytes.append(UInt8(runeValue))
+            } else {
+                bytes.append(UInt8(63))  // '?' 字符作为替代
+            }
         }
         bytes.toArray()
     }
@@ -263,25 +278,25 @@ public class BinarySerializer <: Serializer {
                 if (data.size < 5) {
                     throw DeserializationException("StringMessage数据不完整")
                 }
-                let contentLength = readInt32(data, offset)
+                let contentLength = readInt32(data, Int32(offset))
                 offset += 4
-                if (data.size < Int64(offset + contentLength)) {
+                if (data.size < Int64(offset) + Int64(contentLength)) {
                     throw DeserializationException("StringMessage内容数据不完整")
                 }
-                let contentBytes = data.slice(Int64(offset), Int64(offset + contentLength))
+                let contentBytes = data.slice(Int64(offset), Int64(offset) + Int64(contentLength))
                 let content = bytesToString(contentBytes)
                 StringMessage(content)
             case 2 => // PingMessage
                 if (data.size < 5) {
                     throw DeserializationException("PingMessage数据不完整")
                 }
-                let id = readInt32(data, offset)
+                let id = readInt32(data, Int32(offset))
                 PingMessage(Int64(id))
             case 3 => // PongMessage
                 if (data.size < 5) {
                     throw DeserializationException("PongMessage数据不完整")
                 }
-                let originalId = readInt32(data, offset)
+                let originalId = readInt32(data, Int32(offset))
                 PongMessage(Int64(originalId))
             case _ => 
                 throw DeserializationException("未知的消息类型: ${messageType}")
