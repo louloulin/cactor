@@ -68,4 +68,7 @@ output-type = "executable"
 [package.package-configuration."cactor.examples.stream_demo"]
 output-type = "executable"
 
+[package.package-configuration."cactor.examples.persistent_demo"]
+output-type = "executable"
+
 
