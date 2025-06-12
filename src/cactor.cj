@@ -10,3 +10,4 @@ public import cactor.mailbox.*
 public import cactor.dispatcher.*
 public import cactor.pattern.*
 public import cactor.memory.*
+public import cactor.supervision.*

@@ -31,3 +31,6 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.memory_pool_test"]
 output-type = "executable"
+
+[package.package-configuration."cactor.tests.supervision_test"]
+output-type = "executable"
