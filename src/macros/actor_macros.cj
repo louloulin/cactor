@@ -123,23 +123,23 @@ public macro monitored(input: Tokens): Tokens {
             private let state: $(structDecl.identifier)
             private let metrics: ActorMetrics
             private let routeTable: RouteTable
-            private var messageCount: AtomicInt64
-            private var totalProcessingTime: AtomicInt64
+            private var messageCount: Int64
+            private var totalProcessingTime: Int64
 
             public init() {
                 this.state = $(structDecl.identifier)()
                 this.metrics = ActorMetrics()
                 this.routeTable = RouteTable()
-                this.messageCount = AtomicInt64(0)
-                this.totalProcessingTime = AtomicInt64(0)
+                this.messageCount = 0
+                this.totalProcessingTime = 0
                 this.setupRoutes()
             }
 
             public func receive(message: Message, context: ActorContext): MessageResult {
                 let startTime = getCurrentTimeMillis()
-                messageCount.store(messageCount.load() + 1)
+                messageCount += 1
 
-                let messageType = message.getMessageType()
+                let messageType = message.messageType()
                 println("MonitoredActor " + $(actorName) + ": 开始处理消息 " + messageType)
 
                 // 简化的消息处理逻辑
@@ -158,7 +158,7 @@ public macro monitored(input: Tokens): Tokens {
                 }
 
                 let duration = getCurrentTimeMillis() - startTime
-                totalProcessingTime.addAndGet(duration)
+                totalProcessingTime += duration
                 metrics.recordMessage(messageType, duration, result == MessageResult.Handled)
                 println("MonitoredActor " + $(actorName) + ": 消息处理完成，耗时 " + duration.toString() + "ms")
 
@@ -205,15 +205,14 @@ public macro monitored(input: Tokens): Tokens {
             }
 
             public func getMessageCount(): Int64 {
-                return messageCount.load()
+                return messageCount
             }
 
             public func getAverageProcessingTime(): Float64 {
-                let count = messageCount.load()
-                if (count == 0) {
+                if (messageCount == 0) {
                     return 0.0
                 }
-                return totalProcessingTime.load().toFloat64() / count.toFloat64()
+                return Float64(totalProcessingTime) / Float64(messageCount)
             }
         }
 
@@ -251,7 +250,7 @@ public macro route_table(input: Tokens): Tokens {
             }
 
             public func route(message: Message): Option<MessageHandler> {
-                return routeTable.getHandler(message.getMessageType())
+                return routeTable.getHandler(message.messageType())
             }
 
             public func getAllRoutes(): Array<(String, MessageHandler)> {

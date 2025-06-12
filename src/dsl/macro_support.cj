@@ -289,7 +289,8 @@ public class ActorSystem {
     public func removeActor(actorId: String): Unit {
         actors.remove(actorId)
     }
-    
+
+
     public func getAllActors(): Array<Actor> {
         let result = ArrayList<Actor>()
         for ((_, actor) in actors) {

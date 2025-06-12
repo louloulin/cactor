@@ -6,9 +6,10 @@ package cactor.examples
 
 import cactor.macros.*
 import cactor.dsl.*
-import cactor.core.actor.*
+// import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
+import std.collection.*
 
 // 复杂的业务Actor - 用户管理系统
 @monitored

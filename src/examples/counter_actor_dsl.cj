@@ -6,7 +6,7 @@ package cactor.examples
 
 import cactor.macros.*
 import cactor.dsl.*
-import cactor.core.actor.*
+// import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
 
@@ -274,8 +274,4 @@ public func demonstrateActorDSL(): Unit {
     println("\n✅ DSL演示完成")
 }
 
-// 辅助函数
-func getCurrentTimeMillis(): Int64 {
-    // 简化实现，实际应该调用系统时间API
-    return 1000
-}
+// 删除重复的getCurrentTimeMillis函数
