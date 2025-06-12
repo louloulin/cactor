@@ -1,18 +1,16 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor - 主包导出
- * 模块化Actor系统，参考Akka和Actix设计
+ * CACtor 2.0 - 主包导出
+ * 高性能仓颉Actor系统，基于plan2.md设计
  */
 package cactor
 
 // 导出核心接口
 public import cactor.core.*
 
-// 导出实现类
-public import cactor.impl.*
-
-// 导出工具类
-public import cactor.util.*
+// 导出运行时实现
+public import cactor.runtime.system.*
+public import cactor.runtime.actor.*
 
 /**
  * CACtor系统工厂类
@@ -36,7 +34,3 @@ public struct CActorSystem {
         create("default")
     }
 }
-
-
-
-

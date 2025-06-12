@@ -1,0 +1,11 @@
+/*
+ * Copyright (c) 2024. All rights reserved.
+ * CACtor 2.0 - 核心包导出
+ */
+package cactor.core
+
+public import cactor.core.actor.*
+public import cactor.core.message.*
+public import cactor.core.mailbox.*
+public import cactor.core.context.*
+public import cactor.core.system.*
