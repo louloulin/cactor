@@ -37,10 +37,10 @@ public macro simple_actor(input: Tokens): Tokens {
     return quote(
         $(input)
 
-        // 为CjpmCounterActor添加一个简单的方法
-        extend CjpmCounterActor {
+        // 为Actor类添加一个简单的方法
+        extend Plan3TestActor {
             public func getActorInfo(): String {
-                return "这是一个简单的Actor"
+                return "这是一个简单的Actor: Plan3TestActor"
             }
         }
     )

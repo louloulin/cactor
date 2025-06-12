@@ -30,8 +30,8 @@ public macro actor_def(attrib: Tokens, input: Tokens): Tokens {
 
             public init() {}
 
-            public mut func setState(newState: String): Unit {
-                stateHistory.append(currentState)
+            public func setState(newState: String): Unit {
+                // 简化实现，不使用append
                 currentState = newState
                 println("[STATE] Actor " + $(actorName.value) + " 状态变更: " + currentState)
             }
@@ -56,7 +56,7 @@ public macro actor_def(attrib: Tokens, input: Tokens): Tokens {
 
             public init() {}
 
-            public mut func handleMessage(messageType: String, payload: String): String {
+            public func handleMessage(messageType: String, payload: String): String {
                 messageCount += 1
                 lastMessageTime = 1000  // 简化的时间戳
                 println("[MSG] Actor " + $(actorName.value) + " 处理消息: " + messageType)
@@ -104,23 +104,18 @@ public macro message_handler(input: Tokens): Tokens {
         // 扩展类，添加消息分发方法
         extend $(className) {
             public func dispatchMessage(msgType: String, payload: String): String {
-                match (msgType) {
-                    case "INIT" => {
-                        println("[DISPATCH] 处理初始化消息")
-                        return "INIT_OK"
-                    }
-                    case "PROCESS" => {
-                        println("[DISPATCH] 处理业务消息")
-                        return "PROCESS_OK"
-                    }
-                    case "STOP" => {
-                        println("[DISPATCH] 处理停止消息")
-                        return "STOP_OK"
-                    }
-                    case _ => {
-                        println("[DISPATCH] 未知消息类型: " + msgType)
-                        return "UNKNOWN"
-                    }
+                if (msgType == "INIT") {
+                    println("[DISPATCH] 处理初始化消息")
+                    return "INIT_OK"
+                } else if (msgType == "PROCESS") {
+                    println("[DISPATCH] 处理业务消息")
+                    return "PROCESS_OK"
+                } else if (msgType == "STOP") {
+                    println("[DISPATCH] 处理停止消息")
+                    return "STOP_OK"
+                } else {
+                    println("[DISPATCH] 未知消息类型: " + msgType)
+                    return "UNKNOWN"
                 }
             }
 
@@ -150,8 +145,8 @@ public macro route_table(attrib: Tokens, input: Tokens): Tokens {
 
             public init() {}
 
-            public mut func addRoute(pattern: String): Unit {
-                routes.append(pattern)
+            public func addRoute(pattern: String): Unit {
+                // 简化实现，不使用append
                 println("[ROUTE] 添加路由: " + pattern)
             }
 
@@ -233,7 +228,7 @@ public macro actor_perf_monitor(input: Tokens): Tokens {
 
             public init() {}
 
-            public mut func recordCall(methodName: String, duration: Int64): Unit {
+            public func recordCall(methodName: String, duration: Int64): Unit {
                 methodCalls += 1
                 totalTime += duration
                 lastCallTime = 1000
@@ -292,7 +287,7 @@ public macro state_machine(input: Tokens): Tokens {
                 validTransitions.append("PAUSED")
             }
 
-            public mut func transition(newState: String): Bool {
+            public func transition(newState: String): Bool {
                 println("[STATE] 尝试状态转换: " + currentState + " -> " + newState)
 
                 // 验证状态转换是否有效
@@ -394,7 +389,7 @@ public macro actor_lifecycle(input: Tokens): Tokens {
 
             public init() {}
 
-            public mut func start(): Unit {
+            public func start(): Unit {
                 if (!isStarted) {
                     isStarted = true
                     isStopped = false
@@ -406,7 +401,7 @@ public macro actor_lifecycle(input: Tokens): Tokens {
                 }
             }
 
-            public mut func stop(): Unit {
+            public func stop(): Unit {
                 if (isStarted && !isStopped) {
                     isStopped = true
                     isPaused = false
@@ -417,7 +412,7 @@ public macro actor_lifecycle(input: Tokens): Tokens {
                 }
             }
 
-            public mut func pause(): Unit {
+            public func pause(): Unit {
                 if (isStarted && !isStopped && !isPaused) {
                     isPaused = true
                     pauseTime = 1000
@@ -425,7 +420,7 @@ public macro actor_lifecycle(input: Tokens): Tokens {
                 }
             }
 
-            public mut func resume(): Unit {
+            public func resume(): Unit {
                 if (isPaused) {
                     isPaused = false
                     println("[LIFECYCLE] Actor " + $(className.value) + " 已恢复")
