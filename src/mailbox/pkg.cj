@@ -5,3 +5,4 @@
 package cactor.mailbox
 
 public import cactor.mailbox.ringbuffer.*
+public import cactor.mailbox.queue.*

@@ -38,21 +38,28 @@ public class RingBufferMailbox <: Mailbox {
             return false  // 邮箱已关闭，拒绝新消息
         }
 
-        let currentWrite = writeIndex.load()
-        let nextWrite = currentWrite + 1
-        
-        // 检查是否有空间（避免覆盖未读数据）
-        if (nextWrite - readIndex.load() > capacity) {
-            return false  // 队列满
+        // 使用CAS循环确保并发安全
+        var attempts = 0
+        while (attempts < 1000) {  // 限制重试次数避免无限循环
+            let currentWrite = writeIndex.load()
+            let nextWrite = currentWrite + 1
+
+            // 检查是否有空间（避免覆盖未读数据）
+            if (nextWrite - readIndex.load() > capacity) {
+                return false  // 队列满
+            }
+
+            // 尝试原子更新写索引
+            if (writeIndex.compareAndSwap(currentWrite, nextWrite)) {
+                // 成功获取写位置，现在可以安全写入
+                let index = currentWrite & mask
+                buffer[index] = Some(envelope)
+                return true
+            }
+            // CAS失败，重试
+            attempts += 1
         }
-        
-        // 无锁写入
-        let index = currentWrite & mask
-        buffer[index] = Some(envelope)
-        
-        // 原子更新写索引
-        writeIndex.store(nextWrite)
-        return true
+        return false  // 重试次数过多，失败
     }
 
     public func dequeue(): Option<Envelope> {
@@ -60,23 +67,30 @@ public class RingBufferMailbox <: Mailbox {
             return None
         }
 
-        let currentRead = readIndex.load()
-        
-        // 检查是否有数据
-        if (currentRead >= writeIndex.load()) {
-            return None  // 队列空
+        // 使用CAS循环确保并发安全
+        var attempts = 0
+        while (attempts < 1000) {  // 限制重试次数避免无限循环
+            let currentRead = readIndex.load()
+
+            // 检查是否有数据
+            if (currentRead >= writeIndex.load()) {
+                return None  // 队列空
+            }
+
+            // 尝试原子更新读索引
+            if (readIndex.compareAndSwap(currentRead, currentRead + 1)) {
+                // 成功获取读位置，现在可以安全读取
+                let index = currentRead & mask
+                let envelope = buffer[index]
+
+                // 清空槽位
+                buffer[index] = None
+                return envelope
+            }
+            // CAS失败，重试
+            attempts += 1
         }
-        
-        // 无锁读取
-        let index = currentRead & mask
-        let envelope = buffer[index]
-        
-        // 清空槽位
-        buffer[index] = None
-        
-        // 原子更新读索引
-        readIndex.store(currentRead + 1)
-        return envelope
+        return None  // 重试次数过多，失败
     }
 
     public func isEmpty(): Bool {
