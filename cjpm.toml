@@ -10,3 +10,6 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.simple"]
 output-type = "executable"
+
+[package.package-configuration."cactor.examples.ping_pong"]
+output-type = "executable"
