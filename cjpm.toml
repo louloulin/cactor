@@ -80,4 +80,7 @@ output-type = "executable"
 [package.package-configuration."cactor.tests.zerocopy_test"]
 output-type = "executable"
 
+[package.package-configuration."cactor.tests.macro_dsl_test"]
+output-type = "executable"
+
 
