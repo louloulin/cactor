@@ -43,3 +43,6 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.monitoring_test"]
 output-type = "executable"
+
+[package.package-configuration."cactor.tests.integration_test"]
+output-type = "executable"

@@ -176,6 +176,26 @@ public struct TerminatedMessage <: SystemMessage {
 }
 
 /**
+ * 字符串消息
+ * 用于传递简单的字符串内容
+ */
+public struct StringMessage <: UserMessage {
+    private let content: String
+
+    public init(content: String) {
+        this.content = content
+    }
+
+    public func messageType(): String {
+        "StringMessage"
+    }
+
+    public func getContent(): String {
+        content
+    }
+}
+
+/**
  * Ping消息
  * 用于测试Actor是否响应
  */
