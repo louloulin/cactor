@@ -29,7 +29,7 @@ public class AtomicActorState {
     }
     
     public func incrementMessageCount(): Int64 {
-        let increment = 1L << MESSAGE_COUNT_SHIFT
+        let increment = Int64(1) << MESSAGE_COUNT_SHIFT
         let newState = packedState.fetchAdd(increment)
         (newState + increment) >> MESSAGE_COUNT_SHIFT
     }
@@ -39,7 +39,7 @@ public class AtomicActorState {
     }
     
     public func incrementErrorCount(): Int64 {
-        let increment = 1L << ERROR_COUNT_SHIFT
+        let increment = Int64(1) << ERROR_COUNT_SHIFT
         let newState = packedState.fetchAdd(increment)
         ((newState + increment) >> ERROR_COUNT_SHIFT) & 0xFFFF
     }
@@ -48,16 +48,18 @@ public class AtomicActorState {
         (packedState.load() >> ERROR_COUNT_SHIFT) & 0xFFFF
     }
     
-    public func compareAndSetState(expected: ActorLifecycleState, 
+    public func compareAndSetState(expected: ActorLifecycleState,
                                   desired: ActorLifecycleState): Bool {
         let currentPacked = packedState.load()
         let currentState = currentPacked & STATE_MASK
-        
+
         if (currentState == expected.toInt64()) {
-            let newPacked = (currentPacked & ~STATE_MASK) | desired.toInt64()
+            // 简化实现：清除状态位并设置新状态
+            let clearedPacked = currentPacked - currentState
+            let newPacked = clearedPacked | desired.toInt64()
             return packedState.compareAndSwap(currentPacked, newPacked)
         }
-        
+
         return false
     }
     
@@ -176,15 +178,10 @@ public class LocalActorRefImpl <: LocalActorRef {
             actor.preStart()
             actor.postStart()
 
-            while (!mailbox.isClosed() && getState() != ActorLifecycleState.Stopped) {
+            while (!mailbox.isClosed()) {
                 match (mailbox.dequeue()) {
-                    case Some(envelope) => {
-                        processMessage(envelope)
-                    }
-                    case None => {
-                        // 没有消息，短暂休眠避免忙等待
-                        sleep(Duration.microsecond * 100)
-                    }
+                    case Some(envelope) => processMessage(envelope)
+                    case None => sleep(Duration.microsecond * 100)
                 }
             }
         } catch (e: Exception) {
@@ -209,15 +206,12 @@ public class LocalActorRefImpl <: LocalActorRef {
         let message = envelope.getMessage()
         
         try {
-            match (message.messageType()) {
-                case "StopMessage" => {
-                    atomicState.compareAndSetState(ActorLifecycleState.Running, ActorLifecycleState.Stopping)
-                    mailbox.close()
-                }
-                case _ => {
-                    // 调用Actor的消息处理逻辑
-                    handleActorMessage(message)
-                }
+            if (message.messageType() == "StopMessage") {
+                atomicState.compareAndSetState(ActorLifecycleState.Running, ActorLifecycleState.Stopping)
+                mailbox.close()
+            } else {
+                // 调用Actor的消息处理逻辑
+                handleActorMessage(message)
             }
         } catch (e: Exception) {
             atomicState.incrementErrorCount()

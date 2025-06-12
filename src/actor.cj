@@ -22,15 +22,15 @@ public struct CActorSystem {
      * @param name 系统名称
      * @return Actor系统实例
      */
-    public static func create(name: String): ActorSystem {
-        ActorSystemImpl(name)
+    public static func create(name: String): SimpleActorSystem {
+        SimpleActorSystem(name)
     }
 
     /**
      * 创建默认的Actor系统
      * @return Actor系统实例
      */
-    public static func create(): ActorSystem {
+    public static func create(): SimpleActorSystem {
         create("default")
     }
 }

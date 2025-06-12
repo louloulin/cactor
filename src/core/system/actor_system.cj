@@ -6,12 +6,11 @@
 package cactor.core.system
 
 import std.time.*
-import cactor.core.actor.{Actor, ActorRef, ActorSelection, Props, Future}
-import cactor.core.message.Message
-import cactor.core.context.{Cancellable}
+import std.sync.*
+
 
 /**
- * Actor系统接口
+ * 简化的Actor系统接口
  * 管理整个Actor系统的生命周期和配置
  */
 public interface ActorSystem {
@@ -21,74 +20,21 @@ public interface ActorSystem {
     prop name: String
 
     /**
-     * 创建顶级Actor
-     * @param props Actor创建属性
-     * @param name Actor名称
-     * @return Actor引用
-     */
-    func actorOf<T>(props: Props<T>, name: String): ActorRef where T <: Actor
-
-    /**
-     * 选择Actor
-     * @param path Actor路径
-     * @return ActorSelection实例
-     */
-    func actorSelection(path: String): ActorSelection
-
-    /**
-     * 停止指定的Actor
-     * @param actor 要停止的Actor引用
-     */
-    func stop(actor: ActorRef): Unit
-
-    /**
      * 终止Actor系统
      * 这将停止所有Actor并释放资源
      */
     func terminate(): Unit
-
-    /**
-     * 等待系统终止完成
-     * @return Future，在系统完全终止时完成
-     */
-    func whenTerminated(): Future<Unit>
-
-    /**
-     * 获取调度器
-     * @return 调度器实例
-     */
-    func scheduler(): Scheduler
-
-    /**
-     * 获取死信处理器
-     * @return 死信Actor引用
-     */
-    func deadLetters(): ActorRef
 }
 
 /**
- * 调度器接口
+ * 简化的调度器接口
  * 提供定时任务调度功能
  */
 public interface Scheduler {
     /**
-     * 调度周期性任务
-     * @param initialDelay 初始延迟
-     * @param interval 间隔时间
-     * @param receiver 接收消息的Actor
-     * @param message 要发送的消息
-     * @return 可取消的任务
+     * 停止调度器
      */
-    func schedule(initialDelay: Duration, interval: Duration, receiver: ActorRef, message: Message): Cancellable
-
-    /**
-     * 调度一次性任务
-     * @param delay 延迟时间
-     * @param receiver 接收消息的Actor
-     * @param message 要发送的消息
-     * @return 可取消的任务
-     */
-    func scheduleOnce(delay: Duration, receiver: ActorRef, message: Message): Cancellable
+    func shutdown(): Unit
 }
 
 /**

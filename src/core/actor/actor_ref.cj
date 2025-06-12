@@ -151,64 +151,20 @@ public enum Result<T> {
  */
 public class SimpleFuture<T> <: Future<T> {
     private let result: Option<Result<T>>
-    private let completed: AtomicBool
+    private let completed: Bool
 
     public init(result: Result<T>) {
         this.result = Some(result)
-        this.completed = AtomicBool(true)
+        this.completed = true
     }
 
     public init() {
         this.result = None
-        this.completed = AtomicBool(false)
-    }
-
-    public func onComplete(callback: (Result<T>) -> Unit): Unit {
-        match (result) {
-            case Some(r) => callback(r)
-            case None => {
-                // 简化实现，实际需要存储回调并在完成时调用
-            }
-        }
-    }
-
-    public func map<U>(f: (T) -> U): Future<U> {
-        match (result) {
-            case Some(Result.Success(value)) => SimpleFuture<U>(Result.Success(f(value)))
-            case Some(Result.Failure(e)) => SimpleFuture<U>(Result.Failure(e))
-            case None => SimpleFuture<U>()
-        }
-    }
-
-    public func flatMap<U>(f: (T) -> Future<U>): Future<U> {
-        match (result) {
-            case Some(Result.Success(value)) => {
-                try {
-                    f(value)
-                } catch (e: Exception) {
-                    SimpleFuture<U>(Result.Failure(e))
-                }
-            }
-            case Some(Result.Failure(e)) => SimpleFuture<U>(Result.Failure(e))
-            case None => SimpleFuture<U>()
-        }
-    }
-
-    public func recover(f: (Exception) -> T): Future<T> {
-        match (result) {
-            case Some(Result.Failure(e)) => {
-                try {
-                    SimpleFuture<T>(Result.Success(f(e)))
-                } catch (newE: Exception) {
-                    SimpleFuture<T>(Result.Failure(newE))
-                }
-            }
-            case _ => this
-        }
+        this.completed = false
     }
 
     public func isCompleted(): Bool {
-        completed.load()
+        completed
     }
 
     public func value(): Option<Result<T>> {
