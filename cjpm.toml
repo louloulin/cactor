@@ -52,3 +52,6 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.remote_demo"]
 output-type = "executable"
+
+[package.package-configuration."cactor.tests.advanced_features"]
+output-type = "executable"
