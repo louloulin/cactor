@@ -20,11 +20,11 @@ output-type = "executable"
 [package.package-configuration."cactor.tests.queue"]
 output-type = "executable"
 
-[package.package-configuration."cactor.tests.work_stealing"]
+[package.package-configuration."cactor.tests.work_stealing_test"]
 output-type = "executable"
 
-[package.package-configuration."cactor.tests.batching"]
+[package.package-configuration."cactor.tests.batching_test"]
 output-type = "executable"
 
-[package.package-configuration."cactor.tests.ask_pattern"]
+[package.package-configuration."cactor.tests.ask_pattern_test"]
 output-type = "executable"

@@ -8,6 +8,7 @@ package cactor.mailbox.batching
 import std.sync.*
 import std.time.*
 import std.collection.*
+import std.math.*
 import cactor.core.mailbox.Mailbox
 import cactor.core.message.Envelope
 
@@ -29,11 +30,11 @@ public class BatchingMailbox <: Mailbox {
         this.batchSize = batchSize
         this.batchTimeout = batchTimeout
         this.pendingBatch = ArrayList<Envelope>()
-        this.lastBatchTime = AtomicInt64(getCurrentTimeNanos())
         this.closed = AtomicBool(false)
         this.batchMutex = ReentrantMutex()
         this.totalEnqueued = AtomicInt64(0)
         this.totalBatches = AtomicInt64(0)
+        this.lastBatchTime = AtomicInt64(DateTime.now().toUnixTimeStamp().toMilliseconds() * 1_000_000)
     }
 
     public func enqueue(envelope: Envelope): Bool {
@@ -93,14 +94,14 @@ public class BatchingMailbox <: Mailbox {
             let timeSinceLastBatch = now - lastBatchTime.load()
             
             return currentSize >= batchSize || 
-                   (currentSize > 0 && timeSinceLastBatch > batchTimeout.toNanos())
+                   (currentSize > 0 && timeSinceLastBatch > batchTimeout.toMilliseconds() * 1_000_000)
         } finally {
             batchMutex.unlock()
         }
     }
 
     private func getCurrentTimeNanos(): Int64 {
-        System.currentTimeMillis() * 1_000_000  // 简化实现
+        DateTime.now().toUnixTimeStamp().toMilliseconds() * 1_000_000  // 简化实现
     }
 
     public func isEmpty(): Bool {
@@ -115,7 +116,7 @@ public class BatchingMailbox <: Mailbox {
     public func size(): Int64 {
         batchMutex.lock()
         try {
-            pendingBatch.size.toInt64()
+            Int64(pendingBatch.size)
         } finally {
             batchMutex.unlock()
         }
@@ -231,19 +232,19 @@ public class AdaptiveBatchingMailbox <: Mailbox {
         }
 
         let currentAvg = avgProcessingTime.load()
-        let targetNanos = targetLatency.toNanos()
+        let targetNanos = targetLatency.toMilliseconds() * 1_000_000
         let currentSize = currentBatchSize.load()
 
         if (currentAvg > targetNanos) {
             // 处理时间过长，减小批次
-            let newSize = Math.max(minBatchSize, currentSize * 8 / 10)
+            let newSize = max(minBatchSize, currentSize * 8 / 10)
             if (newSize != currentSize) {
                 currentBatchSize.store(newSize)
                 println("减小批次大小: ${currentSize} -> ${newSize}")
             }
         } else if (currentAvg < targetNanos / 2) {
             // 处理时间很短，增大批次
-            let newSize = Math.min(maxBatchSize, currentSize * 12 / 10)
+            let newSize = min(maxBatchSize, currentSize * 12 / 10)
             if (newSize != currentSize) {
                 currentBatchSize.store(newSize)
                 println("增大批次大小: ${currentSize} -> ${newSize}")
@@ -252,7 +253,7 @@ public class AdaptiveBatchingMailbox <: Mailbox {
     }
 
     private func getCurrentTimeNanos(): Int64 {
-        System.currentTimeMillis() * 1_000_000
+        DateTime.now().toUnixTimeStamp().toMilliseconds() * 1_000_000
     }
 
     public func isEmpty(): Bool {
@@ -329,10 +330,10 @@ public class BatchProcessor {
         let processingTime = endTime - startTime
         
         BatchProcessingMetrics(
-            batchSize: batch.size.toInt64(),
-            processingTime: processingTime,
-            errorCount: errorCount,
-            throughput: calculateThroughput(batch.size.toInt64(), processingTime)
+            Int64(batch.size),
+            processingTime,
+            errorCount,
+            calculateThroughput(Int64(batch.size), processingTime)
         )
     }
 
@@ -357,6 +358,13 @@ public struct BatchProcessingMetrics {
     public let processingTime: Int64  // 纳秒
     public let errorCount: Int64
     public let throughput: Float64    // 消息/秒
+
+    public init(batchSize: Int64, processingTime: Int64, errorCount: Int64, throughput: Float64) {
+        this.batchSize = batchSize
+        this.processingTime = processingTime
+        this.errorCount = errorCount
+        this.throughput = throughput
+    }
 
     public func getProcessingTimeMs(): Float64 {
         Float64(processingTime) / 1_000_000.0

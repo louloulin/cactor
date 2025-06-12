@@ -9,6 +9,7 @@ import std.sync.*
 import std.time.*
 import std.collection.*
 import std.collection.concurrent.*
+import std.math.*
 import cactor.core.message.Envelope
 import cactor.core.actor.ActorRef
 
@@ -163,7 +164,7 @@ public class WorkerThread {
             return None
         }
 
-        let startIndex = Int32(System.currentTimeMillis() % targetCount.toInt64())
+        let startIndex = 0  // 简化实现，从第一个开始
         
         for (i in 0..targetCount) {
             let targetIndex = (startIndex + i) % targetCount
@@ -223,13 +224,13 @@ public class ActorTask {
     public init(envelope: Envelope, actorRef: ActorRef) {
         this.envelope = envelope
         this.actorRef = actorRef
-        this.creationTime = System.currentTimeMillis()
+        this.creationTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
     public func execute(): Unit {
         // 这里应该调用Actor的消息处理方法
         // 简化实现：直接打印
-        println("执行任务: Actor=${actorRef.toString()}, Message=${envelope.getMessage().messageType()}")
+        println("执行任务: Message=${envelope.getMessage().messageType()}")
     }
 
     public func getEnvelope(): Envelope {
@@ -245,7 +246,7 @@ public class ActorTask {
     }
 
     public func getAge(): Int64 {
-        System.currentTimeMillis() - creationTime
+        DateTime.now().toUnixTimeStamp().toMilliseconds() - creationTime
     }
 }
 
@@ -268,12 +269,13 @@ public class WorkStealingDispatcher {
         this.isStarted = AtomicBool(false)
         this.totalTasksSubmitted = AtomicInt64(0)
         this.totalTasksCompleted = AtomicInt64(0)
-        
+
         // 创建工作线程
-        this.workers = Array<WorkerThread>(workerCount, { i => 
-            WorkerThread(i, globalQueue)
+        let queue = this.globalQueue
+        this.workers = Array<WorkerThread>(Int64(workerCount), { i =>
+            WorkerThread(Int32(i), queue)
         })
-        
+
         // 设置工作线程之间的引用
         for (worker in workers) {
             worker.setOtherWorkers(workers)
@@ -313,8 +315,8 @@ public class WorkStealingDispatcher {
 
     private func selectWorker(): WorkerThread {
         // 简单的轮询策略
-        let index = roundRobinCounter.fetchAdd(1) % workerCount.toInt64()
-        workers[Int32(index)]
+        let index = roundRobinCounter.fetchAdd(1) % Int64(workerCount)
+        workers[index]
     }
 
     public func getWorkerCount(): Int32 {
@@ -338,15 +340,17 @@ public class WorkStealingDispatcher {
     }
 
     public func getWorkerStats(): Array<WorkerStats> {
-        workers.map { worker =>
-            WorkerStats(
-                workerId: worker.getWorkerId(),
-                tasksProcessed: worker.getTasksProcessed(),
-                localQueueSize: worker.getLocalQueueSize(),
-                stealAttempts: worker.getStealAttempts(),
-                successfulSteals: worker.getSuccessfulSteals()
-            )
+        let stats = ArrayList<WorkerStats>()
+        for (worker in workers) {
+            stats.append(WorkerStats(
+                worker.getWorkerId(),
+                worker.getTasksProcessed(),
+                worker.getLocalQueueSize(),
+                worker.getStealAttempts(),
+                worker.getSuccessfulSteals()
+            ))
         }
+        stats.toArray()
     }
 }
 
@@ -359,7 +363,16 @@ public struct WorkerStats {
     public let localQueueSize: Int64
     public let stealAttempts: Int64
     public let successfulSteals: Int64
-    
+
+    public init(workerId: Int32, tasksProcessed: Int64, localQueueSize: Int64,
+                stealAttempts: Int64, successfulSteals: Int64) {
+        this.workerId = workerId
+        this.tasksProcessed = tasksProcessed
+        this.localQueueSize = localQueueSize
+        this.stealAttempts = stealAttempts
+        this.successfulSteals = successfulSteals
+    }
+
     public func getStealSuccessRate(): Float64 {
         if (stealAttempts == 0) {
             return 0.0

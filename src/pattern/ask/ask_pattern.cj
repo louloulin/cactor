@@ -10,7 +10,7 @@ import std.time.*
 import std.collection.*
 import std.collection.concurrent.*
 import cactor.core.message.{Message, Envelope}
-import cactor.core.actor.ActorRef
+import cactor.core.actor.{ActorRef, ActorPath}
 
 /**
  * Ask请求消息
@@ -97,24 +97,22 @@ public class AskTimeoutException <: Exception {
 }
 
 /**
- * Ask Future - 表示异步操作的结果
+ * Ask Future - 表示异步操作的结果（简化版本）
  */
 public class AskFuture<T> {
     private let requestId: String
     private let timeout: Duration
     private let startTime: Int64
-    private let result: AtomicRef<Option<Result<T>>>
+    private var result: Option<Result<T>>
     private let completed: AtomicBool
-    private let waiters: ArrayList<() -> Unit>
     private let mutex: ReentrantMutex
 
     public init(requestId: String, timeout: Duration) {
         this.requestId = requestId
         this.timeout = timeout
-        this.startTime = System.currentTimeMillis()
-        this.result = AtomicRef<Option<Result<T>>>(None)
+        this.startTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        this.result = None
         this.completed = AtomicBool(false)
-        this.waiters = ArrayList<() -> Unit>()
         this.mutex = ReentrantMutex()
     }
 
@@ -128,17 +126,9 @@ public class AskFuture<T> {
 
     private func completeWith(resultValue: Result<T>): Unit {
         if (completed.compareAndSwap(false, true)) {
-            result.store(Some(resultValue))
-            
-            // 通知所有等待者
             mutex.lock()
             try {
-                for (waiter in waiters) {
-                    spawn {
-                        waiter()
-                    }
-                }
-                waiters.clear()
+                result = Some(resultValue)
             } finally {
                 mutex.unlock()
             }
@@ -146,76 +136,23 @@ public class AskFuture<T> {
     }
 
     public func get(): Result<T> {
-        // 检查是否已完成
-        match (result.load()) {
-            case Some(res) => res
-            case None => 
-                // 检查是否超时
-                if (isTimedOut()) {
-                    Result.Failure(AskTimeoutException(requestId, timeout))
-                } else {
-                    // 等待完成或超时
-                    waitForCompletion()
-                }
-        }
-    }
-
-    public func get(waitTimeout: Duration): Result<T> {
-        let waitStartTime = System.currentTimeMillis()
-        let waitTimeoutMs = waitTimeout.toMilliseconds()
-        
-        while (!completed.load()) {
-            let elapsed = System.currentTimeMillis() - waitStartTime
-            if (elapsed >= waitTimeoutMs) {
-                return Result.Failure(AskTimeoutException(requestId, waitTimeout))
-            }
-            
-            if (isTimedOut()) {
-                return Result.Failure(AskTimeoutException(requestId, timeout))
-            }
-            
-            sleep(Duration.millisecond)
-        }
-        
-        match (result.load()) {
-            case Some(res) => res
-            case None => Result.Failure(AskTimeoutException(requestId, timeout))
-        }
-    }
-
-    public func onComplete(callback: (Result<T>) -> Unit): Unit {
-        if (completed.load()) {
-            match (result.load()) {
-                case Some(res) => 
-                    spawn {
-                        callback(res)
-                    }
-                case None => 
-                    // 不应该发生
-                    ()
-            }
-        } else {
+        // 简化实现：直接返回结果或超时错误
+        if (isCompleted()) {
             mutex.lock()
             try {
-                if (completed.load()) {
-                    match (result.load()) {
-                        case Some(res) => 
-                            spawn {
-                                callback(res)
-                            }
-                        case None => ()
-                    }
-                } else {
-                    waiters.append(() => {
-                        match (result.load()) {
-                            case Some(res) => callback(res)
-                            case None => ()
-                        }
-                    })
+                match (result) {
+                    case Some(res) => res
+                    case None => Result.Failure(AskTimeoutException(requestId, timeout))
                 }
             } finally {
                 mutex.unlock()
             }
+        } else if (isTimedOut()) {
+            Result.Failure(AskTimeoutException(requestId, timeout))
+        } else {
+            // 等待一段时间
+            sleep(Duration.millisecond * 10)
+            get()  // 递归调用
         }
     }
 
@@ -224,23 +161,8 @@ public class AskFuture<T> {
     }
 
     public func isTimedOut(): Bool {
-        let elapsed = System.currentTimeMillis() - startTime
+        let elapsed = DateTime.now().toUnixTimeStamp().toMilliseconds() - startTime
         elapsed >= timeout.toMilliseconds()
-    }
-
-    private func waitForCompletion(): Result<T> {
-        while (!completed.load() && !isTimedOut()) {
-            sleep(Duration.millisecond)
-        }
-        
-        if (isTimedOut()) {
-            Result.Failure(AskTimeoutException(requestId, timeout))
-        } else {
-            match (result.load()) {
-                case Some(res) => res
-                case None => Result.Failure(AskTimeoutException(requestId, timeout))
-            }
-        }
     }
 
     public func getRequestId(): String {
@@ -317,7 +239,7 @@ public class AskPatternManager {
 
     private func generateRequestId(): String {
         let counter = requestCounter.fetchAdd(1)
-        let timestamp = System.currentTimeMillis()
+        let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
         "ask-${timestamp}-${counter}"
     }
 
@@ -357,7 +279,7 @@ public class AskPatternManager {
     }
 
     public func getPendingRequestCount(): Int64 {
-        pendingRequests.size.toInt64()
+        Int64(pendingRequests.size)
     }
 
     public func getDefaultTimeout(): Duration {
@@ -375,8 +297,29 @@ public class DummyActorRef <: ActorRef {
         this.id = id
     }
 
+    public prop path: ActorPath {
+        get() {
+            ActorPath("default", id)
+        }
+    }
+
     public func tell(message: Message): Unit {
         println("DummyActorRef[${id}] 收到消息: ${message.messageType()}")
+    }
+
+    public func tell(message: Message, sender: Option<String>): Unit {
+        println("DummyActorRef[${id}] 收到来自${sender}的消息: ${message.messageType()}")
+    }
+
+    public func equals(other: ActorRef): Bool {
+        match (other) {
+            case ref: DummyActorRef => this.id == ref.id
+            case _ => false
+        }
+    }
+
+    public func hashCode(): Int32 {
+        Int32(id.hashCode())
     }
 
     public func toString(): String {
