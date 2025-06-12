@@ -58,3 +58,24 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.logging_debug"]
 output-type = "executable"
+
+[package.package-configuration."cactor.examples.hello_world"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.distributed_computing"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.basic_demo"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.modular_demo"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.ping_pong_simple"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.simple_actor_demo"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.ping_pong"]
+output-type = "executable"
