@@ -55,3 +55,6 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.advanced_features"]
 output-type = "executable"
+
+[package.package-configuration."cactor.tests.logging_debug"]
+output-type = "executable"
