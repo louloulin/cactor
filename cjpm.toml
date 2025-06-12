@@ -28,3 +28,6 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.ask_pattern_test"]
 output-type = "executable"
+
+[package.package-configuration."cactor.tests.memory_pool_test"]
+output-type = "executable"
