@@ -74,4 +74,10 @@ output-type = "executable"
 [package.package-configuration."cactor.tests.persistence_test"]
 output-type = "executable"
 
+[package.package-configuration."cactor.tests.virtual_actor_test"]
+output-type = "executable"
+
+[package.package-configuration."cactor.tests.zerocopy_test"]
+output-type = "executable"
+
 
