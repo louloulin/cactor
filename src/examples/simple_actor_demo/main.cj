@@ -2,7 +2,7 @@
  * 仓颉Actor系统 - 简单演示
  * 展示基本的Actor创建、消息传递和生命周期管理
  */
-package examples
+package cactor.examples.simple_actor_demo
 
 import std.sync.*
 import std.collection.*

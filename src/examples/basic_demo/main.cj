@@ -6,6 +6,7 @@ package cactor.examples.basic_demo
 
 import std.sync.*
 import std.collection.*
+import std.time.*
 
 // 简单的工作者Actor
 public class WorkerActor {
@@ -68,7 +69,7 @@ public class WorkerActor {
 // 计数器Actor
 public class CounterActor {
     private var count: Int64 = 0
-    private let lock: Mutex = Mutex()
+    private let lock: ReentrantMutex = ReentrantMutex()
     private let isActive: AtomicBool = AtomicBool(false)
     
     public func start(): Unit {
@@ -148,7 +149,7 @@ public class SimpleActorManager {
                 worker.start()
             }
             
-            println("Actor Manager started with ${workers.size()} workers")
+            println("Actor Manager started with ${workers.size} workers")
         }
     }
     
@@ -170,9 +171,9 @@ public class SimpleActorManager {
     }
     
     public func assignWork(workId: Int64): Unit {
-        if (isRunning.load() && !workers.isEmpty()) {
+        if (isRunning.load() && workers.size > 0) {
             // 简单的轮询分配
-            let workerIndex = (workId % workers.size()).toInt64()
+            let workerIndex = workId % Int64(workers.size)
             let worker = workers[workerIndex]
             worker.doWork(workId)
             counter.increment()
@@ -180,7 +181,12 @@ public class SimpleActorManager {
     }
     
     public func getStatus(): String {
-        let activeWorkers = workers.filter { w => w.isActive() }.size()
+        var activeWorkers = 0
+        for (worker in workers) {
+            if (worker.isActive()) {
+                activeWorkers += 1
+            }
+        }
         let totalTasks = counter.getCount()
         return "Active Workers: ${activeWorkers}, Total Tasks: ${totalTasks}"
     }
@@ -254,7 +260,8 @@ func concurrencyTest(): Unit {
     
     println("Expected count: ${expectedCount}")
     println("Actual count: ${finalCount}")
-    println("Test ${if (finalCount == expectedCount) "PASSED" else "FAILED"}")
+    let testResult = if (finalCount == expectedCount) { "PASSED" } else { "FAILED" }
+    println("Test ${testResult}")
     
     counter.stop()
 }
@@ -298,11 +305,14 @@ func performanceTest(): Unit {
     let duration = endTime - startTime
     
     // 统计结果
-    let totalTasks = workers.map { w => w.getTaskCount() }.reduce(0) { acc, count => acc + count }
-    
+    var totalTasks = Int64(0)
+    for (worker in workers) {
+        totalTasks += worker.getTaskCount()
+    }
+
     println("完成任务数: ${totalTasks}")
-    println("执行时间: ${duration.toNanosecond() / 1000000} ms")
-    println("平均每秒处理: ${(totalTasks * 1000) / (duration.toNanosecond() / 1000000)} 任务")
+    println("执行时间: ${duration.toMilliseconds()} ms")
+    println("平均每秒处理: ${(totalTasks * 1000) / duration.toMilliseconds()} 任务")
     
     // 停止所有工作者
     for (worker in workers) {

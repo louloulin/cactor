@@ -2,7 +2,7 @@
  * 仓颉Actor系统 - 乒乓球示例
  * 演示基础的Actor消息传递
  */
-package cangjie_actor.examples.ping_pong
+package cactor.examples.ping_pong_simple
 
 import cangjie_actor.*
 import std.time.*
