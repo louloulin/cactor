@@ -12,3 +12,5 @@ public import cactor.pattern.*
 public import cactor.memory.*
 public import cactor.supervision.*
 public import cactor.routing.*
+public import cactor.circuit_breaker.*
+public import cactor.monitoring.*

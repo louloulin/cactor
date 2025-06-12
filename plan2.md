@@ -492,7 +492,7 @@ public class CircuitBreaker {
 - [x] Ask模式实现 ✅
 - [x] 监督策略 ✅
 - [x] 路由器实现 ✅
-- [ ] 断路器模式
+- [x] 断路器模式 ✅
 - [ ] 性能监控
 
 ### Phase 4: 远程通信 (6周)

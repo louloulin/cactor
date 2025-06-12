@@ -37,3 +37,9 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.routing_test"]
 output-type = "executable"
+
+[package.package-configuration."cactor.tests.circuit_breaker_test"]
+output-type = "executable"
+
+[package.package-configuration."cactor.tests.monitoring_test"]
+output-type = "executable"
