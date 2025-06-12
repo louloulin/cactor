@@ -276,9 +276,9 @@ class StringBuilder {
         if (parts.size == 0) {
             return ""
         }
-        
+
         // 简化的字符串连接
-        let result = parts[0]
+        var result = parts[0]
         for (i in 1..parts.size) {
             result = result + parts[i]
         }
