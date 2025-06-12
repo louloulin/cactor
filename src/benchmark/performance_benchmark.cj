@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 性能基准测试框架
+ * CActor - 性能基准测试框架
  */
 package cactor.benchmark
 
@@ -333,7 +333,7 @@ public class BenchmarkSuite {
     public func runAllBenchmarks(): Array<BenchmarkResult> {
         let results = ArrayList<BenchmarkResult>()
         
-        println("=== CACtor 2.0 性能基准测试套件 ===")
+        println("=== CActor 性能基准测试套件 ===")
         
         // 消息吞吐量测试
         let throughputResult = benchmark.benchmarkMessageThroughput()
@@ -357,7 +357,7 @@ public class BenchmarkSuite {
     
     public func generateReport(results: Array<BenchmarkResult>): String {
         let report = StringBuilder()
-        report.append("# CACtor 2.0 性能基准测试报告\n\n")
+        report.append("# CActor 性能基准测试报告\n\n")
         
         for (result in results) {
             report.append("## ${result.testName}\n")

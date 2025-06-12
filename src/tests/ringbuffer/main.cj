@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 环形缓冲区邮箱测试
+ * CActor - 环形缓冲区邮箱测试
  * 验证高性能无锁邮箱功能
  */
 package cactor.tests.ringbuffer
@@ -285,7 +285,7 @@ func benchmarkRingBuffer(): Unit {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 环形缓冲区邮箱测试 ===")
+    println("=== CActor 环形缓冲区邮箱测试 ===")
     
     var allPassed = true
     
@@ -304,7 +304,7 @@ main() {
         println("✓ 容量限制正常")
         println("✓ 并发访问安全")
         println("✓ 背压控制有效")
-        println("\n这验证了CACtor 2.0的高性能邮箱能力！")
+        println("\n这验证了CActor的高性能邮箱能力！")
     } else {
         println("\n❌ 部分测试失败")
     }

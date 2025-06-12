@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 网络传输层
+ * CActor - 网络传输层
  * 提供TCP/UDP网络通信功能，支持远程Actor通信
  */
 package cactor.network

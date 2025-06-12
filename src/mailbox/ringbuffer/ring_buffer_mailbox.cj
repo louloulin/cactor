@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 环形缓冲区邮箱
+ * CActor - 环形缓冲区邮箱
  * 高性能无锁消息队列实现
  */
 package cactor.mailbox.ringbuffer

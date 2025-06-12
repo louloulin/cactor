@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 简化的远程通信系统
+ * CActor - 简化的远程通信系统
  */
 package cactor.remote
 

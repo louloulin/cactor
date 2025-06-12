@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 主包导出
+ * CActor - 主包导出
  * 高性能仓颉Actor系统，基于plan2.md设计
  */
 package cactor

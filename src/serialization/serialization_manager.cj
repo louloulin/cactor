@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 序列化管理器
+ * CActor - 序列化管理器
  * 管理多种序列化器，提供统一的序列化接口
  */
 package cactor.serialization

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 批量处理邮箱测试
+ * CActor - 批量处理邮箱测试
  * 验证批量处理功能
  */
 package cactor.tests.batching_test
@@ -122,7 +122,7 @@ func testBatchingBySize(): Bool {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 批量处理邮箱测试 ===")
+    println("=== CActor 批量处理邮箱测试 ===")
     
     var allPassed = true
     
@@ -134,7 +134,7 @@ main() {
         println("\n🎉 所有批量处理邮箱测试通过！")
         println("✓ 批量处理邮箱基础功能正常")
         println("✓ 按大小触发批处理正确")
-        println("\n这验证了CACtor 2.0的批量处理邮箱实现！")
+        println("\n这验证了CActor的批量处理邮箱实现！")
         println("🚀 Phase 2: 批量处理机制功能完成！")
     } else {
         println("\n❌ 部分测试失败")

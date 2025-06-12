@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - Actor系统接口
+ * CActor - Actor系统接口
  * 管理整个Actor系统的生命周期和配置
  */
 package cactor.core.system

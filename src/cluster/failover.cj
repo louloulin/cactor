@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 故障转移实现
+ * CActor - 故障转移实现
  */
 package cactor.cluster
 

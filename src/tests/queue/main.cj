@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 队列邮箱测试
+ * CActor - 队列邮箱测试
  * 验证基于仓颉NonBlockingQueue的邮箱功能
  */
 package cactor.tests.queue
@@ -304,7 +304,7 @@ func benchmarkQueueMailbox(): Unit {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 队列邮箱测试 ===")
+    println("=== CActor 队列邮箱测试 ===")
     
     var allPassed = true
     

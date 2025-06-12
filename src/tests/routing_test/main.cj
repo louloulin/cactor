@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 路由器测试
+ * CActor - 路由器测试
  * 验证消息路由和负载均衡功能
  */
 package cactor.tests.routing_test
@@ -375,7 +375,7 @@ func testRouterActorRef(): Bool {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 路由器测试 ===")
+    println("=== CActor 路由器测试 ===")
     
     var allPassed = true
     
@@ -397,7 +397,7 @@ main() {
         println("✓ 基础路由器功能正常")
         println("✓ 路由器工厂正常")
         println("✓ 路由器ActorRef包装器正常")
-        println("\n这验证了CACtor 2.0的路由器实现！")
+        println("\n这验证了CActor的路由器实现！")
         println("🚀 Phase 3: 路由器功能完成！")
     } else {
         println("\n❌ 部分测试失败")

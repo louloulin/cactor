@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 序列化框架
+ * CActor - 序列化框架
  * 提供消息序列化和反序列化功能，支持远程通信
  */
 package cactor.serialization

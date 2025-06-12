@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 断路器测试
+ * CActor - 断路器测试
  * 验证故障隔离和快速失败机制
  */
 package cactor.tests.circuit_breaker_test
@@ -305,7 +305,7 @@ func testManualControl(): Bool {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 断路器测试 ===")
+    println("=== CActor 断路器测试 ===")
     
     var allPassed = true
     
@@ -327,7 +327,7 @@ main() {
         println("✓ 工厂模式正常")
         println("✓ 装饰器模式正常")
         println("✓ 手动控制正常")
-        println("\n这验证了CACtor 2.0的断路器实现！")
+        println("\n这验证了CActor的断路器实现！")
         println("🚀 Phase 3: 断路器功能完成！")
     } else {
         println("\n❌ 部分测试失败")

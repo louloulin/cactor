@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 邮箱系统
+ * CActor - 邮箱系统
  * 高性能消息队列实现
  */
 package cactor.core.mailbox

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 基于仓颉NonBlockingQueue的邮箱
+ * CActor - 基于仓颉NonBlockingQueue的邮箱
  * 利用仓颉标准库的高性能并发队列实现
  */
 package cactor.mailbox.queue

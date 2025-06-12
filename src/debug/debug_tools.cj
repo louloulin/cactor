@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 调试工具实现
+ * CActor - 调试工具实现
  */
 package cactor.debug
 

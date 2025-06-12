@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 日志和调试功能测试
+ * CActor - 日志和调试功能测试
  */
 package cactor.tests.logging_debug
 
@@ -16,7 +16,7 @@ import cactor.debug.{ActorSnapshot, SystemSnapshot, MessageTrace, DiagnosticRepo
  * 日志和调试功能测试
  */
 main(): Int64 {
-    println("=== CACtor 2.0 日志和调试功能测试 ===")
+    println("=== CActor 日志和调试功能测试 ===")
     
     try {
         // 1. 测试基础日志功能

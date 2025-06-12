@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - Actor核心包
+ * CActor - Actor核心包
  * 包含Actor接口、ActorRef和相关类型定义
  */
 package cactor.core.actor

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 高级功能测试
+ * CActor - 高级功能测试
  */
 package cactor.tests.advanced_features
 
@@ -16,7 +16,7 @@ import cactor.network.{NetworkAddress, TransportProtocol}
  * 高级功能测试
  */
 main(): Int64 {
-    println("=== CACtor 2.0 高级功能测试 ===")
+    println("=== CActor 高级功能测试 ===")
     
     try {
         // 1. 测试配置管理

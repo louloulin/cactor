@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 断路器模式
+ * CActor - 断路器模式
  * 提供故障隔离和快速失败机制
  */
 package cactor.circuit_breaker

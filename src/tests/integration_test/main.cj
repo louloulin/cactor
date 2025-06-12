@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 集成测试
+ * CActor - 集成测试
  * 验证整个Actor系统的综合功能
  */
 package cactor.tests.integration_test
@@ -336,7 +336,7 @@ class TestActorRef <: ActorRef {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 集成测试 ===")
+    println("=== CActor 集成测试 ===")
     println("验证整个Actor系统的综合功能")
     
     var allPassed = true
@@ -353,7 +353,7 @@ main() {
         println("✓ Ask模式集成正常")
         println("✓ 断路器集成正常")
         println("✓ 性能监控集成正常")
-        println("\n🚀 CACtor 2.0 系统集成验证完成！")
+        println("\n🚀 CActor 系统集成验证完成！")
         println("🎯 Phase 3 所有功能已实现并验证！")
         
         // 显示最终统计

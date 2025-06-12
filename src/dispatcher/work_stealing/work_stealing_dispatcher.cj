@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 工作窃取调度器
+ * CActor - 工作窃取调度器
  * 基于仓颉并发原语的高性能工作窃取实现
  */
 package cactor.dispatcher.work_stealing

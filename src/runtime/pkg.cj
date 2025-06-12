@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 运行时包导出
+ * CActor - 运行时包导出
  */
 package cactor.runtime
 

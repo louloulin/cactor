@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - Actor上下文
+ * CActor - Actor上下文
  * 提供Actor运行时的环境和服务
  */
 package cactor.core.context

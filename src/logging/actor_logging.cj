@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - Actor系统日志集成
+ * CActor - Actor系统日志集成
  */
 package cactor.logging
 

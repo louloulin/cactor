@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 本地Actor引用实现
+ * CActor - 本地Actor引用实现
  * 基于仓颉语言特性的高性能Actor实现
  */
 package cactor.runtime.actor

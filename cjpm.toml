@@ -1,7 +1,7 @@
 [package]
 name = "cactor"
 version = "0.2.0"
-description = "High-performance Actor system for Cangjie - CACtor 2.0"
+description = "High-performance Actor system for Cangjie - CActor"
 cjc-version = "0.53.18"
 output-type = "dynamic"
 

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 性能监控
+ * CActor - 性能监控
  * 提供系统性能指标收集和监控功能
  */
 package cactor.monitoring

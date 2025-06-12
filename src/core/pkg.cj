@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 核心包导出
+ * CActor - 核心包导出
  */
 package cactor.core
 

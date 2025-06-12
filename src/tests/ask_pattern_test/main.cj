@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - Ask模式测试
+ * CActor - Ask模式测试
  * 验证Ask模式功能
  */
 package cactor.tests.ask_pattern_test
@@ -130,7 +130,7 @@ func testAskFutureBasics(): Bool {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 Ask模式测试 ===")
+    println("=== CActor Ask模式测试 ===")
     
     var allPassed = true
     
@@ -144,7 +144,7 @@ main() {
         println("✓ Ask消息功能正常")
         println("✓ Ask响应功能正常")
         println("✓ Ask Future基础功能正常")
-        println("\n这验证了CACtor 2.0的Ask模式实现！")
+        println("\n这验证了CActor的Ask模式实现！")
         println("🚀 Phase 3: Ask模式功能完成！")
     } else {
         println("\n❌ 部分测试失败")

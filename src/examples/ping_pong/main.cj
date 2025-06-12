@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - Ping Pong 示例
+ * CActor - Ping Pong 示例
  * 展示基础Actor通信功能
  */
 package cactor.examples.ping_pong
@@ -150,7 +150,7 @@ public class PongActor {
  * 主函数 - 演示Ping Pong通信
  */
 main() {
-    println("=== CACtor 2.0 Ping Pong 示例 ===")
+    println("=== CActor Ping Pong 示例 ===")
     
     // 创建Actor系统
     let system = CActorSystem.create("ping-pong-system")

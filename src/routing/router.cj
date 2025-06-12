@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 路由器实现
+ * CActor - 路由器实现
  * 提供消息路由和负载均衡功能
  */
 package cactor.routing

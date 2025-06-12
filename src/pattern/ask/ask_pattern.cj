@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - Ask模式实现
+ * CActor - Ask模式实现
  * 支持请求-响应模式的异步通信
  */
 package cactor.pattern.ask

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 监督策略
+ * CActor - 监督策略
  * 实现Actor监督和容错机制
  */
 package cactor.supervision

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 远程通信演示
+ * CActor - 远程通信演示
  * 展示完整的远程Actor通信功能
  */
 package cactor.tests.remote_demo
@@ -16,7 +16,7 @@ import cactor.remote.{SimpleRemoteManager, RemoteFactory}
  * 远程通信演示
  */
 main(): Int64 {
-    println("=== CACtor 2.0 远程通信演示 ===")
+    println("=== CActor 远程通信演示 ===")
     println("展示完整的远程Actor通信功能")
     
     try {

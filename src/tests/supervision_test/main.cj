@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 监督策略测试
+ * CActor - 监督策略测试
  * 验证Actor监督和容错机制
  */
 package cactor.tests.supervision_test
@@ -320,7 +320,7 @@ func testTimeWindow(): Bool {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 监督策略测试 ===")
+    println("=== CActor 监督策略测试 ===")
     
     var allPassed = true
     
@@ -340,7 +340,7 @@ main() {
         println("✓ 默认监督策略正常")
         println("✓ 基础监督者功能正常")
         println("✓ 时间窗口机制正确")
-        println("\n这验证了CACtor 2.0的监督策略实现！")
+        println("\n这验证了CActor的监督策略实现！")
         println("🚀 Phase 3: 监督策略功能完成！")
     } else {
         println("\n❌ 部分测试失败")

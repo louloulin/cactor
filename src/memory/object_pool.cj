@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 内存池管理
+ * CActor - 内存池管理
  * 基于仓颉GC的高性能对象池实现
  */
 package cactor.memory

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 日志系统实现
+ * CActor - 日志系统实现
  */
 package cactor.logging
 

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 简化的远程通信测试
+ * CActor - 简化的远程通信测试
  */
 package cactor.tests.remote_simple
 
@@ -26,7 +26,7 @@ func bytesToString(bytes: Array<UInt8>): String {
 }
 
 main(): Int64 {
-    println("=== CACtor 2.0 远程通信功能测试 ===")
+    println("=== CActor 远程通信功能测试 ===")
     
     try {
         // 测试消息类型

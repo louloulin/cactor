@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 配置管理实现
+ * CActor - 配置管理实现
  */
 package cactor.config
 

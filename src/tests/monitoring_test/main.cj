@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 性能监控测试
+ * CActor - 性能监控测试
  * 验证指标收集和性能监控功能
  */
 package cactor.tests.monitoring_test
@@ -381,7 +381,7 @@ func testGlobalMonitor(): Bool {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 性能监控测试 ===")
+    println("=== CActor 性能监控测试 ===")
     
     var allPassed = true
     
@@ -405,7 +405,7 @@ main() {
         println("✓ 全局指标正常")
         println("✓ 性能监控器正常")
         println("✓ 全局监控器正常")
-        println("\n这验证了CACtor 2.0的性能监控实现！")
+        println("\n这验证了CActor的性能监控实现！")
         println("🚀 Phase 3: 性能监控功能完成！")
     } else {
         println("\n❌ 部分测试失败")

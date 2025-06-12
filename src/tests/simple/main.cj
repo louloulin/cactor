@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 简单Actor测试
+ * CActor - 简单Actor测试
  * 验证基础Actor功能
  */
 package cactor.tests.simple
@@ -237,7 +237,7 @@ func benchmarkActorPerformance(): Unit {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 简单Actor系统测试 ===")
+    println("=== CActor 简单Actor系统测试 ===")
     
     var allPassed = true
     
@@ -254,7 +254,7 @@ main() {
         println("✓ 基础Actor功能正常")
         println("✓ 多Actor并发正常")
         println("✓ Actor生命周期正常")
-        println("\n这验证了CACtor 2.0的基础Actor能力！")
+        println("\n这验证了CActor的基础Actor能力！")
     } else {
         println("\n❌ 部分测试失败")
     }

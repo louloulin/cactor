@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 消息系统
+ * CActor - 消息系统
  * 高性能消息传递机制
  */
 package cactor.core.message

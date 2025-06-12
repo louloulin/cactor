@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 内存池测试
+ * CActor - 内存池测试
  * 验证对象池功能
  */
 package cactor.tests.memory_pool_test
@@ -219,7 +219,7 @@ func testEnvelopePool(): Bool {
  * 主测试函数
  */
 main() {
-    println("=== CACtor 2.0 内存池管理测试 ===")
+    println("=== CActor 内存池管理测试 ===")
     
     var allPassed = true
     
@@ -237,7 +237,7 @@ main() {
         println("✓ 统计信息准确")
         println("✓ 并发访问安全")
         println("✓ 消息信封池功能正常")
-        println("\n这验证了CACtor 2.0的内存池管理实现！")
+        println("\n这验证了CActor的内存池管理实现！")
         println("🚀 Phase 2: 内存池管理功能完成！")
     } else {
         println("\n❌ 部分测试失败")

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CACtor 2.0 - 批量处理邮箱
+ * CActor - 批量处理邮箱
  * 支持自适应批处理的高性能邮箱实现
  */
 package cactor.mailbox.batching
