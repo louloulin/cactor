@@ -11,3 +11,4 @@ public import cactor.dispatcher.*
 public import cactor.pattern.*
 public import cactor.memory.*
 public import cactor.supervision.*
+public import cactor.routing.*
