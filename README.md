@@ -1,33 +1,32 @@
-# 仓颉Actor系统
+# CACtor - 仓颉Actor系统
 
-基于仓颉编程语言实现的Actor模型系统，提供高性能、类型安全的并发编程框架。
+基于仓颉编程语言实现的模块化Actor系统，参考Akka和Actix框架设计，提供高性能、类型安全的并发编程框架。
 
 ## 项目概述
 
-本项目实现了一个简化但功能完整的Actor系统，包括：
+CACtor是一个完全模块化的Actor系统实现，采用现代化的架构设计：
 
-- **Actor接口**: 定义Actor的基本行为和生命周期
-- **消息系统**: 类型安全的消息传递机制
-- **Actor上下文**: 管理Actor的状态和消息队列
-- **运行时系统**: 负责Actor的创建、调度和生命周期管理
-- **并发安全**: 基于仓颉的原子类型和同步原语
+- **核心模块** (`cactor.core`): 定义Actor系统的基础接口和抽象
+- **实现模块** (`cactor.impl`): 提供具体的Actor系统实现
+- **工具模块** (`cactor.util`): 包含辅助类和工具函数
+- **示例模块** (`cactor.examples`): 展示各种使用场景
 
-## 核心特性
+## 架构特性
 
-### 1. 类型安全
-- 编译时类型检查
-- 强类型消息系统
-- 接口约束
+### 1. 模块化设计
+- **分层架构**: 核心接口与实现分离
+- **可扩展性**: 支持自定义实现和扩展
+- **松耦合**: 模块间依赖清晰，易于维护
 
-### 2. 高性能并发
-- 基于仓颉的轻量级线程(spawn)
-- 原子操作保证线程安全
-- 互斥锁保护共享状态
+### 2. 类型安全
+- **强类型系统**: 利用仓颉的类型系统确保编译时安全
+- **接口约束**: 明确的接口定义和实现契约
+- **泛型支持**: 类型化Actor和消息处理
 
-### 3. 易用的API
-- 简洁的Actor定义
-- 直观的消息传递
-- 灵活的生命周期管理
+### 3. 高性能并发
+- **轻量级Actor**: 基于仓颉的spawn机制
+- **异步消息传递**: Tell和Ask模式支持
+- **并发安全**: 原子操作和互斥锁保护
 
 ## 核心概念
 
@@ -80,68 +79,106 @@ public class ActorRuntime {
 
 ## 快速开始
 
-### 1. 创建Actor
+### 1. 定义Actor
 
 ```cangjie
-public class CalculatorActor <: Actor {
-    private var value: Int64 = 0
-    
+import cactor.*
+
+// 定义一个简单的计算器Actor
+public class CalculatorActor <: UntypedActor {
+    private var result: Int64 = 0
+
     public prop name: String {
         get() { "Calculator" }
     }
-    
+
     public prop description: String {
         get() { "Simple calculator actor" }
     }
-    
-    public func add(operand: Int64): Int64 {
-        value += operand
-        return value
+
+    public func receive(message: Message, context: ActorContext): MessageResult {
+        match (message.messageType()) {
+            case "AddMessage" => {
+                match (message) {
+                    case addMsg: AddMessage => {
+                        result += addMsg.getValue()
+                        println("Result: ${result}")
+                        MessageResult.Handled
+                    }
+                    case _ => MessageResult.Unhandled
+                }
+            }
+            case _ => MessageResult.Unhandled
+        }
     }
 }
 ```
 
-### 2. 定义消息
+### 2. 定义消息类型
 
 ```cangjie
-public struct AddMessage <: Message {
-    public let operand: Int64
-    
-    public func messageType(): String {
-        "AddMessage"
+public struct AddMessage <: UserMessage {
+    private let value: Int64
+
+    public init(value: Int64) {
+        this.value = value
     }
+
+    public func messageType(): String { "AddMessage" }
+    public func getValue(): Int64 { value }
 }
 ```
 
-### 3. 启动Actor系统
+### 3. 创建和使用Actor系统
 
 ```cangjie
-func main(): Unit {
-    let runtime = ActorRuntime()
-    
-    // 创建并启动Actor
-    let calculator = CalculatorActor()
-    let actorRef = runtime.spawnActor(calculator, "calculator")
-    
-    // 发送消息
-    let message = AddMessage(10)
-    actorRef.send(message)
-    
-    // 清理
-    runtime.shutdown()
-}
+// 创建Actor系统
+let system = CActorSystem.create("my-system")
+
+// 创建Actor
+let props = PropsFactory.create<CalculatorActor>(() => CalculatorActor())
+let calculatorRef = system.actorOf(props, "calculator")
+
+// 发送消息
+calculatorRef.tell(AddMessage(10))
+calculatorRef.tell(AddMessage(20))
+
+// 关闭系统
+system.terminate()
 ```
 
 ## 项目结构
 
 ```
-cangjie-actor/
+cactor/
 ├── src/
-│   └── actor.cj              # 核心Actor系统实现
+│   ├── actor.cj              # 主包导出
+│   ├── core/                 # 核心接口模块
+│   │   ├── pkg.cj            # 核心包导出
+│   │   ├── actor/            # Actor相关接口
+│   │   │   ├── actor.cj      # Actor基础接口
+│   │   │   └── actor_ref.cj  # Actor引用接口
+│   │   ├── message/          # 消息系统
+│   │   │   └── message.cj    # 消息接口和实现
+│   │   ├── context/          # Actor上下文
+│   │   │   └── actor_context.cj
+│   │   ├── system/           # Actor系统
+│   │   │   └── actor_system.cj
+│   │   └── mailbox/          # 邮箱系统
+│   │       └── mailbox.cj
+│   ├── impl/                 # 具体实现模块
+│   │   ├── pkg.cj            # 实现包导出
+│   │   ├── actor/            # Actor实现
+│   │   │   └── local_actor_ref.cj
+│   │   └── system/           # 系统实现
+│   │       └── actor_system_impl.cj
+│   └── util/                 # 工具模块
+│       └── simple_types.cj   # 辅助类型
 ├── examples/
+│   ├── modular_demo.cj       # 模块化设计演示
 │   └── ping_pong.cj          # 乒乓球示例
 ├── tests/
-│   └── actor_tests.cj        # 单元测试
+│   └── simple_test.cj        # 基础测试
 ├── cjpm.toml                 # 项目配置
 └── README.md                 # 项目说明
 ```
