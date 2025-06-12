@@ -13,7 +13,7 @@ import cactor.core.message.Message
  * 序列化管理器
  * 管理多个序列化器，根据消息类型选择合适的序列化器
  */
-public class SerializationManager {
+public open class SerializationManager {
     private let serializers: HashMap<String, Serializer>
     private let defaultSerializer: Serializer
     private let mutex: ReentrantMutex
@@ -22,8 +22,12 @@ public class SerializationManager {
         this.serializers = HashMap<String, Serializer>()
         this.defaultSerializer = JsonSerializer()
         this.mutex = ReentrantMutex()
-        
-        // 注册默认序列化器
+    }
+
+    /**
+     * 初始化默认序列化器
+     */
+    public func initializeDefaultSerializers(): Unit {
         registerSerializer(defaultSerializer)
         registerSerializer(BinarySerializer())
     }
@@ -43,7 +47,7 @@ public class SerializationManager {
     /**
      * 序列化消息
      */
-    public func serialize(message: Message): Array<UInt8> {
+    public open func serialize(message: Message): Array<UInt8> {
         let messageType = message.messageType()
         let serializer = getSerializerForType(messageType)
         serializer.serialize(message)
@@ -52,7 +56,7 @@ public class SerializationManager {
     /**
      * 反序列化消息
      */
-    public func deserialize(data: Array<UInt8>, messageType: String): Message {
+    public open func deserialize(data: Array<UInt8>, messageType: String): Message {
         let serializer = getSerializerForType(messageType)
         serializer.deserialize(data)
     }
@@ -75,9 +79,13 @@ public class SerializationManager {
      */
     public func getSupportedTypes(): Array<String> {
         mutex.lock()
-        let types = serializers.keySet().toArray()
+        let types = ArrayList<String>()
+        for ((key, _) in serializers) {
+            types.append(key)
+        }
+        let result = types.toArray()
         mutex.unlock()
-        types
+        result
     }
 
     /**
@@ -114,7 +122,9 @@ public class SerializationFactory {
      * 创建默认序列化管理器
      */
     public static func createDefaultManager(): SerializationManager {
-        SerializationManager()
+        let manager = SerializationManager()
+        manager.initializeDefaultSerializers()
+        manager
     }
 
     /**
@@ -288,11 +298,10 @@ public class GlobalSerializationManager {
         mutex.lock()
         let result = match (instance) {
             case Some(manager) => manager
-            case None => {
+            case None =>
                 let manager = SerializationFactory.createDefaultManager()
                 instance = Some(manager)
                 manager
-            }
         }
         mutex.unlock()
         result
