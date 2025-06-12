@@ -15,9 +15,14 @@ public interface ZeroCopyMessage <: Message {
     func getMessageId(): UInt64
     func getPayloadSize(): UInt64
     func getTimestamp(): Int64
+    func getSourceActor(): UInt64
+    func getTargetActor(): UInt64
+    func getPayloadPtr(): Option<Array<UInt8>>
     func release(): Unit
     func retain(): Unit
     func getReferenceCount(): Int32
+    func isValid(): Bool
+    func getChecksum(): UInt32
 }
 
 // 消息头部结构 - 64字节对齐
@@ -54,15 +59,23 @@ public class ZeroCopyMessageImpl <: ZeroCopyMessage {
     private let msgId: UInt64
     private let payloadSize: UInt64
     private let createdTime: Int64
+    private let sourceActor: UInt64
+    private let targetActor: UInt64
     private var refCount: AtomicInt32
     private let messageTypeStr: String
-    
-    public init(messageType: UInt16, payloadSize: UInt64, sourceActor: UInt64, targetActor: UInt64) {
+    private let payload: Option<Array<UInt8>>
+    private let checksum: UInt32
+
+    public init(messageType: UInt16, payloadSize: UInt64, sourceActor: UInt64, targetActor: UInt64, payload: Option<Array<UInt8>>) {
         this.msgId = generateMessageId()
         this.payloadSize = payloadSize
         this.createdTime = getCurrentTimeNanos()
+        this.sourceActor = sourceActor
+        this.targetActor = targetActor
         this.refCount = AtomicInt32(1)
         this.messageTypeStr = "ZeroCopyMessage_${messageType}"
+        this.payload = payload
+        this.checksum = calculateChecksum(payload)
     }
     
     public func getMessageId(): UInt64 {
@@ -76,7 +89,27 @@ public class ZeroCopyMessageImpl <: ZeroCopyMessage {
     public func getTimestamp(): Int64 {
         createdTime
     }
-    
+
+    public func getSourceActor(): UInt64 {
+        sourceActor
+    }
+
+    public func getTargetActor(): UInt64 {
+        targetActor
+    }
+
+    public func getPayloadPtr(): Option<Array<UInt8>> {
+        payload
+    }
+
+    public func isValid(): Bool {
+        refCount.load() > 0
+    }
+
+    public func getChecksum(): UInt32 {
+        checksum
+    }
+
     public func messageType(): String {
         messageTypeStr
     }
@@ -132,7 +165,7 @@ public class ZeroCopyMessageBuilder {
     }
     
     public func build(): ZeroCopyMessageImpl {
-        ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor)
+        ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
     }
 }
 
@@ -145,11 +178,15 @@ public class ZeroCopyMessageFactory {
     }
     
     public func createMessage(messageType: UInt16, payloadSize: UInt64, sourceActor: UInt64, targetActor: UInt64): ZeroCopyMessageImpl {
-        ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor)
+        ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
     }
-    
+
     public func createEmptyMessage(messageType: UInt16, payloadSize: UInt64, sourceActor: UInt64, targetActor: UInt64): ZeroCopyMessageImpl {
-        ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor)
+        ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
+    }
+
+    public func createMessageWithPayload(messageType: UInt16, payloadSize: UInt64, sourceActor: UInt64, targetActor: UInt64, payload: Array<UInt8>): ZeroCopyMessageImpl {
+        ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, Some(payload))
     }
 }
 
@@ -221,6 +258,17 @@ func generateMessageId(): UInt64 {
     return (UInt64(timestamp) << 16) | (UInt64(sequence) & 0xFFFF)
 }
 
+func calculateChecksum(payload: Option<Array<UInt8>>): UInt32 {
+    match (payload) {
+        case Some(data) =>
+            let crc32 = CRC32()
+            crc32.update(UInt64(data.size))
+            return crc32.getValue()
+        case None =>
+            return 0
+    }
+}
+
 // 高性能消息池
 public class MessagePool {
     private let pool: ArrayList<ZeroCopyMessageImpl>
@@ -243,7 +291,7 @@ public class MessagePool {
 
         mutex.unlock()
         // 总是创建新的消息
-        return ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor)
+        return ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
     }
 
     public func release(message: ZeroCopyMessageImpl): Unit {

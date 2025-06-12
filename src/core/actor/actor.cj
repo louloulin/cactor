@@ -6,6 +6,8 @@
 package cactor.core.actor
 
 import std.time.*
+import cactor.core.message.*
+import cactor.core.context.*
 
 /**
  * Actor生命周期状态
@@ -59,6 +61,14 @@ public interface Actor {
      * Actor的功能描述
      */
     prop description: String
+
+    /**
+     * 处理接收到的消息
+     * @param message 接收到的消息
+     * @param context Actor上下文
+     * @return 消息处理结果
+     */
+    func receive(message: Message, context: ActorContext): MessageResult
 
     /**
      * Actor启动前的初始化操作

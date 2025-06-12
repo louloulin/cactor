@@ -15,6 +15,9 @@ public interface MemoryPool {
     func deallocate(block: MemoryBlock): Unit
     func getStats(): MemoryPoolStats
     func reset(): Unit
+    func getUtilization(): Float64
+    func getTotalAllocated(): UInt64
+    func getTotalUsed(): UInt64
 }
 
 // 内存块结构
@@ -48,6 +51,20 @@ public class NumaAwareMemoryPool <: MemoryPool {
         // 为每个NUMA节点创建本地内存池
         for (i in 0..Int64(nodeCount)) {
             localPools[i] = LocalMemoryPool(Int32(i))
+        }
+    }
+
+    // 添加带参数的构造函数以支持测试
+    public init(nodeCount: Int32, poolSize: UInt64) {
+        this.nodeCount = nodeCount
+        this.localPools = Array<LocalMemoryPool>(Int64(nodeCount), { i => LocalMemoryPool(Int32(i), poolSize) })
+        this.globalPool = GlobalMemoryPool()
+        this.stats = MemoryPoolStats()
+        this.mutex = ReentrantMutex()
+
+        // 为每个NUMA节点创建本地内存池
+        for (i in 0..Int64(nodeCount)) {
+            localPools[i] = LocalMemoryPool(Int32(i), poolSize)
         }
     }
     
@@ -112,6 +129,33 @@ public class NumaAwareMemoryPool <: MemoryPool {
         stats.reset()
 
         mutex.unlock()
+    }
+
+    public func getUtilization(): Float64 {
+        let totalAllocated = getTotalAllocated()
+        let totalUsed = getTotalUsed()
+        if (totalAllocated == 0) {
+            return 0.0
+        }
+        return Float64(totalUsed) / Float64(totalAllocated)
+    }
+
+    public func getTotalAllocated(): UInt64 {
+        var total: UInt64 = 0
+        for (pool in localPools) {
+            total += pool.getTotalAllocated()
+        }
+        total += globalPool.getTotalAllocated()
+        return total
+    }
+
+    public func getTotalUsed(): UInt64 {
+        var total: UInt64 = 0
+        for (pool in localPools) {
+            total += pool.getTotalUsed()
+        }
+        total += globalPool.getTotalUsed()
+        return total
     }
 }
 
@@ -224,6 +268,20 @@ public class LocalMemoryPool {
             return size + (alignment - remainder)
         }
     }
+
+    public func getTotalAllocated(): UInt64 {
+        mutex.lock()
+        let allocated = totalAllocated
+        mutex.unlock()
+        return allocated
+    }
+
+    public func getTotalUsed(): UInt64 {
+        mutex.lock()
+        let used = totalUsed
+        mutex.unlock()
+        return used
+    }
 }
 
 // 全局内存池（后备分配器）
@@ -264,6 +322,23 @@ public class GlobalMemoryPool <: MemoryPool {
         totalAllocated = 0
 
         mutex.unlock()
+    }
+
+    public func getUtilization(): Float64 {
+        // 全局池的利用率简化为1.0（假设全部使用）
+        return 1.0
+    }
+
+    public func getTotalAllocated(): UInt64 {
+        mutex.lock()
+        let allocated = totalAllocated
+        mutex.unlock()
+        return allocated
+    }
+
+    public func getTotalUsed(): UInt64 {
+        // 简化实现：假设全局池的分配即使用
+        return getTotalAllocated()
     }
 }
 
@@ -330,6 +405,10 @@ public class MemoryPoolStats {
             return 1.0
         }
         return Float64(localAllocations.load()) / Float64(total)
+    }
+
+    public func getTotalAllocations(): Int64 {
+        return localAllocations.load() + remoteAllocations.load() + globalAllocations.load()
     }
 }
 

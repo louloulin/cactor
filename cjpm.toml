@@ -89,6 +89,32 @@ output-type = "executable"
 [package.package-configuration."cactor.tests.plan3_macro_test"]
 output-type = "executable"
 
+# 核心包配置
+[package.package-configuration."cactor.core.actor"]
+output-type = "static"
 
+[package.package-configuration."cactor.core.message"]
+output-type = "static"
 
+[package.package-configuration."cactor.core.context"]
+output-type = "static"
 
+[package.package-configuration."cactor.core.memory"]
+output-type = "static"
+
+[package.package-configuration."cactor.core.zerocopy"]
+output-type = "static"
+
+[package.package-configuration."cactor.core.monitoring"]
+output-type = "static"
+
+[package.package-configuration."cactor.macros"]
+output-type = "static"
+
+# Phase 2 零拷贝系统测试
+[package.package-configuration."cactor.tests.phase2_zerocopy_test"]
+output-type = "executable"
+
+# 简单零拷贝测试
+[package.package-configuration."cactor.tests.simple_zerocopy_test"]
+output-type = "executable"
