@@ -263,8 +263,11 @@ public class MemoryStatsCollector {
     
     public func collectCurrentStats(): MemoryStats {
         let poolStats = memoryPool.getStats()
-        let totalAllocated = memoryPool.getTotalAllocated()
-        let totalUsed = memoryPool.getTotalUsed()
+        let localAllocs = poolStats.getLocalAllocations()
+        let remoteAllocs = poolStats.getRemoteAllocations()
+        let globalAllocs = poolStats.getGlobalAllocations()
+        let totalAllocated = UInt64(localAllocs + remoteAllocs + globalAllocs)
+        let totalUsed = UInt64(poolStats.getLocalBytes() + poolStats.getRemoteBytes() + poolStats.getGlobalBytes())
         let totalFree = totalAllocated - totalUsed
         
         // 更新峰值使用

@@ -60,7 +60,7 @@ public class HighPerfMessageSerializer <: ZeroCopySerializer<ZeroCopyMessageImpl
         offset = writeInt64(buffer, offset, obj.getTimestamp())
         offset = writeUInt64(buffer, offset, obj.getSourceActor())
         offset = writeUInt64(buffer, offset, obj.getTargetActor())
-        offset = writeUInt32(buffer, offset, obj.getChecksum())
+        offset = writeUInt32(buffer, offset, UInt32(obj.getChecksum()))
         
         // 序列化消息类型
         let messageTypeBytes = stringToBytes(obj.messageType())
