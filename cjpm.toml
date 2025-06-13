@@ -126,3 +126,7 @@ output-type = "executable"
 # Phase 5 监控系统测试
 [package.package-configuration."cactor.tests.phase5_monitoring_test"]
 output-type = "executable"
+
+# 压力测试和性能分析
+[package.package-configuration."cactor.tests.stress_test"]
+output-type = "executable"
