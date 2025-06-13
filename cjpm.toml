@@ -118,3 +118,7 @@ output-type = "static"
 # 简单零拷贝测试 - 暂时禁用，有链接问题
 # [package.package-configuration."cactor.tests.simple_zerocopy_test"]
 # output-type = "executable"
+
+# 高性能调度器系统测试
+[package.package-configuration."cactor.tests.scheduler_test"]
+output-type = "executable"
