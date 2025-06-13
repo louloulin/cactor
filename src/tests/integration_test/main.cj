@@ -10,6 +10,7 @@ import std.sync.*
 import std.collection.*
 import cactor.core.actor.*
 import cactor.core.message.*
+import cactor.core.context.*
 import cactor.runtime.*
 import cactor.pattern.*
 import cactor.supervision.*
@@ -71,21 +72,23 @@ class WorkerActor <: Actor {
         get() { "Worker actor that processes work messages" }
     }
 
-    public func receive(message: Message): Unit {
+    public func receive(message: Message, context: ActorContext): MessageResult {
         match (message) {
-            case work: WorkMessage => 
+            case work: WorkMessage =>
                 // 模拟工作处理
-                GlobalMonitor.recordMessageProcessingTime({ => 
+                GlobalMonitor.recordMessageProcessingTime({ =>
                     let result = "Worker[${id}] processed: ${work.data}"
                     processedCount.fetchAdd(1)
-                    
+
                     // 发送结果消息（简化实现）
                     println("${result}")
-                    
+
                     GlobalMonitor.recordMessageProcessed()
                 })
-            case _ => 
+                return MessageResult.Handled
+            case _ =>
                 println("Worker[${id}] 收到未知消息: ${message.messageType()}")
+                return MessageResult.Unhandled
         }
     }
 
@@ -114,13 +117,15 @@ class SupervisorActor <: Actor {
         get() { "Supervisor actor that manages worker actors" }
     }
 
-    public func receive(message: Message): Unit {
+    public func receive(message: Message, context: ActorContext): MessageResult {
         match (message) {
-            case work: WorkMessage => 
+            case work: WorkMessage =>
                 // 通过路由器分发工作
                 router.route(work)
-            case _ => 
+                return MessageResult.Handled
+            case _ =>
                 println("Supervisor 收到未知消息: ${message.messageType()}")
+                return MessageResult.Unhandled
         }
     }
 
@@ -164,9 +169,10 @@ func testActorSystemBasics(): Bool {
     let work2 = WorkMessage(2, "task2")
     let work3 = WorkMessage(3, "task3")
     
-    supervisor.receive(work1)
-    supervisor.receive(work2)
-    supervisor.receive(work3)
+    let testContext = SimpleActorContext("test")
+    supervisor.receive(work1, testContext)
+    supervisor.receive(work2, testContext)
+    supervisor.receive(work3, testContext)
     
     println("✓ Actor系统基础功能测试通过")
     return true
@@ -280,6 +286,21 @@ class TestException <: Exception {
 }
 
 /**
+ * 简单的ActorContext实现
+ */
+class SimpleActorContext <: ActorContext {
+    private let senderName: String
+
+    public init(senderName: String) {
+        this.senderName = senderName
+    }
+
+    public func sender(): Option<String> {
+        Some(senderName)
+    }
+}
+
+/**
  * 测试ActorRef实现
  */
 class TestActorRef <: ActorRef {
@@ -306,11 +327,12 @@ class TestActorRef <: ActorRef {
     }
 
     public func tell(message: Message): Unit {
+        let context = SimpleActorContext("test")
         match (workerActor) {
-            case Some(worker) => worker.receive(message)
+            case Some(worker) => worker.receive(message, context)
             case None =>
                 match (supervisorActor) {
-                    case Some(supervisor) => supervisor.receive(message)
+                    case Some(supervisor) => supervisor.receive(message, context)
                     case None => println("No actor to receive message")
                 }
         }

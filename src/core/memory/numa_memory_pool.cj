@@ -67,6 +67,20 @@ public class NumaAwareMemoryPool <: MemoryPool {
             localPools[i] = LocalMemoryPool(Int32(i), poolSize)
         }
     }
+
+    // 添加简化的构造函数（只有poolSize参数）
+    public init(poolSize: UInt64) {
+        this.nodeCount = getNumaNodeCount()
+        this.localPools = Array<LocalMemoryPool>(Int64(nodeCount), { i => LocalMemoryPool(Int32(i), poolSize) })
+        this.globalPool = GlobalMemoryPool()
+        this.stats = MemoryPoolStats()
+        this.mutex = ReentrantMutex()
+
+        // 为每个NUMA节点创建本地内存池
+        for (i in 0..Int64(nodeCount)) {
+            localPools[i] = LocalMemoryPool(Int32(i), poolSize)
+        }
+    }
     
     public func allocate(size: UInt64): Option<MemoryBlock> {
         let currentNode = getCurrentNumaNode()
@@ -157,6 +171,8 @@ public class NumaAwareMemoryPool <: MemoryPool {
         total += globalPool.getTotalUsed()
         return total
     }
+
+
 }
 
 // 本地内存池（单个NUMA节点）

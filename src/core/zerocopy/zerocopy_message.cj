@@ -22,7 +22,7 @@ public interface ZeroCopyMessage <: Message {
     func retain(): Unit
     func getReferenceCount(): Int32
     func isValid(): Bool
-    func getChecksum(): UInt32
+    func getChecksum(): UInt64
 }
 
 // 消息头部结构 - 64字节对齐
@@ -106,8 +106,8 @@ public class ZeroCopyMessageImpl <: ZeroCopyMessage {
         refCount.load() > 0
     }
 
-    public func getChecksum(): UInt32 {
-        checksum
+    public func getChecksum(): UInt64 {
+        UInt64(checksum)
     }
 
     public func messageType(): String {

@@ -36,13 +36,6 @@ public macro repeat_3_times(code: Tokens): Tokens {
 public macro simple_actor(input: Tokens): Tokens {
     return quote(
         $(input)
-
-        // 为Actor类添加一个简单的方法
-        extend Plan3TestActor {
-            public func getActorInfo(): String {
-                return "这是一个简单的Actor: Plan3TestActor"
-            }
-        }
     )
 }
 
