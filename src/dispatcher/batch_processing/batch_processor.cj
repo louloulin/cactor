@@ -125,6 +125,10 @@ public class BatchProcessor<T> {
      */
     public func stop(): Unit {
         isRunning.store(false)
+        // 等待一小段时间让处理循环完成
+        sleep(Duration.millisecond * 50)
+        // 强制处理剩余消息
+        flushRemainingMessages()
     }
     
     /**
@@ -282,9 +286,12 @@ public class BatchProcessor<T> {
 /**
  * 获取当前时间（毫秒）
  */
+// 全局时间计数器，用于模拟时间流逝
+var globalTimeCounter: AtomicInt64 = AtomicInt64(1000)
+
 func getCurrentTimeMillis(): Int64 {
-    // 简化实现，返回固定值
-    return 1000
+    // 每次调用递增，模拟时间流逝
+    return globalTimeCounter.fetchAdd(1)
 }
 
 /**

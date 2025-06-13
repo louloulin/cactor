@@ -29,7 +29,7 @@ func testBatchProcessor(): Bool {
     processor.start()
 
     // 添加消息
-    for (i in 1..12) {
+    for (i in 0..12) {  // 0到11，共12条消息
         if (!processor.addMessage(Int32(i))) {
             println("❌ 添加消息失败: ${i}")
             return false
@@ -47,9 +47,8 @@ func testBatchProcessor(): Bool {
         return false
     }
 
-    // 由于时间逻辑简化，可能会有消息丢失，放宽检查条件
-    if (stats.getTotalMessages() < 10) {
-        println("❌ 应该处理至少10条消息，实际: ${stats.getTotalMessages()}")
+    if (stats.getTotalMessages() != 12) {
+        println("❌ 应该处理12条消息，实际: ${stats.getTotalMessages()}")
         return false
     }
 
@@ -105,16 +104,15 @@ func testThroughputCalculator(): Bool {
     let calculator = ThroughputCalculator(1000)  // 1秒窗口
     
     // 模拟事件
-    for (i in 1..10) {
+    for (i in 0..10) {  // 0到9，共10次
         calculator.recordEvent(1)
         sleep(Duration.millisecond * 50)  // 50ms间隔
     }
     
     let throughput = calculator.getCurrentThroughput()
 
-    // 由于时间函数简化，吞吐量计算可能不准确，放宽检查条件
-    if (throughput < 0.0) {
-        println("❌ 吞吐量不应该为负数: ${throughput}")
+    if (throughput <= 0.0) {
+        println("❌ 吞吐量应该大于0，实际: ${throughput}")
         return false
     }
     
@@ -133,34 +131,33 @@ func testSchedulerMonitor(): Bool {
     let monitor = SchedulerMonitor()
     
     // 模拟调度器活动
-    for (i in 1..100) {
+    for (i in 0..100) {  // 明确使用0到99，共100次
         monitor.recordTaskScheduled()
-        
+
         // 模拟任务执行延时
         let latency = Int64(1000 + i * 100)  // 1μs到10μs
         monitor.recordTaskCompleted(latency)
-        
+
         // 模拟工作窃取
         if (i % 10 == 0) {
             monitor.recordStealAttempt(true)
         } else if (i % 20 == 0) {
             monitor.recordStealAttempt(false)
         }
-        
+
         // 模拟工作时间
         monitor.recordWorkerTime(latency, latency / 10)
     }
     
     let metrics = monitor.getCurrentMetrics()
 
-    // 由于循环可能有边界问题，放宽检查条件
-    if (metrics.totalTasksScheduled < 95) {
-        println("❌ 调度任务数应该至少95，实际: ${metrics.totalTasksScheduled}")
+    if (metrics.totalTasksScheduled != 100) {
+        println("❌ 调度任务数应该为100，实际: ${metrics.totalTasksScheduled}")
         return false
     }
 
-    if (metrics.totalTasksCompleted < 95) {
-        println("❌ 完成任务数应该至少95，实际: ${metrics.totalTasksCompleted}")
+    if (metrics.totalTasksCompleted != 100) {
+        println("❌ 完成任务数应该为100，实际: ${metrics.totalTasksCompleted}")
         return false
     }
     
