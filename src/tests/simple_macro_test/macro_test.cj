@@ -53,24 +53,24 @@ func testRepeatMacro(): Bool {
     }
 }
 
-// 主测试函数
-main(): Int64 {
+// 简单宏测试函数 - 供主测试调用
+func runSimpleMacroTests(): Bool {
     println("=== CActor 简单宏功能测试 ===")
-    
+
     var allTestsPassed = true
-    
+
     // 运行宏测试
     allTestsPassed = allTestsPassed && testLogMacro()
     allTestsPassed = allTestsPassed && testTimeMacro()
     allTestsPassed = allTestsPassed && testRepeatMacro()
-    
+
     println("========================================")
     if (allTestsPassed) {
         println("🎉 所有宏测试通过！")
         println("✅ 宏功能验证成功")
-        return 0
     } else {
         println("❌ 部分宏测试失败")
-        return 1
     }
+
+    return allTestsPassed
 }

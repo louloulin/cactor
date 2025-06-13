@@ -122,3 +122,7 @@ output-type = "static"
 # 高性能调度器系统测试
 [package.package-configuration."cactor.tests.scheduler_test"]
 output-type = "executable"
+
+# Phase 5 监控系统测试
+[package.package-configuration."cactor.tests.phase5_monitoring_test"]
+output-type = "executable"
