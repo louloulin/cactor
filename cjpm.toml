@@ -158,3 +158,11 @@ output-type = "executable"
 # 优化调度器测试 - 暂时禁用，有编译问题
 # [package.package-configuration."cactor.tests.optimized_scheduler_test"]
 # output-type = "executable"
+
+# pb1.md API优化测试
+[package.package-configuration."cactor.tests.pb1_simple_test"]
+output-type = "executable"
+
+# pb1.md API验证测试
+[package.package-configuration."cactor.tests.pb1_api_verification"]
+output-type = "executable"

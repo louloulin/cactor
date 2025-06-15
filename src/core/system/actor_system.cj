@@ -7,6 +7,9 @@ package cactor.core.system
 
 import std.time.*
 import std.sync.*
+import cactor.core.actor.{Actor, ActorRef, Props}
+import cactor.core.message.{Message}
+import cactor.pattern.ask.{AskFuture}
 
 
 /**
@@ -20,10 +23,57 @@ public interface ActorSystem {
     prop name: String
 
     /**
+     * 创建Actor - 类似Akka的actorOf方法
+     * @param props Actor属性配置
+     * @param name Actor名称
+     * @return Actor引用
+     */
+    func actorOf(props: Props<Actor>, name: String): ActorRef
+
+    /**
+     * 创建Actor - 自动生成名称
+     * @param props Actor属性配置
+     * @return Actor引用
+     */
+    func actorOf(props: Props<Actor>): ActorRef
+
+    /**
+     * Actor选择 - 根据路径查找Actor
+     * @param path Actor路径
+     * @return Actor选择器
+     */
+    func actorSelection(path: String): ActorSelection
+
+    /**
      * 终止Actor系统
      * 这将停止所有Actor并释放资源
      */
     func terminate(): Unit
+}
+
+/**
+ * Actor选择器接口
+ * 用于根据路径查找和操作Actor
+ */
+public interface ActorSelection {
+    /**
+     * 解析为单个ActorRef
+     * @return AskFuture包装的ActorRef
+     */
+    func resolveOne(): AskFuture<ActorRef>
+
+    /**
+     * 向选中的Actor发送消息
+     * @param message 要发送的消息
+     */
+    func tell(message: Message): Unit
+
+    /**
+     * Ask模式发送消息
+     * @param message 要发送的消息
+     * @return AskFuture包装的响应
+     */
+    func ask(message: Message): AskFuture<Message>
 }
 
 /**
