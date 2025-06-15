@@ -5,7 +5,9 @@
 
 package cactor.stream
 
-import cactor.*
+import cactor.core.actor.{Actor, ActorRef}
+import cactor.core.message.*
+import cactor.core.context.ActorContext
 import std.collection.*
 import std.time.*
 import std.sync.sleep

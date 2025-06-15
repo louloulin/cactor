@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import std.collection.*
 import cactor.core.message.*
-import cactor.core.context.{PooledActorContext, PooledActorContextPool, ActorPath, SimpleActorPath}
+import cactor.core.context.{PooledActorContext, PooledActorContextPool}
 import cactor.mailbox.lockfree.*
 import cactor.memory.object_pool.*
 import cactor.core.context.{PoolStats}

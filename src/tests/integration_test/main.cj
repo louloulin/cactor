@@ -8,9 +8,9 @@ package cactor.tests.integration_test
 import std.time.*
 import std.sync.*
 import std.collection.*
-import cactor.core.actor.*
+import cactor.core.actor.{Actor, ActorRef, ActorPath}
 import cactor.core.message.*
-import cactor.core.context.*
+import cactor.core.context.ActorContext
 import cactor.runtime.*
 import cactor.pattern.*
 import cactor.supervision.*

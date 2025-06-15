@@ -11,16 +11,16 @@ import std.collection.*
 import cactor.core.message.*
 import cactor.memory.object_pool.*
 
-// 前向声明避免循环依赖
-public interface ActorRef {
-    prop path: ActorPath
+// 前向声明避免循环依赖 - 使用不同的名称
+public interface ContextActorRef {
+    prop path: ContextActorPath
     func tell(message: Message): Unit
     func tell(message: Message, sender: Option<String>): Unit
-    func equals(other: ActorRef): Bool
+    func equals(other: ContextActorRef): Bool
     func hashCode(): Int32
 }
 
-public interface ActorPath {
+public interface ContextActorPath {
     func toString(): String
 }
 
@@ -36,10 +36,10 @@ func getCurrentTimeNanos(): Int64 {
  */
 public class PooledActorContext {
     // 当前Actor引用 (可重置)
-    private var currentSelf: Option<ActorRef>
+    private var currentSelf: Option<ContextActorRef>
 
     // 当前发送者 (可重置)
-    private var currentSender: Option<ActorRef>
+    private var currentSender: Option<ContextActorRef>
 
     // 重置计数器
     private var resetCount: Int64
@@ -66,40 +66,40 @@ public class PooledActorContext {
     /**
      * 设置当前Actor引用
      */
-    public func setSelf(self: ActorRef): Unit {
+    public func setSelf(self: ContextActorRef): Unit {
         currentSelf = Some(self)
     }
-    
+
     /**
      * 设置当前发送者
      */
-    public func setSender(sender: Option<ActorRef>): Unit {
+    public func setSender(sender: Option<ContextActorRef>): Unit {
         currentSender = sender
     }
     
     /**
      * 获取当前Actor引用
      */
-    public func getSelf(): ActorRef {
+    public func getSelf(): ContextActorRef {
         match (currentSelf) {
             case Some(self) => self
-            case None => DeadLetterActorRef()
+            case None => DeadLetterContextActorRef()
         }
     }
-    
+
     /**
      * 获取消息发送者
      */
-    public func getSender(): Option<ActorRef> {
+    public func getSender(): Option<ContextActorRef> {
         currentSender
     }
-    
+
     /**
      * 获取父Actor引用
      */
-    public func getParent(): ActorRef {
+    public func getParent(): ContextActorRef {
         // 简化实现，返回系统Actor
-        SystemActorRef()
+        SystemContextActorRef()
     }
     
     /**
@@ -269,43 +269,65 @@ public struct PoolStats {
 }
 
 /**
- * 简单Actor引用实现
+ * 简化的死信Actor引用
  */
-public class SimpleActorRef <: ActorRef {
-    private let actorPath: String
-    
-    public init(path: String) {
-        this.actorPath = path
+public class DeadLetterContextActorRef <: ContextActorRef {
+    public prop path: ContextActorPath {
+        get() { SimpleContextActorPath("/deadLetters") }
     }
-    
-    public prop path: ActorPath {
-        get() { SimpleActorPath(actorPath) }
-    }
-    
+
     public func tell(message: Message): Unit {
-        // 简化实现
+        // 死信处理
     }
-    
+
     public func tell(message: Message, sender: Option<String>): Unit {
-        // 简化实现
+        // 死信处理
     }
-    
-    public func equals(other: ActorRef): Bool {
+
+    public func equals(other: ContextActorRef): Bool {
         match (other) {
-            case ref: SimpleActorRef => ref.actorPath == this.actorPath
+            case _: DeadLetterContextActorRef => true
             case _ => false
         }
     }
-    
+
     public func hashCode(): Int32 {
-        Int32(actorPath.hashCode())
+        Int32("/deadLetters".hashCode())
     }
 }
 
 /**
- * 简单Actor路径实现
+ * 简化的系统Actor引用
  */
-public struct SimpleActorPath <: ActorPath {
+public class SystemContextActorRef <: ContextActorRef {
+    public prop path: ContextActorPath {
+        get() { SimpleContextActorPath("/system") }
+    }
+
+    public func tell(message: Message): Unit {
+        // 系统消息处理
+    }
+
+    public func tell(message: Message, sender: Option<String>): Unit {
+        // 系统消息处理
+    }
+
+    public func equals(other: ContextActorRef): Bool {
+        match (other) {
+            case _: SystemContextActorRef => true
+            case _ => false
+        }
+    }
+
+    public func hashCode(): Int32 {
+        Int32("/system".hashCode())
+    }
+}
+
+/**
+ * 简化的Actor路径实现
+ */
+public struct SimpleContextActorPath <: ContextActorPath {
     private let pathString: String
 
     public init(path: String) {
@@ -314,61 +336,5 @@ public struct SimpleActorPath <: ActorPath {
 
     public func toString(): String {
         pathString
-    }
-}
-
-/**
- * 死信Actor引用
- */
-public class DeadLetterActorRef <: ActorRef {
-    public prop path: ActorPath {
-        get() { SimpleActorPath("/deadLetters") }
-    }
-    
-    public func tell(message: Message): Unit {
-        // 死信处理
-    }
-    
-    public func tell(message: Message, sender: Option<String>): Unit {
-        // 死信处理
-    }
-    
-    public func equals(other: ActorRef): Bool {
-        match (other) {
-            case _: DeadLetterActorRef => true
-            case _ => false
-        }
-    }
-    
-    public func hashCode(): Int32 {
-        Int32("/deadLetters".hashCode())
-    }
-}
-
-/**
- * 系统Actor引用
- */
-public class SystemActorRef <: ActorRef {
-    public prop path: ActorPath {
-        get() { SimpleActorPath("/system") }
-    }
-    
-    public func tell(message: Message): Unit {
-        // 系统消息处理
-    }
-    
-    public func tell(message: Message, sender: Option<String>): Unit {
-        // 系统消息处理
-    }
-    
-    public func equals(other: ActorRef): Bool {
-        match (other) {
-            case _: SystemActorRef => true
-            case _ => false
-        }
-    }
-    
-    public func hashCode(): Int32 {
-        Int32("/system".hashCode())
     }
 }
