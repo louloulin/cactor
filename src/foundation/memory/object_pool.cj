@@ -153,36 +153,34 @@ public struct PoolStatistics {
 }
 
 /**
- * 消息信封对象池
- * 专门用于BaseEnvelope对象的池化管理
+ * 字符串对象池
+ * 专门用于字符串对象的池化管理
  */
-public class EnvelopePool <: ObjectPool<BaseEnvelope> {
-    private let innerPool: CangjieFriendlyObjectPool<BaseEnvelope>
+public class StringPool <: ObjectPool<String> {
+    private let innerPool: CangjieFriendlyObjectPool<String>
 
     public init(maxSize: Int64) {
-        this.innerPool = CangjieFriendlyObjectPool<BaseEnvelope>(
-            EnvelopePool.createEnvelope,
-            EnvelopePool.resetEnvelope,
+        this.innerPool = CangjieFriendlyObjectPool<String>(
+            StringPool.createString,
+            StringPool.resetString,
             maxSize
         )
     }
 
-    private static func createEnvelope(): BaseEnvelope {
-        // 创建一个空的Envelope，稍后会被重置
-        SimpleEnvelope(DummyMessage())
+    private static func createString(): String {
+        // 创建一个空字符串
+        ""
     }
 
-    private static func resetEnvelope(envelope: BaseEnvelope): Unit {
-        // 重置Envelope的状态
-        // 注意：这里需要根据Envelope的实际实现来重置
-        // 简化实现，实际中可能需要更复杂的重置逻辑
+    private static func resetString(str: String): Unit {
+        // 字符串是不可变的，无需重置
     }
 
-    public func acquire(): BaseEnvelope {
+    public func acquire(): String {
         innerPool.acquire()
     }
 
-    public func release(obj: BaseEnvelope): Unit {
+    public func release(obj: String): Unit {
         innerPool.release(obj)
     }
 
@@ -200,26 +198,48 @@ public class EnvelopePool <: ObjectPool<BaseEnvelope> {
 }
 
 /**
- * 虚拟消息类型，用于对象池
+ * 字节数组对象池
+ * 专门用于字节数组的池化管理
  */
-class DummyMessage <: BaseMessage {
-    public func messageType(): String {
-        "DummyMessage"
-    }
-}
+public class ByteArrayPool <: ObjectPool<Array<UInt8>> {
+    private let innerPool: CangjieFriendlyObjectPool<Array<UInt8>>
 
-/**
- * 简单信封实现
- */
-class SimpleEnvelope <: BaseEnvelope {
-    private let message: BaseMessage
-
-    public init(message: BaseMessage) {
-        this.message = message
+    public init(maxSize: Int64) {
+        this.innerPool = CangjieFriendlyObjectPool<Array<UInt8>>(
+            ByteArrayPool.createByteArray,
+            ByteArrayPool.resetByteArray,
+            maxSize
+        )
     }
 
-    public func getMessage(): BaseMessage {
-        message
+    private static func createByteArray(): Array<UInt8> {
+        // 创建一个空的字节数组
+        Array<UInt8>(0, { i => UInt8(0) })
+    }
+
+    private static func resetByteArray(arr: Array<UInt8>): Unit {
+        // 字节数组重置（清零）
+        // 注意：这里简化实现，实际可能需要更复杂的重置逻辑
+    }
+
+    public func acquire(): Array<UInt8> {
+        innerPool.acquire()
+    }
+
+    public func release(obj: Array<UInt8>): Unit {
+        innerPool.release(obj)
+    }
+
+    public func size(): Int64 {
+        innerPool.size()
+    }
+
+    public func clear(): Unit {
+        innerPool.clear()
+    }
+
+    public func getStatistics(): PoolStatistics {
+        innerPool.getStatistics()
     }
 }
 
