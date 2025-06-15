@@ -82,13 +82,7 @@ output-type = "executable"
 
 [package.package-configuration."cactor.tests.simple_macro_test"]
 output-type = "executable"
-
-[package.package-configuration."cactor.tests.cjpm_macro_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.plan3_macro_test"]
-output-type = "executable"
-
+   
 # 核心包配置
 [package.package-configuration."cactor.core.actor"]
 output-type = "static"
