@@ -15,12 +15,22 @@ import cactor.core.actor.ActorRef
 /**
  * 背压策略
  */
-public enum BackpressureStrategy {
+public enum BackpressureStrategy <: ToString {
     | Drop          // 丢弃新消息
     | Block         // 阻塞发送者
     | Buffer        // 缓冲消息
     | Reject        // 拒绝消息
     | Throttle      // 限流
+
+    public func toString(): String {
+        match (this) {
+            case Drop => "Drop"
+            case Block => "Block"
+            case Buffer => "Buffer"
+            case Reject => "Reject"
+            case Throttle => "Throttle"
+        }
+    }
 }
 
 /**
