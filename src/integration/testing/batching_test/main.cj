@@ -7,7 +7,7 @@ package cactor.integration.testing.batching_test
 
 import std.sync.*
 import std.time.*
-import cactor.mailbox.batching.*
+// import cactor.mailbox.batching.*
 import cactor.core.message.{Envelope, PingMessage}
 
 /**

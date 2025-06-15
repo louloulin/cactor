@@ -5,7 +5,7 @@
  */
 package cactor.integration.testing.virtual_actor_test
 
-import cactor.virtual.*
+// import cactor.virtual.*
 import cactor.core.message.*
 import cactor.core.context.*
 import std.time.*

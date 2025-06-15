@@ -8,7 +8,7 @@ package cactor.integration.testing.ringbuffer
 import std.sync.*
 import std.time.*
 import cactor.core.message.{Envelope, PingMessage}
-import cactor.mailbox.ringbuffer.{RingBufferMailbox, BackpressureRingBufferMailbox}
+// import cactor.mailbox.ringbuffer.{RingBufferMailbox, BackpressureRingBufferMailbox}
 
 /**
  * 测试环形缓冲区基础功能

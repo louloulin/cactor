@@ -8,7 +8,7 @@ package cactor.core.monitoring
 import std.sync.*
 import std.collection.*
 import std.time.*
-import cactor.core.memory.*
+// import cactor.core.memory.*
 
 // 内存监控接口
 public interface MemoryMonitor {

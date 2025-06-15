@@ -11,7 +11,7 @@ import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.system.*
 import cactor.core.context.*
-import cactor.runtime.system.*
+// import cactor.runtime.system.*
 
 /**
  * 简单的测试Actor

@@ -4,7 +4,7 @@
  */
 package cactor.integration.testing.simple_macro_test
 
-import cactor.macros.*
+// import cactor.macros.*
 
 // 测试简单宏功能
 func testLogMacro(): Bool {

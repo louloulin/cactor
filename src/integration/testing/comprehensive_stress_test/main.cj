@@ -11,7 +11,7 @@ import std.collection.*
 import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
-import cactor.mailbox.lockfree.*
+// import cactor.mailbox.lockfree.*
 import cactor.foundation.memory.object_pool.*
 // 移除不存在的依赖
 

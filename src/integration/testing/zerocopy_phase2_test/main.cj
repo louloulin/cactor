@@ -8,7 +8,7 @@ package cactor.integration.testing.zerocopy_phase2_test
 import std.sync.*
 import std.time.*
 import std.collection.*
-import cactor.core.zerocopy.*
+// import cactor.core.zerocopy.*
 
 // 辅助函数
 func getCurrentTimeNanos(): Int64 {

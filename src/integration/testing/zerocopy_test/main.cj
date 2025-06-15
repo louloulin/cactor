@@ -5,8 +5,8 @@
  */
 package cactor.integration.testing.zerocopy_test
 
-import cactor.core.zerocopy.*
-import cactor.core.memory.*
+// import cactor.core.zerocopy.*
+// import cactor.core.memory.*
 import std.time.*
 import std.sync.sleep
 import std.collection.*

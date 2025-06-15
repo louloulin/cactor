@@ -7,9 +7,9 @@ package cactor.integration.testing.advanced_features
 import std.time.*
 import std.collection.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-import cactor.cluster.{NodeId, ClusterNode, SimpleClusterManager, FailoverManager, FailoverStrategy}
+// import cactor.cluster.{NodeId, ClusterNode, SimpleClusterManager, FailoverManager, FailoverStrategy}
 import cactor.integration.configuration.{ConfigurationManager, ActorSystemConfig, RemoteConfig, ClusterConfig, ConfigValue}
-import cactor.benchmark.{BenchmarkSuite, BenchmarkResult}
+// import cactor.benchmark.{BenchmarkSuite, BenchmarkResult}
 import cactor.foundation.network.{NetworkAddress, TransportProtocol}
 
 /**

@@ -4,7 +4,7 @@
  */
 package cactor.integration.testing.simple_zerocopy_test
 
-import cactor.core.zerocopy.*
+// import cactor.core.zerocopy.*
 
 // 简单的零拷贝消息测试
 func testBasicZeroCopyMessage(): Bool {

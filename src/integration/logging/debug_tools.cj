@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import cactor.core.message.{Message, StringMessage}
 import cactor.core.actor.{Actor, ActorRef, ActorPath}
-import cactor.integration.logging.{Logger, LoggerFactory, LogLevel}
+// import cactor.integration.logging.{Logger, LoggerFactory, LogLevel}  // 避免循环依赖
 
 /**
  * Actor状态快照

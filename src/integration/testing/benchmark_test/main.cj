@@ -10,8 +10,8 @@ import std.time.*
 import std.collection.*
 import cactor.core.actor.*
 import cactor.core.message.*
-import cactor.mailbox.lockfree.*
-import cactor.dispatcher.optimized.*
+// import cactor.mailbox.lockfree.*
+// import cactor.dispatcher.optimized.*
 
 /**
  * 简化的基准测试上下文

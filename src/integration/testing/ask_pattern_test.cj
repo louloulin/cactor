@@ -7,7 +7,7 @@ package cactor.integration.testing
 
 import std.sync.*
 import std.time.*
-import cactor.pattern.ask.*
+// import cactor.pattern.ask.*
 import cactor.core.message.{Message, PingMessage}
 
 /**

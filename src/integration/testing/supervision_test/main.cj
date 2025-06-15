@@ -7,7 +7,7 @@ package cactor.integration.testing.supervision_test
 
 import std.sync.*
 import std.time.*
-import cactor.supervision.*
+// import cactor.supervision.*
 import cactor.core.actor.{ActorRef, ActorPath}
 import cactor.core.message.Message
 

@@ -7,7 +7,7 @@ package cactor.integration.testing
 
 import std.sync.*
 import std.time.*
-import cactor.dispatcher.work_stealing.*
+// import cactor.dispatcher.work_stealing.*
 import cactor.core.message.{Envelope, PingMessage, Message}
 import cactor.core.actor.ActorRef
 

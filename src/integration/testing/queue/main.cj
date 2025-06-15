@@ -8,7 +8,7 @@ package cactor.integration.testing.queue
 import std.sync.*
 import std.time.*
 import cactor.core.message.{Envelope, PingMessage, StopMessage}
-import cactor.mailbox.queue.{QueueMailbox, BoundedQueueMailbox, PriorityQueueMailbox}
+// import cactor.mailbox.queue.{QueueMailbox, BoundedQueueMailbox, PriorityQueueMailbox}
 
 /**
  * 测试基础队列邮箱功能

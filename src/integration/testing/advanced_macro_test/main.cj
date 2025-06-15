@@ -5,7 +5,7 @@
  */
 package cactor.integration.testing.advanced_macro_test
 
-import cactor.macros.*
+// import cactor.macros.*
 import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*

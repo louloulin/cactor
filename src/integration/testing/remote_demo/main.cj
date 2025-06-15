@@ -10,7 +10,7 @@ import std.collection.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
 import cactor.foundation.serialization.{JsonSerializer, BinarySerializer, SerializationFactory}
 import cactor.foundation.network.{NetworkAddress, NetworkMessage, TransportFactory, TransportProtocol}
-import cactor.remote.{SimpleRemoteManager, RemoteFactory}
+// import cactor.remote.{SimpleRemoteManager, RemoteFactory}
 
 /**
  * 远程通信演示

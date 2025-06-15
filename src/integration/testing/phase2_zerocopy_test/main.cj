@@ -8,9 +8,9 @@ package cactor.integration.testing.phase2_zerocopy_test
 import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
-import cactor.core.memory.*
-import cactor.core.zerocopy.*
-import cactor.core.monitoring.*
+// import cactor.core.memory.*
+// import cactor.core.zerocopy.*
+// import cactor.core.monitoring.*
 
 // 测试用的简单Actor实现
 class TestActor <: Actor {

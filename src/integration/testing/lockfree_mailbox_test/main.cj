@@ -7,7 +7,7 @@ package cactor.integration.testing.lockfree_mailbox_test
 
 import std.sync.*
 import std.time.*
-import cactor.mailbox.lockfree.{LockFreeRingBufferMailbox, AtomicSlot}
+// import cactor.mailbox.lockfree.{LockFreeRingBufferMailbox, AtomicSlot}
 import cactor.core.message.{Message, Envelope, StringMessage}
 
 /**

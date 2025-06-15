@@ -10,7 +10,7 @@ import std.time.*
 import std.math.*
 import cactor.core.message.{Message, StringMessage, PingMessage}
 import cactor.core.actor.{Actor, ActorRef, ActorPath}
-import cactor.benchmark.{BenchmarkResult, LatencyCollector, ActorBenchmark}
+// import cactor.benchmark.{BenchmarkResult, LatencyCollector, ActorBenchmark}
 
 /**
  * 压力测试配置

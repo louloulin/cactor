@@ -8,10 +8,10 @@ package cactor.integration.testing.scheduler_test
 import std.sync.*
 import std.time.*
 import std.collection.*
-import cactor.dispatcher.batch_processing.*
-import cactor.dispatcher.monitoring.*
+// import cactor.dispatcher.batch_processing.*
+// import cactor.dispatcher.monitoring.*
 import cactor.core.message.*
-import cactor.dispatcher.work_stealing.*
+// import cactor.dispatcher.work_stealing.*
 
 // ============================================================================
 // 1. 测试批量处理器

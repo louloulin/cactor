@@ -8,11 +8,11 @@ package cactor.core.system
 import std.sync.*
 import std.collection.*
 import std.collection.concurrent.*
-import cactor.core.system.{ActorSystem, ActorSelection}
+// import cactor.core.system.{ActorSystem, ActorSelection}  // 避免循环依赖，在同一包中
 import cactor.core.actor.{Actor, ActorRef, Props, ActorPath}
 import cactor.core.message.{Message, MessageResult}
 import cactor.core.context.{ActorContext}
-import cactor.pattern.ask.{AskFuture}
+// import cactor.pattern.ask.{AskFuture}
 
 /**
  * 简化的Actor系统实现

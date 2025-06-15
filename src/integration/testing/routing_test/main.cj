@@ -8,7 +8,7 @@ package cactor.integration.testing.routing_test
 import std.sync.*
 import std.time.*
 import std.collection.*
-import cactor.routing.*
+// import cactor.routing.*
 import cactor.core.actor.{ActorRef, ActorPath}
 import cactor.core.message.Message
 

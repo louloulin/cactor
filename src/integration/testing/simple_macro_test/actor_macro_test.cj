@@ -4,7 +4,7 @@
  */
 package cactor.integration.testing.simple_macro_test
 
-import cactor.macros.*
+// import cactor.macros.*
 
 // 简单的Actor结构体（不使用宏，避免编译问题）
 struct CounterActor {
