@@ -1,101 +1,77 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor - 序列化管理器
- * 管理多种序列化器，提供统一的序列化接口
+ * Foundation Layer - 序列化管理器
+ * 管理多种序列化器，提供统一的序列化接口，零依赖实现
  */
 package cactor.foundation.serialization
 
 import std.collection.*
 import std.sync.*
-import cactor.core.message.Message
 
 /**
- * 序列化管理器
- * 管理多个序列化器，根据消息类型选择合适的序列化器
+ * 通用序列化管理器 - 零依赖
+ * 管理字节数组的序列化和反序列化
  */
 public open class SerializationManager {
-    private let serializers: HashMap<String, Serializer>
-    private let defaultSerializer: Serializer
+    private let byteSerializer: ByteSerializer
+    private let stringSerializer: StringSerializer
+    private let intSerializer: IntSerializer
     private let mutex: ReentrantMutex
 
     public init() {
-        this.serializers = HashMap<String, Serializer>()
-        this.defaultSerializer = JsonSerializer()
+        this.byteSerializer = ByteSerializer()
+        this.stringSerializer = StringSerializer()
+        this.intSerializer = IntSerializer()
         this.mutex = ReentrantMutex()
     }
 
     /**
-     * 初始化默认序列化器
+     * 序列化字节数组
      */
-    public func initializeDefaultSerializers(): Unit {
-        registerSerializer(defaultSerializer)
-        registerSerializer(BinarySerializer())
+    public func serializeBytes(data: Array<UInt8>): Array<UInt8> {
+        byteSerializer.serialize(data)
     }
 
     /**
-     * 注册序列化器
+     * 反序列化字节数组
      */
-    public func registerSerializer(serializer: Serializer): Unit {
-        mutex.lock()
-        let supportedTypes = serializer.getSupportedTypes()
-        for (messageType in supportedTypes) {
-            serializers[messageType] = serializer
-        }
-        mutex.unlock()
+    public func deserializeBytes(data: Array<UInt8>): Array<UInt8> {
+        byteSerializer.deserialize(data)
     }
 
     /**
-     * 序列化消息
+     * 序列化字符串
      */
-    public open func serialize(message: Message): Array<UInt8> {
-        let messageType = message.messageType()
-        let serializer = getSerializerForType(messageType)
-        serializer.serialize(message)
+    public func serializeString(str: String): Array<UInt8> {
+        stringSerializer.serialize(str)
     }
 
     /**
-     * 反序列化消息
+     * 反序列化字符串
      */
-    public open func deserialize(data: Array<UInt8>, messageType: String): Message {
-        let serializer = getSerializerForType(messageType)
-        serializer.deserialize(data)
+    public func deserializeString(data: Array<UInt8>): String {
+        stringSerializer.deserialize(data)
     }
 
     /**
-     * 获取指定类型的序列化器
+     * 序列化整数
      */
-    private func getSerializerForType(messageType: String): Serializer {
-        mutex.lock()
-        let result = match (serializers.get(messageType)) {
-            case Some(serializer) => serializer
-            case None => defaultSerializer
-        }
-        mutex.unlock()
-        result
+    public func serializeInt(value: Int64): Array<UInt8> {
+        intSerializer.serialize(value)
     }
 
     /**
-     * 获取所有支持的消息类型
+     * 反序列化整数
+     */
+    public func deserializeInt(data: Array<UInt8>): Int64 {
+        intSerializer.deserialize(data)
+    }
+
+    /**
+     * 获取支持的数据类型
      */
     public func getSupportedTypes(): Array<String> {
-        mutex.lock()
-        let types = ArrayList<String>()
-        for ((key, _) in serializers) {
-            types.append(key)
-        }
-        let result = types.toArray()
-        mutex.unlock()
-        result
-    }
-
-    /**
-     * 获取序列化器数量
-     */
-    public func getSerializerCount(): Int64 {
-        mutex.lock()
-        let count = serializers.size
-        mutex.unlock()
-        count
+        ["bytes", "string", "int64"]
     }
 }
 
@@ -105,37 +81,31 @@ public open class SerializationManager {
  */
 public class SerializationFactory {
     /**
-     * 创建JSON序列化器
+     * 创建字节序列化器
      */
-    public static func createJsonSerializer(): Serializer {
-        JsonSerializer()
+    public static func createByteSerializer(): ByteSerializer {
+        ByteSerializer()
     }
 
     /**
-     * 创建二进制序列化器
+     * 创建字符串序列化器
      */
-    public static func createBinarySerializer(): Serializer {
-        BinarySerializer()
+    public static func createStringSerializer(): StringSerializer {
+        StringSerializer()
+    }
+
+    /**
+     * 创建整数序列化器
+     */
+    public static func createIntSerializer(): IntSerializer {
+        IntSerializer()
     }
 
     /**
      * 创建默认序列化管理器
      */
     public static func createDefaultManager(): SerializationManager {
-        let manager = SerializationManager()
-        manager.initializeDefaultSerializers()
-        manager
-    }
-
-    /**
-     * 创建自定义序列化管理器
-     */
-    public static func createCustomManager(serializers: Array<Serializer>): SerializationManager {
-        let manager = SerializationManager()
-        for (serializer in serializers) {
-            manager.registerSerializer(serializer)
-        }
-        manager
+        SerializationManager()
     }
 }
 
@@ -237,55 +207,7 @@ public class SerializationStats {
     }
 }
 
-/**
- * 带统计的序列化管理器
- */
-public class StatefulSerializationManager <: SerializationManager {
-    private let stats: SerializationStats
-    private let config: SerializationConfig
 
-    public init(config: SerializationConfig) {
-        super()
-        this.stats = SerializationStats()
-        this.config = config
-    }
-
-    public func serialize(message: Message): Array<UInt8> {
-        try {
-            let data = super.serialize(message)
-            stats.recordSerialization(Int64(data.size))
-            
-            // 检查消息大小限制
-            if (data.size > config.maxMessageSize) {
-                throw SerializationException("消息大小超过限制: ${data.size} > ${config.maxMessageSize}")
-            }
-            
-            data
-        } catch (e: Exception) {
-            stats.recordError()
-            throw e
-        }
-    }
-
-    public func deserialize(data: Array<UInt8>, messageType: String): Message {
-        try {
-            let message = super.deserialize(data, messageType)
-            stats.recordDeserialization(Int64(data.size))
-            message
-        } catch (e: Exception) {
-            stats.recordError()
-            throw e
-        }
-    }
-
-    public func getStats(): SerializationStats {
-        stats
-    }
-
-    public func getConfig(): SerializationConfig {
-        config
-    }
-}
 
 /**
  * 全局序列化管理器实例

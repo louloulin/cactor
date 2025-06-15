@@ -7,6 +7,6 @@ package cactor.foundation
 
 // 基础设施组件导出
 public import cactor.foundation.memory.*
-public import cactor.foundation.concurrency.*
+public import cactor.foundation.queue.*
 public import cactor.foundation.serialization.*
 public import cactor.foundation.network.*

@@ -1,23 +1,21 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor - 无锁环形缓冲区邮箱
- * 基于仓颉语言原子操作的高性能无锁邮箱实现
+ * Foundation Layer - 无锁队列实现
+ * 零依赖的高性能无锁队列，基于环形缓冲区
  */
-package cactor.foundation.concurrency
+package cactor.foundation.queue
 
 import std.sync.*
 import std.collection.*
-import std.math.*
-import cactor.core.message.{Message, Envelope}
-// import cactor.core.mailbox.Mailbox
 
 /**
- * 简化的原子槽位实现
+ * 原子槽位实现
  * 专门用于环形缓冲区的槽位管理
  */
-public class AtomicSlot {
+public class AtomicSlot<T> {
     private let state: AtomicInt64  // 0=空, 1=有数据, 2=正在写入, 3=正在读取
-    private let data: AtomicInt64   // 数据的哈希码或标识符
+    private var data: Option<T>     // 存储的数据
+    private let mutex: ReentrantMutex  // 保护data的访问
 
     // 状态常量
     public static let EMPTY: Int64 = 0
@@ -27,7 +25,8 @@ public class AtomicSlot {
 
     public init() {
         this.state = AtomicInt64(EMPTY)
-        this.data = AtomicInt64(0)
+        this.data = None
+        this.mutex = ReentrantMutex()
     }
 
     /**
@@ -40,8 +39,10 @@ public class AtomicSlot {
     /**
      * 完成写入
      */
-    public func finishWrite(dataHash: Int64): Unit {
-        data.store(dataHash)
+    public func finishWrite(item: T): Unit {
+        mutex.lock()
+        data = Some(item)
+        mutex.unlock()
         state.store(FILLED)
     }
 
@@ -62,9 +63,11 @@ public class AtomicSlot {
     /**
      * 完成读取
      */
-    public func finishRead(): Int64 {
-        let result = data.load()
-        data.store(0)
+    public func finishRead(): Option<T> {
+        mutex.lock()
+        let result = data
+        data = None
+        mutex.unlock()
         state.store(EMPTY)
         return result
     }
@@ -99,7 +102,7 @@ public class AtomicSlot {
 }
 
 /**
- * 无锁环形缓冲区邮箱
+ * 无锁环形缓冲区队列
  * 
  * 设计特点：
  * 1. 使用环形缓冲区减少内存分配
@@ -107,13 +110,12 @@ public class AtomicSlot {
  * 3. 支持多生产者多消费者模式
  * 4. 容量必须是2的幂，便于位运算优化
  */
-public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox {
-    private let buffer: Array<AtomicSlot>
+public class LockFreeQueue<T> <: Queue<T> {
+    private let buffer: Array<AtomicSlot<T>>
     private let capacity: Int64
     private let mask: Int64        // 容量掩码，用于快速取模
     private let head: AtomicInt64  // 读指针
     private let tail: AtomicInt64  // 写指针
-    private let closed: AtomicBool // 邮箱是否已关闭
     
     // 性能统计
     private let enqueueCount: AtomicInt64
@@ -125,7 +127,6 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
         // 初始化指针
         this.head = AtomicInt64(0)
         this.tail = AtomicInt64(0)
-        this.closed = AtomicBool(false)
 
         // 初始化统计
         this.enqueueCount = AtomicInt64(0)
@@ -134,23 +135,18 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
         this.failedDequeues = AtomicInt64(0)
 
         // 确保容量是2的幂
-        let actualCapacity = LockFreeRingBufferMailbox.nextPowerOfTwo(requestedCapacity)
+        let actualCapacity = LockFreeQueue.nextPowerOfTwo(requestedCapacity)
         this.capacity = actualCapacity
         this.mask = actualCapacity - 1
 
         // 初始化缓冲区
-        this.buffer = Array<AtomicSlot>(actualCapacity, { i => AtomicSlot() })
+        this.buffer = Array<AtomicSlot<T>>(actualCapacity, { i => AtomicSlot<T>() })
     }
     
     /**
      * 入队操作（无锁实现）
      */
-    public func enqueue(envelope: Envelope): Bool {
-        if (closed.load()) {
-            failedEnqueues.fetchAdd(1)
-            return false
-        }
-        
+    public func enqueue(item: T): Bool {
         // 最大重试次数，避免无限循环
         let maxRetries = 1000
         var retries = 0
@@ -173,7 +169,7 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
                 // 成功获得写入权限，尝试推进tail指针
                 if (tail.compareAndSwap(currentTail, currentTail + 1)) {
                     // 成功推进指针，完成写入
-                    slot.finishWrite(Int64(envelope.getMessage().messageType().hashCode()))
+                    slot.finishWrite(item)
                     enqueueCount.fetchAdd(1)
                     return true
                 } else {
@@ -192,12 +188,7 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
     /**
      * 出队操作（无锁实现）
      */
-    public func dequeue(): Option<Envelope> {
-        if (closed.load() && isEmpty()) {
-            failedDequeues.fetchAdd(1)
-            return None
-        }
-        
+    public func dequeue(): Option<T> {
         // 最大重试次数
         let maxRetries = 1000
         var retries = 0
@@ -220,12 +211,9 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
                 // 成功获得读取权限，尝试推进head指针
                 if (head.compareAndSwap(currentHead, currentHead + 1)) {
                     // 成功推进指针，完成读取
-                    let dataHash = slot.finishRead()
+                    let result = slot.finishRead()
                     dequeueCount.fetchAdd(1)
-                    
-                    // 简化实现：创建一个占位符Envelope
-                    // 在实际实现中需要从哈希码恢复真实对象
-                    return Some(createPlaceholderEnvelope(dataHash))
+                    return result
                 } else {
                     // 指针推进失败，取消读取
                     slot.cancelRead()
@@ -240,7 +228,7 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
     }
     
     /**
-     * 检查邮箱是否为空
+     * 检查队列是否为空
      */
     public func isEmpty(): Bool {
         return head.load() >= tail.load()
@@ -259,12 +247,12 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
     /**
      * 获取队列容量
      */
-    public func getCapacity(): Int64 {
+    public func capacity(): Int64 {
         return capacity
     }
     
     /**
-     * 清空邮箱
+     * 清空队列
      */
     public func clear(): Unit {
         // 通过重置头尾指针来清空队列
@@ -279,26 +267,12 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
             }
         }
     }
-
-    /**
-     * 关闭邮箱
-     */
-    public func close(): Unit {
-        closed.store(true)
-    }
-
-    /**
-     * 检查邮箱是否已关闭
-     */
-    public func isClosed(): Bool {
-        return closed.load()
-    }
     
     /**
      * 获取性能统计信息
      */
-    public func getStats(): MailboxStats {
-        MailboxStats(
+    public func getStats(): QueueStats {
+        QueueStats(
             enqueueCount.load(),
             dequeueCount.load(),
             failedEnqueues.load(),
@@ -328,67 +302,5 @@ public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox 
         if (n <= 8192) { return 8192 }
         if (n <= 16384) { return 16384 }
         return 32768  // 最大支持32K
-    }
-    
-    /**
-     * 创建占位符Envelope（简化实现）
-     */
-    private func createPlaceholderEnvelope(dataHash: Int64): Envelope {
-        // 简化实现：创建一个包含哈希码的占位符消息
-        let placeholderMessage = PlaceholderMessage(dataHash)
-        return Envelope(placeholderMessage, None)
-    }
-}
-
-/**
- * 邮箱性能统计信息
- */
-public struct MailboxStats {
-    public let enqueueCount: Int64
-    public let dequeueCount: Int64
-    public let failedEnqueues: Int64
-    public let failedDequeues: Int64
-    public let currentSize: Int64
-    public let capacity: Int64
-
-    public init(enqueueCount: Int64, dequeueCount: Int64, failedEnqueues: Int64,
-                failedDequeues: Int64, currentSize: Int64, capacity: Int64) {
-        this.enqueueCount = enqueueCount
-        this.dequeueCount = dequeueCount
-        this.failedEnqueues = failedEnqueues
-        this.failedDequeues = failedDequeues
-        this.currentSize = currentSize
-        this.capacity = capacity
-    }
-    
-    public func getSuccessRate(): Float64 {
-        let totalOps = enqueueCount + dequeueCount
-        let failedOps = failedEnqueues + failedDequeues
-        if (totalOps == 0) { return 1.0 }
-        return Float64(totalOps - failedOps) / Float64(totalOps)
-    }
-
-    public func getUtilization(): Float64 {
-        if (capacity == 0) { return 0.0 }
-        return Float64(currentSize) / Float64(capacity)
-    }
-}
-
-/**
- * 占位符消息（用于简化实现）
- */
-public class PlaceholderMessage <: Message {
-    private let dataHash: Int64
-    
-    public init(dataHash: Int64) {
-        this.dataHash = dataHash
-    }
-    
-    public func messageType(): String {
-        return "PlaceholderMessage"
-    }
-    
-    public func getDataHash(): Int64 {
-        return dataHash
     }
 }

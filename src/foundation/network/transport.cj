@@ -1,15 +1,14 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor - 网络传输层
- * 提供TCP/UDP网络通信功能，支持远程Actor通信
+ * Foundation Layer - 网络传输层
+ * 提供TCP/UDP网络通信功能，零依赖的字节流传输
  */
 package cactor.foundation.network
 
 import std.collection.*
 import std.sync.*
 import std.time.*
-import cactor.core.message.{Message, Envelope}
-import cactor.foundation.serialization.{SerializationManager, GlobalSerializationManager}
+import cactor.foundation.serialization.{SerializationManager}
 
 /**
  * 网络地址
@@ -39,17 +38,17 @@ public struct NetworkAddress {
 }
 
 /**
- * 网络消息
- * 包装要通过网络发送的消息
+ * 网络数据包
+ * 包装要通过网络发送的原始数据
  */
-public struct NetworkMessage {
-    public let targetActor: String
-    public let message: Message
+public struct NetworkPacket {
+    public let targetAddress: String
+    public let data: Array<UInt8>
     public let sender: Option<String>
 
-    public init(targetActor: String, message: Message, sender: Option<String>) {
-        this.targetActor = targetActor
-        this.message = message
+    public init(targetAddress: String, data: Array<UInt8>, sender: Option<String>) {
+        this.targetAddress = targetAddress
+        this.data = data
         this.sender = sender
     }
 }
@@ -63,7 +62,7 @@ public enum TransportProtocol {
 }
 
 /**
- * 网络传输接口
+ * 网络传输接口 - 零依赖，只处理字节流
  */
 public interface NetworkTransport {
     /**
@@ -77,14 +76,14 @@ public interface NetworkTransport {
     func stop(): Unit
 
     /**
-     * 发送消息到远程地址
+     * 发送数据到远程地址
      */
-    func send(address: NetworkAddress, message: NetworkMessage): Unit
+    func send(address: NetworkAddress, data: Array<UInt8>): Unit
 
     /**
-     * 设置消息接收处理器
+     * 设置数据接收处理器
      */
-    func setMessageHandler(handler: (NetworkMessage) -> Unit): Unit
+    func setDataHandler(handler: (Array<UInt8>) -> Unit): Unit
 
     /**
      * 获取本地地址
@@ -98,20 +97,18 @@ public interface NetworkTransport {
 }
 
 /**
- * TCP传输实现
+ * TCP传输实现 - 零依赖，只处理字节流
  */
 public class TcpTransport <: NetworkTransport {
     private let localAddress: NetworkAddress
     private let isRunning: AtomicBool
-    private let serializationManager: SerializationManager
-    private var messageHandler: Option<(NetworkMessage) -> Unit>
+    private var dataHandler: Option<(Array<UInt8>) -> Unit>
     private let mutex: ReentrantMutex
 
     public init(localAddress: NetworkAddress) {
         this.localAddress = localAddress
         this.isRunning = AtomicBool(false)
-        this.serializationManager = GlobalSerializationManager.getInstance()
-        this.messageHandler = None
+        this.dataHandler = None
         this.mutex = ReentrantMutex()
     }
 
@@ -132,31 +129,24 @@ public class TcpTransport <: NetworkTransport {
         }
     }
 
-    public func send(address: NetworkAddress, message: NetworkMessage): Unit {
+    public func send(address: NetworkAddress, data: Array<UInt8>): Unit {
         if (!isRunning.load()) {
             throw Exception("传输层未启动")
         }
 
         try {
-            // 序列化消息
-            let serializedMessage = serializationManager.serialize(message.message)
-            
-            // 创建网络包
-            let packet = createNetworkPacket(message.targetActor, serializedMessage, message.sender)
-            
-            // 发送到目标地址
-            sendPacket(address, packet)
-            
-            println("消息发送到 ${address.toString()}: ${message.message.messageType()}")
+            // 直接发送字节数据
+            sendPacket(address, data)
+            println("数据发送到 ${address.toString()}: ${data.size} 字节")
         } catch (e: Exception) {
-            println("发送消息失败: ${e.message}")
+            println("发送数据失败: ${e.message}")
             throw e
         }
     }
 
-    public func setMessageHandler(handler: (NetworkMessage) -> Unit): Unit {
+    public func setDataHandler(handler: (Array<UInt8>) -> Unit): Unit {
         mutex.lock()
-        messageHandler = Some(handler)
+        dataHandler = Some(handler)
         mutex.unlock()
     }
 
@@ -190,70 +180,26 @@ public class TcpTransport <: NetworkTransport {
         println("TCP服务器停止监听")
     }
 
-    private func createNetworkPacket(targetActor: String, data: Array<UInt8>, sender: Option<String>): Array<UInt8> {
-        // 简化的网络包格式：
-        // [4字节：目标Actor长度][目标Actor][4字节：发送者长度][发送者][4字节：数据长度][数据]
-        let packet = ArrayList<UInt8>()
-        
-        // 目标Actor
-        let targetBytes = stringToBytes(targetActor)
-        writeInt32(packet, Int32(targetBytes.size))
-        packet.appendAll(targetBytes)
-        
-        // 发送者
-        let senderStr = match (sender) {
-            case Some(s) => s
-            case None => ""
-        }
-        let senderBytes = stringToBytes(senderStr)
-        writeInt32(packet, Int32(senderBytes.size))
-        packet.appendAll(senderBytes)
-        
-        // 消息数据
-        writeInt32(packet, Int32(data.size))
-        packet.appendAll(data)
-        
-        packet.toArray()
-    }
-
-    private func sendPacket(address: NetworkAddress, packet: Array<UInt8>): Unit {
+    private func sendPacket(address: NetworkAddress, data: Array<UInt8>): Unit {
         // 简化的发送实现
         // 在实际实现中，这里应该创建TCP连接并发送数据
-        println("发送${packet.size}字节到${address.toString()}")
-    }
-
-    private func writeInt32(buffer: ArrayList<UInt8>, value: Int32): Unit {
-        buffer.append(UInt8((value >> 24) & 0xFF))
-        buffer.append(UInt8((value >> 16) & 0xFF))
-        buffer.append(UInt8((value >> 8) & 0xFF))
-        buffer.append(UInt8(value & 0xFF))
-    }
-
-    private func stringToBytes(str: String): Array<UInt8> {
-        // 简化实现
-        let bytes = ArrayList<UInt8>()
-        for (i in 0..str.size) {
-            bytes.append(UInt8(65))  // 简化为固定值
-        }
-        bytes.toArray()
+        println("TCP发送${data.size}字节到${address.toString()}")
     }
 }
 
 /**
- * UDP传输实现
+ * UDP传输实现 - 零依赖，只处理字节流
  */
 public class UdpTransport <: NetworkTransport {
     private let localAddress: NetworkAddress
     private let isRunning: AtomicBool
-    private let serializationManager: SerializationManager
-    private var messageHandler: Option<(NetworkMessage) -> Unit>
+    private var dataHandler: Option<(Array<UInt8>) -> Unit>
     private let mutex: ReentrantMutex
 
     public init(localAddress: NetworkAddress) {
         this.localAddress = localAddress
         this.isRunning = AtomicBool(false)
-        this.serializationManager = GlobalSerializationManager.getInstance()
-        this.messageHandler = None
+        this.dataHandler = None
         this.mutex = ReentrantMutex()
     }
 
@@ -273,23 +219,22 @@ public class UdpTransport <: NetworkTransport {
         }
     }
 
-    public func send(address: NetworkAddress, message: NetworkMessage): Unit {
+    public func send(address: NetworkAddress, data: Array<UInt8>): Unit {
         if (!isRunning.load()) {
             throw Exception("传输层未启动")
         }
 
         try {
-            let serializedMessage = serializationManager.serialize(message.message)
-            println("UDP发送消息到 ${address.toString()}: ${message.message.messageType()}")
+            println("UDP发送数据到 ${address.toString()}: ${data.size} 字节")
         } catch (e: Exception) {
-            println("UDP发送消息失败: ${e.message}")
+            println("UDP发送数据失败: ${e.message}")
             throw e
         }
     }
 
-    public func setMessageHandler(handler: (NetworkMessage) -> Unit): Unit {
+    public func setDataHandler(handler: (Array<UInt8>) -> Unit): Unit {
         mutex.lock()
-        messageHandler = Some(handler)
+        dataHandler = Some(handler)
         mutex.unlock()
     }
 

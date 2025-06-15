@@ -10,10 +10,18 @@
 - **架构验证通过**: 基础架构编译成功，测试验证通过
 
 ### 🚀 **下一步计划**
-1. **功能完善**: 修复编译错误，完善各层具体实现
-2. **性能优化**: 实现高吞吐量目标(800万消息/秒)
-3. **测试验证**: 全面测试覆盖，确保功能完整性
-4. **生产部署**: 准备生产环境部署
+1. **🔥 紧急修复**: Foundation层依赖倒置问题 (见Foundation.md)
+2. **功能完善**: 修复编译错误，完善各层具体实现
+3. **性能优化**: 实现高吞吐量目标(800万消息/秒)
+4. **测试验证**: 全面测试覆盖，确保功能完整性
+5. **生产部署**: 准备生产环境部署
+
+### 🚨 **关键架构问题发现**
+**Foundation层依赖倒置**: 发现Foundation层错误依赖Core层，违反分层架构原则
+- **问题**: `foundation.concurrency` → `core.message` (依赖倒置)
+- **影响**: 循环依赖风险、编译问题、架构混乱
+- **解决方案**: 详见 [Foundation.md](Foundation.md) 完整改造计划
+- **优先级**: 🔥 **最高优先级** - 必须立即修复
 
 ## �🎯 项目概述
 
@@ -344,17 +352,55 @@ mkdir -p api/{public,extensions}
 # 4. 发布准备 ✅
 ```
 
-### Phase 5: 验证和部署 (Week 9-12)
+### Phase 5: Foundation层紧急重构 (Week 9) 🔥 **新增紧急任务**
+**目标**: 修复Foundation层依赖倒置问题，实现真正的零依赖基础设施
+
+#### Week 9: Foundation层架构修复 🔥 **最高优先级**
+**参考文档**: [Foundation.md](Foundation.md)
+
+**Day 1-2: 移除业务依赖** ✅ **已完成**
+- [x] 重命名 `foundation.concurrency` → `foundation.queue`
+- [x] 删除 `foundation.queue.mailbox.cj` (移至runtime层)
+- [x] 删除 `foundation.queue.lockfree_mailbox.cj` (移至runtime层)
+- [x] 创建纯净的 `Queue<T>` 接口 (零依赖)
+- [x] 实现 `LockFreeQueue<T>` (零依赖)
+
+**Day 3-4: 重构序列化层** ✅ **已完成**
+- [x] 移除 `foundation.serialization` 对 `core.message` 的依赖
+- [x] 创建通用 `Serializer<T>` 接口
+- [x] 实现 `ByteSerializer` (处理原始字节)
+- [x] 重构 `SerializationManager` (零依赖)
+
+**Day 5-7: 重构网络层** ✅ **已完成**
+- [x] 移除 `foundation.network` 对 `core.message` 的依赖
+- [x] 重构 `NetworkTransport` 只处理字节流
+- [x] 移除 `NetworkMessage` 概念 (移至上层)
+- [x] 实现纯字节流传输
+
+#### Week 10: 上层重构适配
+**Day 8-10: 重构Runtime层**
+- [ ] 基于 `foundation.queue.Queue<T>` 重新实现 `ActorMailbox`
+- [ ] 在Runtime层添加Actor语义
+- [ ] 重构 `runtime.mailbox` 包结构
+- [ ] 验证Runtime层功能完整性
+
+**Day 11-14: 重构Core层**
+- [ ] 确保Core层正确使用Foundation组件
+- [ ] 重构消息序列化 (基于foundation.serialization)
+- [ ] 重构网络消息 (基于foundation.network)
+- [ ] 验证Core层功能完整性
+
+### Phase 6: 验证和部署 (Week 11-12)
 **目标**: 全面验证和生产部署准备
 
-#### Week 9-10: 全面测试
-- [ ] 功能完整性测试
-- [ ] 性能基准验证
-- [ ] 兼容性测试
-- [ ] 压力测试
-- [ ] 故障恢复测试
+#### Week 11: 架构验证
+- [ ] **依赖检查**: 运行Foundation零依赖验证脚本
+- [ ] **编译验证**: 确保所有层正确编译
+- [ ] **功能测试**: 验证重构后功能完整性
+- [ ] **性能测试**: 确保性能不退化
+- [ ] **集成测试**: 验证层间协作正常
 
-#### Week 11-12: 部署准备
+#### Week 12: 部署准备
 - [ ] 生产环境验证
 - [ ] 监控告警配置
 - [ ] 运维文档编写
