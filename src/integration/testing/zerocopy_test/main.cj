@@ -3,7 +3,7 @@
  * CActor 3.0 - 零拷贝消息系统测试
  * 验证零拷贝消息传递和NUMA感知内存池功能
  */
-package cactor.tests.zerocopy_test
+package cactor.integration.testing.zerocopy_test
 
 import cactor.core.zerocopy.*
 import cactor.core.memory.*

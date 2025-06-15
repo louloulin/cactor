@@ -3,7 +3,7 @@
  * 提供流畅的 API 来构建流处理管道
  */
 
-package cactor.stream
+package cactor.distribution.streaming
 
 import cactor.*
 import std.collection.*

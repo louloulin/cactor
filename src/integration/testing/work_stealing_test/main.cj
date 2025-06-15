@@ -3,7 +3,7 @@
  * CActor 3.0 - 工作窃取调度器测试
  * 验证升级后的工作窃取功能，包括优先级调度和零拷贝消息
  */
-package cactor.tests.work_stealing_test
+package cactor.integration.testing.work_stealing_test
 
 import std.sync.*
 import std.time.*

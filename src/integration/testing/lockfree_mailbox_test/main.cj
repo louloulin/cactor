@@ -3,7 +3,7 @@
  * CActor - 无锁邮箱性能测试
  * 验证无锁邮箱的功能和性能
  */
-package cactor.tests.lockfree_mailbox_test
+package cactor.integration.testing.lockfree_mailbox_test
 
 import std.sync.*
 import std.time.*

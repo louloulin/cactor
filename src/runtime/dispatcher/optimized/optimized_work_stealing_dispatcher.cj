@@ -3,7 +3,7 @@
  * CActor 3.0 - 优化的高性能工作窃取调度器
  * Phase 3: 智能负载均衡、优化窃取策略、NUMA感知调度
  */
-package cactor.dispatcher.optimized
+package cactor.runtime.dispatcher.optimized
 
 import std.sync.*
 import std.time.*

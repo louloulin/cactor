@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 配置管理实现
  */
-package cactor.config
+package cactor.integration.configuration
 
 import std.collection.*
 import std.sync.*

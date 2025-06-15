@@ -3,7 +3,7 @@
  * CActor - 环形缓冲区邮箱
  * 高性能无锁消息队列实现
  */
-package cactor.mailbox.ringbuffer
+package cactor.runtime.mailbox.ringbuffer
 
 import std.sync.*
 import cactor.core.mailbox.Mailbox

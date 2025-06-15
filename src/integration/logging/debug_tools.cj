@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 调试工具实现
  */
-package cactor.debug
+package cactor.integration.logging
 
 import std.collection.*
 import std.sync.*

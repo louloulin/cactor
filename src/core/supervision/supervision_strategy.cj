@@ -3,7 +3,7 @@
  * CActor - 监督策略
  * 实现Actor监督和容错机制
  */
-package cactor.supervision
+package cactor.core.supervision
 
 import std.sync.*
 import std.time.*

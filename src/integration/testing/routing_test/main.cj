@@ -3,7 +3,7 @@
  * CActor - 路由器测试
  * 验证消息路由和负载均衡功能
  */
-package cactor.tests.routing_test
+package cactor.integration.testing.routing_test
 
 import std.sync.*
 import std.time.*

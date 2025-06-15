@@ -3,7 +3,7 @@
  * CActor - 批量处理邮箱
  * 支持自适应批处理的高性能邮箱实现
  */
-package cactor.mailbox.batching
+package cactor.runtime.mailbox.batching
 
 import std.sync.*
 import std.time.*

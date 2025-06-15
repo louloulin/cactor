@@ -3,7 +3,7 @@
  * CActor 3.0 - 综合压力测试
  * 验证tu.md中所有已实现功能的集成性能
  */
-package cactor.tests.comprehensive_stress_test
+package cactor.integration.testing.comprehensive_stress_test
 
 import std.sync.*
 import std.time.*

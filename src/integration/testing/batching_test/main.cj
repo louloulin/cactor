@@ -3,7 +3,7 @@
  * CActor - 批量处理邮箱测试
  * 验证批量处理功能
  */
-package cactor.tests.batching_test
+package cactor.integration.testing.batching_test
 
 import std.sync.*
 import std.time.*

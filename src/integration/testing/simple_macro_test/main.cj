@@ -3,7 +3,7 @@
  * 测试基础功能，为将来的宏功能做准备
  */
 
-package cactor.tests.simple_macro_test
+package cactor.integration.testing.simple_macro_test
 
 // 简单的消息类型
 public class SimpleMessage {

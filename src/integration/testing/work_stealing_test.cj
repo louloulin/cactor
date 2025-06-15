@@ -3,7 +3,7 @@
  * CActor - 工作窃取调度器测试
  * 验证工作窃取功能
  */
-package cactor.tests
+package cactor.integration.testing
 
 import std.sync.*
 import std.time.*

@@ -3,7 +3,7 @@
  * 验证plan3.md中实现的所有高级宏功能
  * 基于CActor的class架构
  */
-package cactor.tests.advanced_macro_test
+package cactor.integration.testing.advanced_macro_test
 
 import cactor.macros.*
 import cactor.core.actor.*

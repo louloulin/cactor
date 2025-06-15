@@ -3,7 +3,7 @@
  * CActor - 性能监控
  * 提供系统性能指标收集和监控功能
  */
-package cactor.monitoring
+package cactor.integration.monitoring
 
 import std.sync.*
 import std.time.*

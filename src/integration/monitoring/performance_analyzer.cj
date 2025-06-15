@@ -3,7 +3,7 @@
  * CActor 3.0 - 实时性能分析系统
  * 基于plan3.md设计的性能监控和分析实现
  */
-package cactor.monitoring
+package cactor.integration.monitoring
 
 import std.sync.*
 import std.time.*

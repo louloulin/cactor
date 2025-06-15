@@ -2,7 +2,7 @@
  * CActor 简单零拷贝测试
  * 验证基础的零拷贝消息功能
  */
-package cactor.tests.simple_zerocopy_test
+package cactor.integration.testing.simple_zerocopy_test
 
 import cactor.core.zerocopy.*
 

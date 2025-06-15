@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 高级功能测试
  */
-package cactor.tests.advanced_features
+package cactor.integration.testing.advanced_features
 
 import std.time.*
 import std.collection.*

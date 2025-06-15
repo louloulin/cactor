@@ -3,7 +3,7 @@
  * CActor - pb1.md API优化验证测试
  * 验证新的API易用性改进
  */
-package cactor.tests.pb1_api_test
+package cactor.integration.testing.pb1_api_test
 
 import std.time.*
 import std.sync.*

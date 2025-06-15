@@ -3,12 +3,26 @@
  * CActor - 内存池管理
  * 基于仓颉GC的高性能对象池实现
  */
-package cactor.memory
+package cactor.foundation.memory
 
 import std.sync.*
 import std.collection.*
 import std.collection.concurrent.*
-import cactor.core.message.{Envelope, Message}
+// import cactor.core.message.{Envelope, Message}  // 暂时注释掉，避免循环依赖
+
+/**
+ * 基础消息接口 (Foundation层的简化版本)
+ */
+public interface BaseMessage {
+    func messageType(): String
+}
+
+/**
+ * 基础信封接口 (Foundation层的简化版本)
+ */
+public interface BaseEnvelope {
+    func getMessage(): BaseMessage
+}
 
 /**
  * 对象池接口

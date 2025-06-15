@@ -4,7 +4,7 @@
  * 基于仓颉语言的实时性能监控和分析
  * 支持延时统计、吞吐量监控、负载分析等功能
  */
-package cactor.dispatcher.monitoring
+package cactor.runtime.dispatcher.monitoring
 
 import std.sync.*
 import std.time.*

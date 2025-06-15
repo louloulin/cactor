@@ -1,4 +1,4 @@
-package cactor.persistence
+package cactor.distribution.persistence
 
 import std.collection.*
 import std.time.*

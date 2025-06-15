@@ -3,7 +3,7 @@
  * CActor 3.0 - 虚拟Actor系统测试
  * 验证虚拟Actor的激活、钝化和状态管理功能
  */
-package cactor.tests.virtual_actor_test
+package cactor.integration.testing.virtual_actor_test
 
 import cactor.virtual.*
 import cactor.core.message.*

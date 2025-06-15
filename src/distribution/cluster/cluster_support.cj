@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 集群支持实现
  */
-package cactor.cluster
+package cactor.distribution.cluster
 
 import std.collection.*
 import std.sync.*

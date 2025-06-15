@@ -3,7 +3,7 @@
  * CActor 3.0 - 高性能Actor测试
  * 验证基于tu.md优化的高性能Actor实现
  */
-package cactor.tests.high_performance_actor_test
+package cactor.integration.testing.high_performance_actor_test
 
 import std.sync.*
 import std.time.*

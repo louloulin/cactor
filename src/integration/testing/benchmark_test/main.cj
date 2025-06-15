@@ -3,7 +3,7 @@
  * CActor 3.0 - 基准测试：精确测量500万消息/秒吞吐量
  * 使用优化的测试方法验证系统峰值性能
  */
-package cactor.tests.benchmark_test
+package cactor.integration.testing.benchmark_test
 
 import std.sync.*
 import std.time.*

@@ -3,7 +3,7 @@
  * CActor - Ask模式测试
  * 验证Ask模式功能
  */
-package cactor.tests.ask_pattern_test
+package cactor.integration.testing.ask_pattern_test
 
 import std.sync.*
 import std.time.*

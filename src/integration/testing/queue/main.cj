@@ -3,7 +3,7 @@
  * CActor - 队列邮箱测试
  * 验证基于仓颉NonBlockingQueue的邮箱功能
  */
-package cactor.tests.queue
+package cactor.integration.testing.queue
 
 import std.sync.*
 import std.time.*

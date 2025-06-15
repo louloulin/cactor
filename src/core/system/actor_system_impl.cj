@@ -3,7 +3,7 @@
  * CActor - 简化的Actor系统实现
  * 基于仓颉并发特性的Actor系统
  */
-package cactor.runtime.system
+package cactor.core.system
 
 import std.sync.*
 import std.collection.*

@@ -1,4 +1,4 @@
-package cactor.persistence
+package cactor.distribution.persistence
 
 import cactor.core.actor.*
 import cactor.core.message.*

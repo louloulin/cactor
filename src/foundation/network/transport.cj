@@ -3,7 +3,7 @@
  * CActor - 网络传输层
  * 提供TCP/UDP网络通信功能，支持远程Actor通信
  */
-package cactor.network
+package cactor.foundation.network
 
 import std.collection.*
 import std.sync.*

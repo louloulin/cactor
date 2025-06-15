@@ -3,7 +3,7 @@
  * CActor - 简单Actor测试
  * 验证基础Actor功能
  */
-package cactor.tests.simple
+package cactor.integration.testing.simple
 
 import std.sync.*
 import std.time.*

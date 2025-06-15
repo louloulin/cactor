@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 日志和调试功能测试
  */
-package cactor.tests.logging_debug
+package cactor.integration.testing.logging_debug
 
 import std.time.*
 import std.collection.*

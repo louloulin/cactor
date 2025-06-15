@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor 3.0 - 简化并发HashMap实现
  */
-package cactor.core.collections
+package cactor.foundation.concurrency
 
 import std.sync.*
 import std.collection.*

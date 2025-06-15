@@ -4,7 +4,7 @@
  * 基于仓颉并发原语的低延时高吞吐工作窃取实现
  * 支持优先级调度、零拷贝消息、NUMA感知等高级特性
  */
-package cactor.dispatcher.work_stealing
+package cactor.runtime.dispatcher.work_stealing
 
 import std.sync.*
 import std.time.*

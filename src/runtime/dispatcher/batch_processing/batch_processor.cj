@@ -4,7 +4,7 @@
  * 基于仓颉语言的高性能批量处理实现
  * 支持动态批量大小、超时控制、背压管理等高级特性
  */
-package cactor.dispatcher.batch_processing
+package cactor.runtime.dispatcher.batch_processing
 
 import std.sync.*
 import std.time.*

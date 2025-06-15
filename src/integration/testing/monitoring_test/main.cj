@@ -3,7 +3,7 @@
  * CActor - 性能监控测试
  * 验证指标收集和性能监控功能
  */
-package cactor.tests.monitoring_test
+package cactor.integration.testing.monitoring_test
 
 import std.time.*
 import std.collection.*

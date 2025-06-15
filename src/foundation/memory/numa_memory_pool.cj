@@ -3,7 +3,7 @@
  * CActor 3.0 - NUMA感知内存池系统
  * 高性能、NUMA感知的内存分配和管理
  */
-package cactor.core.memory
+package cactor.foundation.memory
 
 import std.sync.*
 import std.collection.*

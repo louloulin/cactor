@@ -3,7 +3,7 @@
  * CActor 3.0 - Phase 2: 零拷贝消息优化测试套件
  * 验证共享内存缓冲区、高性能内存池和增强消息传递系统
  */
-package cactor.tests.zerocopy_phase2_test
+package cactor.integration.testing.zerocopy_phase2_test
 
 import std.sync.*
 import std.time.*

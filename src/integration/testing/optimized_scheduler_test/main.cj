@@ -3,7 +3,7 @@
  * CActor 3.0 - Phase 3 优化调度器测试
  * 高性能工作窃取调度器功能验证和性能测试
  */
-package cactor.tests.optimized_scheduler_test
+package cactor.integration.testing.optimized_scheduler_test
 
 import std.sync.*
 import std.time.*

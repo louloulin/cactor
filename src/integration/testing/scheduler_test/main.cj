@@ -3,7 +3,7 @@
  * CActor 3.0 - 高性能调度器系统测试
  * 验证批量处理、性能监控等高级调度器功能
  */
-package cactor.tests.scheduler_test
+package cactor.integration.testing.scheduler_test
 
 import std.sync.*
 import std.time.*

@@ -3,7 +3,7 @@
  * CActor - 环形缓冲区邮箱测试
  * 验证高性能无锁邮箱功能
  */
-package cactor.tests.ringbuffer
+package cactor.integration.testing.ringbuffer
 
 import std.sync.*
 import std.time.*

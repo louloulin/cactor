@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - Actor系统日志集成
  */
-package cactor.logging
+package cactor.integration.logging
 
 import std.collection.*
 import std.sync.*

@@ -3,7 +3,7 @@
  * CActor - 远程通信演示
  * 展示完整的远程Actor通信功能
  */
-package cactor.tests.remote_demo
+package cactor.integration.testing.remote_demo
 
 import std.time.*
 import std.collection.*

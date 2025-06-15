@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 压力测试和性能分析
  */
-package cactor.tests.stress_test
+package cactor.integration.testing.stress_test
 
 import std.collection.*
 import std.sync.*

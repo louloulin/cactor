@@ -3,7 +3,7 @@
  * CActor - 路由器实现
  * 提供消息路由和负载均衡功能
  */
-package cactor.routing
+package cactor.patterns.routing
 
 import std.sync.*
 import std.time.*

@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 简化的远程通信测试
  */
-package cactor.tests.remote_simple
+package cactor.integration.testing.remote_simple
 
 import std.time.*
 import std.collection.*

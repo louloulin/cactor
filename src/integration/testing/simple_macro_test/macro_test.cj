@@ -2,7 +2,7 @@
  * CActor 简单宏功能测试
  * 验证基础宏功能是否正常工作
  */
-package cactor.tests.simple_macro_test
+package cactor.integration.testing.simple_macro_test
 
 import cactor.macros.*
 

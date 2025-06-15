@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - pb1.md API优化简化验证测试
  */
-package cactor.tests.pb1_simple_test
+package cactor.integration.testing.pb1_simple_test
 
 import std.time.*
 import std.sync.*

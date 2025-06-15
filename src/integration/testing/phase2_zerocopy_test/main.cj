@@ -3,7 +3,7 @@
  * 验证plan3.md中Phase 2实现的所有零拷贝功能
  * 包括：零拷贝消息、NUMA内存池、序列化、优化传递、内存监控
  */
-package cactor.tests.phase2_zerocopy_test
+package cactor.integration.testing.phase2_zerocopy_test
 
 import cactor.core.actor.*
 import cactor.core.message.*

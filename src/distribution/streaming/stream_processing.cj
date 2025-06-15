@@ -3,7 +3,7 @@
  * 基于 Actor 模型的高性能流处理框架
  */
 
-package cactor.stream
+package cactor.distribution.streaming
 
 import cactor.core.actor.{Actor, ActorRef}
 import cactor.core.message.*

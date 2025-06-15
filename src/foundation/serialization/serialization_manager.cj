@@ -3,7 +3,7 @@
  * CActor - 序列化管理器
  * 管理多种序列化器，提供统一的序列化接口
  */
-package cactor.serialization
+package cactor.foundation.serialization
 
 import std.collection.*
 import std.sync.*

@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor 3.0 - 对象池接口和实现
  */
-package cactor.memory.object_pool
+package cactor.foundation.memory.object_pool
 
 import std.sync.*
 

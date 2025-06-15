@@ -3,7 +3,7 @@
  * CActor 3.0 - Phase 5 监控系统测试
  * 测试分布式追踪、性能分析和可视化系统
  */
-package cactor.tests.phase5_monitoring_test
+package cactor.integration.testing.phase5_monitoring_test
 
 import std.time.*
 import cactor.monitoring.*

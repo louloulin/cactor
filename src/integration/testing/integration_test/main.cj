@@ -3,7 +3,7 @@
  * CActor - 集成测试
  * 验证整个Actor系统的综合功能
  */
-package cactor.tests.integration_test
+package cactor.integration.testing.integration_test
 
 import std.time.*
 import std.sync.*

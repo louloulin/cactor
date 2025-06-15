@@ -3,7 +3,7 @@
  * CActor 3.0 - 分布式追踪系统
  * 基于plan3.md设计的分布式消息追踪实现
  */
-package cactor.monitoring
+package cactor.integration.monitoring
 
 import std.sync.*
 import std.time.*

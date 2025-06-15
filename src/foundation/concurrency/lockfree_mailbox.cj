@@ -3,7 +3,7 @@
  * CActor - 无锁环形缓冲区邮箱
  * 基于仓颉语言原子操作的高性能无锁邮箱实现
  */
-package cactor.mailbox.lockfree
+package cactor.foundation.concurrency
 
 import std.sync.*
 import std.collection.*

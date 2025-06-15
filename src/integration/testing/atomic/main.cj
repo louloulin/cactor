@@ -3,7 +3,7 @@
  * CActor - 原子操作测试
  * 验证仓颉原子类型的基本功能
  */
-package cactor.tests.atomic
+package cactor.integration.testing.atomic
 
 import std.sync.*
 import std.time.*

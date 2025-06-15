@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 简化的远程通信系统
  */
-package cactor.remote
+package cactor.distribution.remote
 
 import std.collection.*
 import std.sync.*

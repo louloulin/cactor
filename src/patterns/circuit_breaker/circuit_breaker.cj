@@ -3,7 +3,7 @@
  * CActor - 断路器模式
  * 提供故障隔离和快速失败机制
  */
-package cactor.circuit_breaker
+package cactor.patterns.circuit_breaker
 
 import std.sync.*
 import std.time.*

@@ -2,7 +2,7 @@
  * CActor Actor宏功能测试
  * 验证Actor相关宏功能是否正常工作
  */
-package cactor.tests.simple_macro_test
+package cactor.integration.testing.simple_macro_test
 
 import cactor.macros.*
 

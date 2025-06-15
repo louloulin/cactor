@@ -3,7 +3,7 @@
  * CActor - 断路器测试
  * 验证故障隔离和快速失败机制
  */
-package cactor.tests.circuit_breaker_test
+package cactor.integration.testing.circuit_breaker_test
 
 import std.sync.*
 import std.time.*

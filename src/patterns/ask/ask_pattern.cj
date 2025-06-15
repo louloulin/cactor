@@ -3,7 +3,7 @@
  * CActor - Ask模式实现
  * 支持请求-响应模式的异步通信
  */
-package cactor.pattern.ask
+package cactor.patterns.ask
 
 import std.sync.*
 import std.time.*

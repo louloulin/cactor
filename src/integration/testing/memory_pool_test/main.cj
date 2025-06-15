@@ -3,7 +3,7 @@
  * CActor - 内存池测试
  * 验证对象池功能
  */
-package cactor.tests.memory_pool_test
+package cactor.integration.testing.memory_pool_test
 
 import std.sync.*
 import std.time.*

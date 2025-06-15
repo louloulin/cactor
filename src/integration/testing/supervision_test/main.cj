@@ -3,7 +3,7 @@
  * CActor - 监督策略测试
  * 验证Actor监督和容错机制
  */
-package cactor.tests.supervision_test
+package cactor.integration.testing.supervision_test
 
 import std.sync.*
 import std.time.*

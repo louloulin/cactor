@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - 故障转移实现
  */
-package cactor.cluster
+package cactor.distribution.cluster
 
 import std.collection.*
 import std.sync.*

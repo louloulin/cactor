@@ -3,7 +3,7 @@
  * CActor 3.0 - 可视化监控界面
  * 基于plan3.md设计的实时监控可视化系统
  */
-package cactor.monitoring
+package cactor.integration.monitoring
 
 import std.sync.*
 import std.time.*

@@ -3,7 +3,7 @@
  * CActor - 持久化功能测试
  * 测试Actor持久化系统的各种功能
  */
-package cactor.tests.persistence_test
+package cactor.integration.testing.persistence_test
 
 import cactor.core.actor.*
 import cactor.core.message.*

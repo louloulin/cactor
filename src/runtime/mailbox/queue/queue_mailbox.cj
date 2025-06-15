@@ -3,7 +3,7 @@
  * CActor - 基于仓颉NonBlockingQueue的邮箱
  * 利用仓颉标准库的高性能并发队列实现
  */
-package cactor.mailbox.queue
+package cactor.runtime.mailbox.queue
 
 import std.collection.concurrent.*
 import std.sync.*
