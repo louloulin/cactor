@@ -107,7 +107,7 @@ public class AtomicSlot {
  * 3. 支持多生产者多消费者模式
  * 4. 容量必须是2的幂，便于位运算优化
  */
-public class LockFreeRingBufferMailbox <: Mailbox {
+public class LockFreeRingBufferMailbox <: cactor.foundation.concurrency.Mailbox {
     private let buffer: Array<AtomicSlot>
     private let capacity: Int64
     private let mask: Int64        // 容量掩码，用于快速取模
