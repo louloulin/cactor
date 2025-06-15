@@ -48,9 +48,9 @@ public class ZeroCopyMessageImpl {
     private let checksum: UInt32
     private let mutex: ReentrantMutex
 
-    public init(messageType: UInt16, payloadSize: UInt64, sourceActor: UInt64, 
+    public init(messageType: UInt16, payloadSize: UInt64, sourceActor: UInt64,
                 targetActor: UInt64, payload: Option<Array<UInt8>>) {
-        this.messageId = generateMessageId()
+        // 先初始化所有成员变量
         this.messageType = messageType
         this.payloadSize = payloadSize
         this.sourceActor = sourceActor
@@ -58,16 +58,27 @@ public class ZeroCopyMessageImpl {
         this.payload = payload
         this.refCount = AtomicInt64(1)
         this.isValidFlag = AtomicBool(true)
-        this.checksum = calculateChecksum(payload)
         this.mutex = ReentrantMutex()
+
+        // 然后计算需要调用方法的字段
+        this.messageId = ZeroCopyMessageImpl.generateMessageIdStatic()
+        this.checksum = ZeroCopyMessageImpl.calculateChecksumStatic(payload)
     }
 
     private func generateMessageId(): UInt64 {
+        ZeroCopyMessageImpl.generateMessageIdStatic()
+    }
+
+    private func calculateChecksum(payload: Option<Array<UInt8>>): UInt32 {
+        ZeroCopyMessageImpl.calculateChecksumStatic(payload)
+    }
+
+    private static func generateMessageIdStatic(): UInt64 {
         let now = DateTime.now()
         UInt64(now.toUnixTimeStamp().toMilliseconds())
     }
 
-    private func calculateChecksum(payload: Option<Array<UInt8>>): UInt32 {
+    private static func calculateChecksumStatic(payload: Option<Array<UInt8>>): UInt32 {
         let crc = CRC32()
         match (payload) {
             case Some(data) =>
