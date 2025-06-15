@@ -1,0 +1,81 @@
+{
+  "name": "Cangjie Actor Framework Development Environment",
+  "image": "ubuntu:22.04",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true,
+      "username": "vscode",
+      "userUid": "automatic",
+      "userGid": "automatic"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "ppa": true,
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "nodeGypDependencies": true,
+      "version": "lts"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-json",
+        "ms-vscode.hexeditor",
+        "ms-vscode.vscode-typescript-next",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-vscode.test-adapter-converter",
+        "hbenl.vscode-test-explorer",
+        "ms-vscode.makefile-tools",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+        },
+        "files.associations": {
+          "*.cj": "cangjie",
+          "*.cjpm": "toml",
+          "cjpm.toml": "toml"
+        },
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
+      }
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/setup-cangjie.sh",
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ],
+  "forwardPorts": [3000, 8080, 9000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Development Server",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Cangjie HTTP Server",
+      "onAutoForward": "openPreview"
+    },
+    "9000": {
+      "label": "Debug Port",
+      "onAutoForward": "silent"
+    }
+  },
+  "containerEnv": {
+    "CANGJIE_HOME": "/opt/cangjie/compiler",
+    "CANGJIE_SDK_HOME": "/opt/cangjie",
+    "PATH": "${PATH}:/opt/cangjie/compiler/bin:/opt/cangjie/compiler/tools/bin:/home/vscode/.cjpm/bin",
+    "LD_LIBRARY_PATH": "/opt/cangjie/compiler/runtime/lib/linux_x86_64_llvm:/opt/cangjie/compiler/lib/linux_x86_64_llvm:/opt/cangjie/compiler/tools/lib"
+  },
+  "shutdownAction": "stopContainer"
+}
