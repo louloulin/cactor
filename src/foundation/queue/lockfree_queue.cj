@@ -140,7 +140,7 @@ public class LockFreeQueue<T> <: Queue<T> {
         this.mask = actualCapacity - 1
 
         // 初始化缓冲区
-        this.buffer = Array<AtomicSlot<T>>(actualCapacity, { i => AtomicSlot<T>() })
+        this.buffer = Array<AtomicSlot<T>>(actualCapacity, { _ => AtomicSlot<T>() })
     }
     
     /**

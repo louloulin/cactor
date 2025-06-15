@@ -87,7 +87,7 @@ func testSimpleMacros(): Bool {
 
     // 测试基本的计数功能
     var counter: Int64 = 0
-    for (i in 0..3) {
+    for (_ in 0..3) {
         counter += 1
         println("重复执行第${counter}次")
     }

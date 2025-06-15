@@ -147,16 +147,17 @@ public class EnhancedMessageFactory {
     /**
      * 创建带数据的消息
      */
-    public func createMessageWithData(messageType: UInt16, data: Array<UInt8>, 
+    public func createMessageWithData(messageType: UInt16, data: Array<UInt8>,
                                      sourceActor: UInt64, targetActor: UInt64): EnhancedZeroCopyMessage {
         mutex.lock()
         try {
-            let buffer = memoryPool.allocate(UInt64(data.size))
-            buffer.copyFrom(data, 0)
-            
-            let message = EnhancedZeroCopyMessage(messageType, sourceActor, targetActor, buffer, UInt64(data.size))
+            // 创建SharedMemoryBuffer并复制数据
+            let sharedBuffer = SharedMemoryBuffer(UInt64(data.size))
+            sharedBuffer.copyFrom(data, 0)
+
+            let message = EnhancedZeroCopyMessage(messageType, sourceActor, targetActor, sharedBuffer, UInt64(data.size))
             message.setSendTimestamp(getCurrentTimeNanos())
-            
+
             return message
         } finally {
             mutex.unlock()
@@ -166,14 +167,15 @@ public class EnhancedMessageFactory {
     /**
      * 创建空消息
      */
-    public func createEmptyMessage(messageType: UInt16, sourceActor: UInt64, 
+    public func createEmptyMessage(messageType: UInt16, sourceActor: UInt64,
                                   targetActor: UInt64, size: UInt64): EnhancedZeroCopyMessage {
         mutex.lock()
         try {
-            let buffer = memoryPool.allocate(size)
-            let message = EnhancedZeroCopyMessage(messageType, sourceActor, targetActor, buffer, size)
+            // 创建空的SharedMemoryBuffer
+            let sharedBuffer = SharedMemoryBuffer(size)
+            let message = EnhancedZeroCopyMessage(messageType, sourceActor, targetActor, sharedBuffer, size)
             message.setSendTimestamp(getCurrentTimeNanos())
-            
+
             return message
         } finally {
             mutex.unlock()
@@ -307,11 +309,14 @@ public class HighPerformanceMessagePassing {
      */
     public func getMemoryUsage(): MemoryUsageStats {
         let poolStats = memoryPool.getStats()
+        let totalBytes = UInt64(poolStats.getLocalBytes() + poolStats.getRemoteBytes() + poolStats.getGlobalBytes())
+        let totalAllocations = UInt64(poolStats.getTotalAllocations())
+
         MemoryUsageStats(
-            poolStats.totalAllocated,
-            poolStats.currentUsage,
-            poolStats.peakUsage,
-            poolStats.poolEfficiency
+            totalBytes,           // totalAllocated
+            totalBytes,           // currentUsage (简化)
+            totalBytes,           // peakUsage (简化)
+            poolStats.getNumaEfficiency()  // poolEfficiency
         )
     }
 
