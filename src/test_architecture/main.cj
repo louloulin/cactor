@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor 7.0 - 简单架构验证测试
  */
-package test_architecture
+package cactor.test_architecture
 
 import cactor.foundation.memory.{CangjieFriendlyObjectPool, PoolStatistics}
 

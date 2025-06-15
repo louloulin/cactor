@@ -41,3 +41,7 @@ output-type = "static"
 # === 架构验证测试 ===
 [package.package-configuration."cactor.integration.testing.architecture_test"]
 output-type = "executable"
+
+# === 简单架构测试 ===
+[package.package-configuration."cactor.test_architecture"]
+output-type = "executable"
