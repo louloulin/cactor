@@ -166,3 +166,7 @@ output-type = "executable"
 # pb1.md API验证测试
 [package.package-configuration."cactor.tests.pb1_api_verification"]
 output-type = "executable"
+
+# pb1.md API演示
+[package.package-configuration."cactor.examples.pb1_api_demo"]
+output-type = "executable"
