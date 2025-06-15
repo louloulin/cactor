@@ -5,7 +5,4 @@
  */
 package cactor.foundation.memory
 
-// 导出内存管理组件
-public import cactor.foundation.memory.{ObjectPool, CangjieFriendlyObjectPool, StringPool, ByteArrayPool, PoolStatistics, TieredObjectPool, PoolTier, PoolManager}
-public import cactor.foundation.memory.{MemoryPool, NumaMemoryPool, MemoryStats, MemoryConfig}
-public import cactor.foundation.memory.object_pool.*
+// 内存管理包 - 所有符号通过文件自动导出

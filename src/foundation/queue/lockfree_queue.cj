@@ -112,7 +112,7 @@ public class AtomicSlot<T> {
  */
 public class LockFreeQueue<T> <: Queue<T> {
     private let buffer: Array<AtomicSlot<T>>
-    private let capacity: Int64
+    private let queueCapacity: Int64
     private let mask: Int64        // 容量掩码，用于快速取模
     private let head: AtomicInt64  // 读指针
     private let tail: AtomicInt64  // 写指针
@@ -135,8 +135,8 @@ public class LockFreeQueue<T> <: Queue<T> {
         this.failedDequeues = AtomicInt64(0)
 
         // 确保容量是2的幂
-        let actualCapacity = LockFreeQueue.nextPowerOfTwo(requestedCapacity)
-        this.capacity = actualCapacity
+        let actualCapacity = LockFreeQueue<T>.nextPowerOfTwo(requestedCapacity)
+        this.queueCapacity = actualCapacity
         this.mask = actualCapacity - 1
 
         // 初始化缓冲区
@@ -156,7 +156,7 @@ public class LockFreeQueue<T> <: Queue<T> {
             let currentHead = head.load()
             
             // 检查队列是否已满
-            if (currentTail - currentHead >= capacity) {
+            if (currentTail - currentHead >= queueCapacity) {
                 failedEnqueues.fetchAdd(1)
                 return false  // 队列已满
             }
@@ -248,7 +248,7 @@ public class LockFreeQueue<T> <: Queue<T> {
      * 获取队列容量
      */
     public func capacity(): Int64 {
-        return capacity
+        return this.queueCapacity
     }
     
     /**
@@ -260,7 +260,7 @@ public class LockFreeQueue<T> <: Queue<T> {
         head.store(currentTail)
 
         // 清空所有槽位
-        for (i in 0..capacity) {
+        for (i in 0..queueCapacity) {
             let slot = buffer[i]
             if (slot.isFilled()) {
                 slot.finishRead()  // 清空槽位
@@ -278,7 +278,7 @@ public class LockFreeQueue<T> <: Queue<T> {
             failedEnqueues.load(),
             failedDequeues.load(),
             size(),
-            capacity
+            queueCapacity
         )
     }
     

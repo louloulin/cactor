@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor 3.0 - 简化并发HashMap实现
+ * Foundation Layer - 简化并发HashMap实现
  */
-package cactor.foundation.concurrency
+package cactor.foundation.queue
 
 import std.sync.*
 import std.collection.*

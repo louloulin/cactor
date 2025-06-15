@@ -87,7 +87,7 @@ public class SimpleQueue<T> <: Queue<T> {
     private let mutex: ReentrantMutex
     private let maxCapacity: Int64
     
-    public init(capacity: Int64 = 1000) {
+    public init(capacity: Int64) {
         this.items = ArrayList<T>()
         this.mutex = ReentrantMutex()
         this.maxCapacity = capacity
@@ -110,8 +110,18 @@ public class SimpleQueue<T> <: Queue<T> {
             mutex.unlock()
             return None
         }
+
+        // 简化实现：创建新的ArrayList，跳过第一个元素
         let item = items[0]
-        items.removeAt(0)
+        let newItems = ArrayList<T>()
+        for (i in 1..items.size) {
+            newItems.append(items[i])
+        }
+        items.clear()
+        for (newItem in newItems) {
+            items.append(newItem)
+        }
+
         mutex.unlock()
         return Some(item)
     }

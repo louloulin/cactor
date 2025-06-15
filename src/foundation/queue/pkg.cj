@@ -5,5 +5,4 @@
  */
 package cactor.foundation.queue
 
-// 导出基础队列接口和实现
-public import cactor.foundation.queue.{Queue, SimpleQueue, LockFreeQueue, QueueStats, ConcurrentHashMap}
+// 基础队列包 - 所有符号通过文件自动导出

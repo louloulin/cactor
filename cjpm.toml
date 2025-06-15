@@ -9,7 +9,7 @@ output-type = "dynamic"
 [package.package-configuration."cactor.foundation.memory"]
 output-type = "static"
 
-[package.package-configuration."cactor.foundation.concurrency"]
+[package.package-configuration."cactor.foundation.queue"]
 output-type = "static"
 
 [package.package-configuration."cactor.foundation.serialization"]
