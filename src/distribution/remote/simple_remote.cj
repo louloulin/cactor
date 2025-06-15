@@ -8,7 +8,8 @@ import std.collection.*
 import std.sync.*
 import std.time.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-import cactor.foundation.network.{NetworkTransport, NetworkAddress, NetworkMessage, TransportFactory, TransportProtocol}
+import cactor.foundation.network.{NetworkTransport, NetworkAddress, TransportFactory, TransportProtocol}
+import cactor.core.message.{NetworkMessage, NetworkMessageSerializer}
 import cactor.foundation.serialization.{SerializationManager, GlobalSerializationManager}
 
 /**
@@ -17,11 +18,13 @@ import cactor.foundation.serialization.{SerializationManager, GlobalSerializatio
 public class SimpleRemoteSender {
     private let transport: NetworkTransport
     private let serializationManager: SerializationManager
+    private let networkMessageSerializer: NetworkMessageSerializer
     private let isStarted: AtomicBool
 
     public init(localAddress: NetworkAddress, protocol: TransportProtocol) {
         this.transport = TransportFactory.createTransport(protocol, localAddress)
         this.serializationManager = GlobalSerializationManager.getInstance()
+        this.networkMessageSerializer = NetworkMessageSerializer()
         this.isStarted = AtomicBool(false)
     }
 
@@ -55,7 +58,9 @@ public class SimpleRemoteSender {
 
         try {
             let networkMessage = NetworkMessage(targetActor, message, None)
-            transport.send(targetAddress, networkMessage)
+            // 序列化NetworkMessage为字节数组
+            let serializedData = networkMessageSerializer.serialize(networkMessage)
+            transport.send(targetAddress, serializedData)
             println("消息发送成功到 ${targetAddress.toString()}")
         } catch (e: Exception) {
             println("消息发送失败: ${e.message}")
@@ -84,6 +89,7 @@ public class SimpleRemoteSender {
 public class SimpleRemoteReceiver {
     private let transport: NetworkTransport
     private let serializationManager: SerializationManager
+    private let networkMessageSerializer: NetworkMessageSerializer
     private let isStarted: AtomicBool
     private let messageHandlers: HashMap<String, (Message) -> Unit>
     private let mutex: ReentrantMutex
@@ -91,12 +97,13 @@ public class SimpleRemoteReceiver {
     public init(localAddress: NetworkAddress, protocol: TransportProtocol) {
         this.transport = TransportFactory.createTransport(protocol, localAddress)
         this.serializationManager = GlobalSerializationManager.getInstance()
+        this.networkMessageSerializer = NetworkMessageSerializer()
         this.isStarted = AtomicBool(false)
         this.messageHandlers = HashMap<String, (Message) -> Unit>()
         this.mutex = ReentrantMutex()
-        
-        // 设置消息处理器
-        transport.setMessageHandler(handleNetworkMessage)
+
+        // 设置数据处理器
+        transport.setDataHandler(handleReceivedData)
     }
 
     /**
@@ -130,6 +137,18 @@ public class SimpleRemoteReceiver {
     }
 
     /**
+     * 处理接收到的字节数据
+     */
+    private func handleReceivedData(data: Array<UInt8>): Unit {
+        try {
+            let networkMessage = networkMessageSerializer.deserialize(data)
+            handleNetworkMessage(networkMessage)
+        } catch (e: Exception) {
+            println("反序列化网络消息失败: ${e.message}")
+        }
+    }
+
+    /**
      * 处理网络消息
      */
     private func handleNetworkMessage(networkMessage: NetworkMessage): Unit {
@@ -138,12 +157,12 @@ public class SimpleRemoteReceiver {
             mutex.lock()
             let handler = messageHandlers.get(targetActor)
             mutex.unlock()
-            
+
             match (handler) {
-                case Some(h) => 
+                case Some(h) =>
                     h(networkMessage.message)
                     println("消息处理成功: ${targetActor}")
-                case None => 
+                case None =>
                     println("未找到处理器: ${targetActor}")
             }
         } catch (e: Exception) {

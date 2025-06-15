@@ -8,8 +8,10 @@ package cactor.integration.testing.remote_demo
 import std.time.*
 import std.collection.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-import cactor.foundation.serialization.{JsonSerializer, BinarySerializer, SerializationFactory}
-import cactor.foundation.network.{NetworkAddress, NetworkMessage, TransportFactory, TransportProtocol}
+import cactor.foundation.serialization.{JsonSerializer, SerializationFactory}
+import cactor.foundation.network.{NetworkAddress, TransportFactory, TransportProtocol}
+import cactor.core.message.NetworkMessage
+import cactor.distribution.remote.RemoteFactory
 // import cactor.remote.{SimpleRemoteManager, RemoteFactory}
 
 /**
@@ -129,7 +131,7 @@ func testJsonSerializationOnly(): Unit {
     
     let startTime = DateTime.now()
     for (i in 0..1000) {
-        let serialized = jsonSerializer.serialize(message)
+        let serialized = jsonSerializer.serialize(message.getContent())
         let deserialized = jsonSerializer.deserialize(serialized)
     }
     let endTime = DateTime.now()

@@ -6,10 +6,10 @@ package cactor.integration.testing.remote_simple
 
 import std.time.*
 import std.collection.*
-import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-import cactor.foundation.serialization.{JsonSerializer, BinarySerializer, SerializationFactory}
-import cactor.foundation.network.{NetworkAddress, NetworkMessage, TransportFactory, TransportProtocol}
-// import cactor.remote.{SimpleRemoteManager, RemoteFactory}
+import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage, NetworkMessage}
+import cactor.foundation.serialization.{JsonSerializer, SerializationFactory}
+import cactor.foundation.network.{NetworkAddress, TransportFactory, TransportProtocol}
+import cactor.distribution.remote.RemoteFactory
 
 /**
  * 简单的字节数组转字符串函数
@@ -43,7 +43,7 @@ main(): Int64 {
         // 测试序列化
         println("2. 测试序列化...")
         let jsonSerializer = JsonSerializer()
-        let serializedData = jsonSerializer.serialize(stringMsg)
+        let serializedData = jsonSerializer.serialize(stringMsg.getContent())
         println("   JSON序列化成功，数据大小: ${serializedData.size}")
 
         // 打印序列化的JSON内容以便调试

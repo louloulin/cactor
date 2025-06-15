@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import cactor.core.message.*
 import cactor.core.context.*
-// import cactor.mailbox.lockfree.*
+import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
 import cactor.foundation.memory.object_pool.*
 
 /**
@@ -140,7 +140,7 @@ public class HighPerformanceActor <: Actor {
     private let actorId: String
     
     // 高性能无锁邮箱 (8字节指针)
-    private let mailbox: LockFreeRingBufferMailbox
+    private let mailbox: FoundationMailbox
     
     // Actor行为 (8字节指针)
     private let behavior: HighPerformanceActorBehavior
@@ -162,7 +162,7 @@ public class HighPerformanceActor <: Actor {
         this.behavior = behavior
         this.contextPool = contextPool
         this.stateValue = AtomicInt64(1)  // 1表示运行状态
-        this.mailbox = LockFreeRingBufferMailbox(1024)  // 1K容量，适合高吞吐量
+        this.mailbox = FoundationMailbox(1024, true)  // 1K容量，适合高吞吐量
         this.stats = AtomicInt64(0)
         this.createdAt = getCurrentTimeNanos()
         this.lastActiveTime = AtomicInt64(getCurrentTimeNanos())
