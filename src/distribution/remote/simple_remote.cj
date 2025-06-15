@@ -8,8 +8,8 @@ import std.collection.*
 import std.sync.*
 import std.time.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-import cactor.network.{NetworkTransport, NetworkAddress, NetworkMessage, TransportFactory, TransportProtocol}
-import cactor.serialization.{SerializationManager, GlobalSerializationManager}
+import cactor.foundation.network.{NetworkTransport, NetworkAddress, NetworkMessage, TransportFactory, TransportProtocol}
+import cactor.foundation.serialization.{SerializationManager, GlobalSerializationManager}
 
 /**
  * 简化的远程消息发送器

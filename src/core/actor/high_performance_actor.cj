@@ -10,7 +10,7 @@ import std.time.*
 import cactor.core.message.*
 import cactor.core.context.*
 import cactor.mailbox.lockfree.*
-import cactor.memory.object_pool.*
+import cactor.foundation.memory.object_pool.*
 
 /**
  * 压缩Actor状态 - 8字节紧凑表示

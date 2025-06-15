@@ -7,7 +7,7 @@ package cactor.integration.testing.monitoring_test
 
 import std.time.*
 import std.collection.*
-import cactor.monitoring.*
+import cactor.integration.monitoring.*
 
 /**
  * 简单的延迟函数

@@ -7,7 +7,7 @@ package cactor.integration.testing.memory_pool_test
 
 import std.sync.*
 import std.time.*
-import cactor.memory.*
+import cactor.foundation.memory.*
 import cactor.core.message.{Envelope, PingMessage}
 
 /**

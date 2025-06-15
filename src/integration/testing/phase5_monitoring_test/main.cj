@@ -6,7 +6,7 @@
 package cactor.integration.testing.phase5_monitoring_test
 
 import std.time.*
-import cactor.monitoring.*
+import cactor.integration.monitoring.*
 import cactor.core.actor.*
 
 // 测试分布式追踪功能

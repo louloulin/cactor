@@ -7,8 +7,8 @@ package cactor.integration.testing.remote_simple
 import std.time.*
 import std.collection.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-import cactor.serialization.{JsonSerializer, BinarySerializer, SerializationFactory}
-import cactor.network.{NetworkAddress, NetworkMessage, TransportFactory, TransportProtocol}
+import cactor.foundation.serialization.{JsonSerializer, BinarySerializer, SerializationFactory}
+import cactor.foundation.network.{NetworkAddress, NetworkMessage, TransportFactory, TransportProtocol}
 import cactor.remote.{SimpleRemoteManager, RemoteFactory}
 
 /**

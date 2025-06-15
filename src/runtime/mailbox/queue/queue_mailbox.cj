@@ -7,7 +7,7 @@ package cactor.runtime.mailbox.queue
 
 import std.collection.concurrent.*
 import std.sync.*
-import cactor.core.mailbox.Mailbox
+import cactor.runtime.mailbox.Mailbox
 import cactor.core.message.Envelope
 
 /**

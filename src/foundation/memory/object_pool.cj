@@ -169,35 +169,35 @@ public struct PoolStatistics {
 
 /**
  * 消息信封对象池
- * 专门用于Envelope对象的池化管理
+ * 专门用于BaseEnvelope对象的池化管理
  */
-public class EnvelopePool <: ObjectPool<Envelope> {
-    private let innerPool: CangjieFriendlyObjectPool<Envelope>
+public class EnvelopePool <: ObjectPool<BaseEnvelope> {
+    private let innerPool: CangjieFriendlyObjectPool<BaseEnvelope>
 
     public init(maxSize: Int64) {
-        this.innerPool = CangjieFriendlyObjectPool<Envelope>(
+        this.innerPool = CangjieFriendlyObjectPool<BaseEnvelope>(
             EnvelopePool.createEnvelope,
             EnvelopePool.resetEnvelope,
             maxSize
         )
     }
 
-    private static func createEnvelope(): Envelope {
+    private static func createEnvelope(): BaseEnvelope {
         // 创建一个空的Envelope，稍后会被重置
-        Envelope(DummyMessage(), None)
+        SimpleEnvelope(DummyMessage())
     }
 
-    private static func resetEnvelope(envelope: Envelope): Unit {
+    private static func resetEnvelope(envelope: BaseEnvelope): Unit {
         // 重置Envelope的状态
         // 注意：这里需要根据Envelope的实际实现来重置
         // 简化实现，实际中可能需要更复杂的重置逻辑
     }
 
-    public func acquire(): Envelope {
+    public func acquire(): BaseEnvelope {
         innerPool.acquire()
     }
 
-    public func release(obj: Envelope): Unit {
+    public func release(obj: BaseEnvelope): Unit {
         innerPool.release(obj)
     }
 
@@ -217,9 +217,24 @@ public class EnvelopePool <: ObjectPool<Envelope> {
 /**
  * 虚拟消息类型，用于对象池
  */
-class DummyMessage <: Message {
+class DummyMessage <: BaseMessage {
     public func messageType(): String {
         "DummyMessage"
+    }
+}
+
+/**
+ * 简单信封实现
+ */
+class SimpleEnvelope <: BaseEnvelope {
+    private let message: BaseMessage
+
+    public init(message: BaseMessage) {
+        this.message = message
+    }
+
+    public func getMessage(): BaseMessage {
+        message
     }
 }
 

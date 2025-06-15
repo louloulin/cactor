@@ -11,7 +11,7 @@ import std.collection.*
 import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
-import cactor.memory.object_pool.*
+import cactor.foundation.memory.object_pool.*
 
 // 简化时间函数
 func getCurrentTimeNanos(): Int64 {

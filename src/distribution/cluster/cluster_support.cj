@@ -9,9 +9,9 @@ import std.sync.*
 import std.time.*
 import cactor.core.message.{Message, StringMessage}
 import cactor.core.actor.{ActorRef, ActorPath}
-import cactor.network.{NetworkAddress, NetworkMessage}
-import cactor.remote.{SimpleRemoteManager}
-import cactor.network.{TransportProtocol}
+import cactor.foundation.network.{NetworkAddress, NetworkMessage}
+import cactor.distribution.remote.{SimpleRemoteManager}
+import cactor.foundation.network.{TransportProtocol}
 
 /**
  * 集群节点标识

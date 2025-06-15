@@ -12,8 +12,8 @@ import std.math.*
 import std.random.*
 import cactor.core.message.*
 import cactor.core.actor.*
-import cactor.dispatcher.work_stealing.*
-import cactor.mailbox.lockfree.*
+import cactor.runtime.dispatcher.work_stealing.*
+import cactor.runtime.mailbox.lockfree.*
 
 /**
  * 负载均衡策略枚举

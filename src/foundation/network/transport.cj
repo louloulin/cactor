@@ -9,7 +9,7 @@ import std.collection.*
 import std.sync.*
 import std.time.*
 import cactor.core.message.{Message, Envelope}
-import cactor.serialization.{SerializationManager, GlobalSerializationManager}
+import cactor.foundation.serialization.{SerializationManager, GlobalSerializationManager}
 
 /**
  * 网络地址

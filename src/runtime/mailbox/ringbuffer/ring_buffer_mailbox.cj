@@ -6,7 +6,7 @@
 package cactor.runtime.mailbox.ringbuffer
 
 import std.sync.*
-import cactor.core.mailbox.Mailbox
+import cactor.runtime.mailbox.Mailbox
 import cactor.core.message.Envelope
 
 /**

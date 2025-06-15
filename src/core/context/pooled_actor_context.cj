@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import std.collection.*
 import cactor.core.message.*
-import cactor.memory.object_pool.*
+import cactor.foundation.memory.object_pool.*
 
 // 前向声明避免循环依赖 - 使用不同的名称
 public interface ContextActorRef {

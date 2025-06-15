@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
 import cactor.core.actor.{ActorRef, ActorPath}
-import cactor.network.{NetworkAddress}
+import cactor.foundation.network.{NetworkAddress}
 
 /**
  * 故障检测器

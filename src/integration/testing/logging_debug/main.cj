@@ -6,11 +6,11 @@ package cactor.integration.testing.logging_debug
 
 import std.time.*
 import std.collection.*
-import cactor.logging.{Logger, LoggerFactory, LogLevel, LoggingConfig, SystemLogManager}
-import cactor.logging.{ConsoleAppender, FileAppender, AsyncAppender}
-import cactor.logging.{ActorLogger, ActorLogEvent, LogMetrics}
-import cactor.debug.{SystemDiagnostics, PerformanceProfiler, MessageTracer}
-import cactor.debug.{ActorSnapshot, SystemSnapshot, MessageTrace, DiagnosticReport}
+import cactor.integration.logging.{Logger, LoggerFactory, LogLevel, LoggingConfig, SystemLogManager}
+import cactor.integration.logging.{ConsoleAppender, FileAppender, AsyncAppender}
+import cactor.integration.logging.{ActorLogger, ActorLogEvent, LogMetrics}
+import cactor.integration.logging.{SystemDiagnostics, PerformanceProfiler, MessageTracer}
+import cactor.integration.logging.{ActorSnapshot, SystemSnapshot, MessageTrace, DiagnosticReport}
 
 /**
  * 日志和调试功能测试

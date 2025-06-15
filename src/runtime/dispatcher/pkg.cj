@@ -4,7 +4,7 @@
  */
 package cactor.runtime.dispatcher
 
-public import cactor.dispatcher.work_stealing.*
-public import cactor.dispatcher.batch_processing.*
-public import cactor.dispatcher.monitoring.*
-public import cactor.dispatcher.optimized.*
+public import cactor.runtime.dispatcher.work_stealing.*
+public import cactor.runtime.dispatcher.batch_processing.*
+public import cactor.runtime.dispatcher.monitoring.*
+public import cactor.runtime.dispatcher.optimized.*

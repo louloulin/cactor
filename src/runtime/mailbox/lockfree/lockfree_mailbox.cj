@@ -9,7 +9,7 @@ import std.sync.*
 import std.collection.*
 import std.math.*
 import cactor.core.message.{Message, Envelope}
-import cactor.core.mailbox.Mailbox
+import cactor.runtime.mailbox.Mailbox
 
 /**
  * 简化的原子槽位实现

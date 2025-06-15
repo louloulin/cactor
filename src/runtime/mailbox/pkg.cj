@@ -4,6 +4,6 @@
  */
 package cactor.runtime.mailbox
 
-public import cactor.mailbox.ringbuffer.*
-public import cactor.mailbox.queue.*
-public import cactor.mailbox.batching.*
+public import cactor.runtime.mailbox.ringbuffer.*
+public import cactor.runtime.mailbox.queue.*
+public import cactor.runtime.mailbox.batching.*

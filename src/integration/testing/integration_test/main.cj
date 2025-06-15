@@ -16,7 +16,7 @@ import cactor.pattern.*
 import cactor.supervision.*
 import cactor.routing.*
 import cactor.circuit_breaker.*
-import cactor.monitoring.*
+import cactor.integration.monitoring.*
 
 /**
  * 工作消息

@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import std.collection.*
 import std.math.*
-import cactor.core.mailbox.Mailbox
+import cactor.runtime.mailbox.Mailbox
 import cactor.core.message.Envelope
 
 /**

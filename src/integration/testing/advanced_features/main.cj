@@ -8,9 +8,9 @@ import std.time.*
 import std.collection.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
 import cactor.cluster.{NodeId, ClusterNode, SimpleClusterManager, FailoverManager, FailoverStrategy}
-import cactor.config.{ConfigurationManager, ActorSystemConfig, RemoteConfig, ClusterConfig, ConfigValue}
+import cactor.integration.configuration.{ConfigurationManager, ActorSystemConfig, RemoteConfig, ClusterConfig, ConfigValue}
 import cactor.benchmark.{BenchmarkSuite, BenchmarkResult}
-import cactor.network.{NetworkAddress, TransportProtocol}
+import cactor.foundation.network.{NetworkAddress, TransportProtocol}
 
 /**
  * 高级功能测试
