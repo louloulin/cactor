@@ -1,4 +1,4 @@
-package cactor.stream
+package cactor.distribution.streaming
 
 import cactor.*
 import std.collection.*

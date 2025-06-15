@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - Ask模式包
  */
-package cactor.pattern.ask
+package cactor.patterns.ask
 
 // 导出Ask模式相关类
 // 这些类在同一个包中的ask_pattern.cj文件中定义
