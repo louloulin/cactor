@@ -221,15 +221,30 @@ public class LocalActorRefImpl <: LocalActorRef {
 
     /**
      * 处理Actor消息
-     * 简化的消息分发机制
+     * 高性能消息分发机制
      */
     private func handleActorMessage(message: Message): Unit {
-        // 这里需要根据具体的Actor类型进行消息分发
-        // 由于仓颉的类型系统限制，我们使用简化的处理方式
-        
-        // 对于实际的Actor实现，需要在Actor中定义receive方法
-        // 这里只是一个占位符实现
-        println("Processing message: ${message.messageType()}")
+        // 直接调用Actor的receive方法，避免字符串比较
+        let result = actor.receive(message, context)
+
+        // 处理消息结果
+        match (result) {
+            case MessageResult.Handled =>
+                // 消息处理成功，增加计数
+                atomicState.incrementMessageCount()
+            case MessageResult.Unhandled =>
+                // 消息未处理，记录但不算错误
+                println("消息未被处理: ${message.messageType()}")
+            case MessageResult.Stop =>
+                atomicState.compareAndSetState(ActorLifecycleState.Running, ActorLifecycleState.Stopping)
+                mailbox.close()
+            case MessageResult.Restart =>
+                atomicState.compareAndSetState(ActorLifecycleState.Running, ActorLifecycleState.Restarting)
+            case MessageResult.Escalate =>
+                atomicState.incrementErrorCount()
+                // 向监督者报告问题
+                println("消息处理升级到监督者")
+        }
     }
 
     /**

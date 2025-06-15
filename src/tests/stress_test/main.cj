@@ -145,8 +145,17 @@ public class HighPerfLatencyCollector {
         
         // 计算百分位延迟（简化实现）
         let sortedLatencies = latencies.toArray()
-        // 这里应该对数组进行排序，简化实现
-        
+        // 简单的冒泡排序
+        for (i in 0..sortedLatencies.size) {
+            for (j in 0..(sortedLatencies.size - i - 1)) {
+                if (sortedLatencies[j] > sortedLatencies[j + 1]) {
+                    let temp = sortedLatencies[j]
+                    sortedLatencies[j] = sortedLatencies[j + 1]
+                    sortedLatencies[j + 1] = temp
+                }
+            }
+        }
+
         let p50Index = Int64(Float64(sortedLatencies.size) * 0.5)
         let p95Index = Int64(Float64(sortedLatencies.size) * 0.95)
         let p99Index = Int64(Float64(sortedLatencies.size) * 0.99)
@@ -349,7 +358,8 @@ class StressTestActor {
     }
     
     private func getCurrentTimeNanos(): Int64 {
-        DateTime.now().toUnixTimeStamp().toMilliseconds() * 1_000_000
+        // 使用更高精度的时间测量
+        DateTime.now().toUnixTimeStamp().toMicroseconds() * 1000
     }
     
     public func getProcessedCount(): Int64 {
@@ -480,7 +490,7 @@ public class StressTestSuite {
             let actorIndex = i % Int64(actors.size)
             let actor = actors[actorIndex]
 
-            let sendTime = DateTime.now().toUnixTimeStamp().toMilliseconds() * 1_000_000
+            let sendTime = DateTime.now().toUnixTimeStamp().toMicroseconds() * 1000
             let message = PingMessage(sendTime)
 
             actor.receive(message, context)
@@ -502,7 +512,7 @@ public class StressTestSuite {
                     let actorIndex = (threadId * messagesPerThread + i) % Int64(actors.size)
                     let actor = actors[actorIndex]
 
-                    let sendTime = DateTime.now().toUnixTimeStamp().toMilliseconds() * 1_000_000
+                    let sendTime = DateTime.now().toUnixTimeStamp().toMicroseconds() * 1000
                     let message = PingMessage(sendTime)
 
                     actor.receive(message, context)

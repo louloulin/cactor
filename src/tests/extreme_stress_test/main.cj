@@ -451,26 +451,26 @@ public class ExtremeStressTestSuite {
         if (throughputRatio >= 0.9) {
             println("✅ 吞吐量: 优秀 (${throughputRatio * 100.0}%)")
         } else if (throughputRatio >= 0.7) {
-            println("⚠️ 吞吐量: 良好 (${throughputRatio * 100.0}%)")
+            println("⚠ 吞吐量: 良好 (${throughputRatio * 100.0}%)")
         } else {
             println("❌ 吞吐量: 需要改进 (${throughputRatio * 100.0}%)")
         }
-        
+
         // 延迟评估
         if (latencyStats.p99Latency < 100.0) {
             println("✅ P99延迟: 优秀 (${latencyStats.p99Latency}μs < 100μs)")
         } else if (latencyStats.p99Latency < 1000.0) {
-            println("⚠️ P99延迟: 良好 (${latencyStats.p99Latency}μs < 1ms)")
+            println("⚠ P99延迟: 良好 (${latencyStats.p99Latency}μs < 1ms)")
         } else {
             println("❌ P99延迟: 需要改进 (${latencyStats.p99Latency}μs > 1ms)")
         }
-        
+
         // 一致性评估
         let latencyVariance = latencyStats.maxLatency - latencyStats.minLatency
         if (latencyVariance < 1000.0) {
             println("✅ 延迟一致性: 优秀 (变化范围${latencyVariance}μs)")
         } else {
-            println("⚠️ 延迟一致性: 需要改进 (变化范围${latencyVariance}μs)")
+            println("⚠ 延迟一致性: 需要改进 (变化范围${latencyVariance}μs)")
         }
     }
 }
