@@ -130,3 +130,7 @@ output-type = "executable"
 # 压力测试和性能分析
 [package.package-configuration."cactor.tests.stress_test"]
 output-type = "executable"
+
+# Phase 1 无锁邮箱系统测试
+[package.package-configuration."cactor.tests.lockfree_mailbox_test"]
+output-type = "executable"
