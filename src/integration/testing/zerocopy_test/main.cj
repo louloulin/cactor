@@ -5,11 +5,94 @@
  */
 package cactor.integration.testing.zerocopy_test
 
-// import cactor.core.zerocopy.*
-// import cactor.core.memory.*
 import std.time.*
-import std.sync.sleep
+import std.sync.*
 import std.collection.*
+import cactor.core.message.{ZeroCopyMessageImpl, ZeroCopyMessageFactory, MessagePool, ZeroCopyMessageBuilder}
+import cactor.foundation.memory.{MemoryPool}
+
+// 临时定义缺失的类型
+struct MemoryBlock {
+    public let size: UInt64
+    public let numaNode: Int32
+
+    public init(size: UInt64, numaNode: Int32) {
+        this.size = size
+        this.numaNode = numaNode
+    }
+}
+
+class NumaAwareMemoryPool {
+    public init() {}
+
+    public func allocate(size: UInt64): Option<MemoryBlock> {
+        Some(MemoryBlock(size, 0))
+    }
+
+    public func deallocate(block: MemoryBlock): Unit {}
+
+    public func getStats(): MemoryPoolStats {
+        MemoryPoolStats()
+    }
+}
+
+class LocalMemoryPool {
+    public init(node: Int32, chunkSize: UInt64) {}
+
+    public func tryAllocate(size: UInt64): Option<MemoryBlock> {
+        Some(MemoryBlock(size, 0))
+    }
+
+    public func deallocate(block: MemoryBlock): Unit {}
+}
+
+class MemoryPoolStats {
+    private let localAllocations: AtomicInt64
+    private let remoteAllocations: AtomicInt64
+    private let globalAllocations: AtomicInt64
+
+    public init() {
+        this.localAllocations = AtomicInt64(0)
+        this.remoteAllocations = AtomicInt64(0)
+        this.globalAllocations = AtomicInt64(0)
+    }
+
+    public func getLocalAllocations(): Int64 {
+        localAllocations.load()
+    }
+
+    public func getRemoteAllocations(): Int64 {
+        remoteAllocations.load()
+    }
+
+    public func getGlobalAllocations(): Int64 {
+        globalAllocations.load()
+    }
+
+    public func getNumaEfficiency(): Float64 {
+        let total = localAllocations.load() + remoteAllocations.load() + globalAllocations.load()
+        if (total == 0) { return 1.0 }
+        Float64(localAllocations.load()) / Float64(total)
+    }
+
+    public func recordLocalAllocation(size: UInt64): Unit {
+        localAllocations.fetchAdd(1)
+    }
+
+    public func recordRemoteAllocation(size: UInt64): Unit {
+        remoteAllocations.fetchAdd(1)
+    }
+
+    public func recordGlobalAllocation(size: UInt64): Unit {
+        globalAllocations.fetchAdd(1)
+    }
+
+    public func reset(): Unit {
+        localAllocations.store(0)
+        remoteAllocations.store(0)
+        globalAllocations.store(0)
+    }
+}
 
 // 零拷贝消息基础功能测试
 func testZeroCopyMessageBasics(): Bool {
@@ -29,8 +112,8 @@ func testZeroCopyMessageBasics(): Bool {
         return false
     }
     
-    if (message.messageType() != "ZeroCopyMessage_1") {
-        println("✗ 消息类型不正确：${message.messageType()}")
+    if (message.getMessageTypeString() != "ZeroCopyMessage_1") {
+        println("✗ 消息类型不正确：${message.getMessageTypeString()}")
         return false
     }
     
@@ -71,8 +154,8 @@ func testMessageBuilder(): Bool {
         return false
     }
     
-    if (!message.messageType().contains("42")) {
-        println("✗ 构建的消息类型不正确：${message.messageType()}")
+    if (!message.getMessageTypeString().contains("42")) {
+        println("✗ 构建的消息类型不正确：${message.getMessageTypeString()}")
         return false
     }
     

@@ -7,7 +7,7 @@ package cactor.integration.testing.circuit_breaker_test
 
 import std.sync.*
 import std.time.*
-// import cactor.circuit_breaker.*
+import cactor.patterns.circuit_breaker.{CircuitBreaker, BasicCircuitBreaker, CircuitBreakerConfig, CircuitBreakerState, CircuitBreakerFactory, CircuitBreakerOpenException, CircuitBreakerDecorator}
 
 /**
  * 测试异常类

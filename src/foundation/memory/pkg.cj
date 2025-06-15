@@ -5,4 +5,5 @@
  */
 package cactor.foundation.memory
 
-// 内存管理包 - 所有符号通过文件自动导出
+// 导出对象池相关类型
+public import cactor.foundation.memory.object_pool.{ObjectPool, SimpleObjectPool, ThreadLocalObjectPool}

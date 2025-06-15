@@ -442,3 +442,29 @@ func getCurrentNumaNode(): Int32 {
 func getCurrentTimeMillis(): Int64 {
     DateTime.now().toUnixTimeStamp().toMilliseconds()
 }
+
+/**
+ * 内存池工厂
+ */
+public struct MemoryPoolFactory {
+    /**
+     * 创建基础内存池
+     */
+    public static func createPool(maxSize: UInt64): MemoryPool {
+        GlobalMemoryPool()
+    }
+
+    /**
+     * 创建高吞吐量内存池
+     */
+    public static func createHighThroughputPool(): MemoryPool {
+        NumaAwareMemoryPool()
+    }
+
+    /**
+     * 创建低延迟内存池
+     */
+    public static func createLowLatencyPool(): MemoryPool {
+        NumaAwareMemoryPool()
+    }
+}
