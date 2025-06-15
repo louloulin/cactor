@@ -135,6 +135,14 @@ output-type = "executable"
 [package.package-configuration."cactor.tests.lockfree_mailbox_test"]
 output-type = "executable"
 
+# 高性能Actor测试 - 基于tu.md优化
+[package.package-configuration."cactor.tests.high_performance_actor_test"]
+output-type = "executable"
+
+# 综合压力测试 - 验证tu.md所有功能
+[package.package-configuration."cactor.tests.comprehensive_stress_test"]
+output-type = "executable"
+
 # 高吞吐量测试 - 暂时禁用，有编译问题
 # [package.package-configuration."cactor.tests.high_throughput_test"]
 # output-type = "executable"
