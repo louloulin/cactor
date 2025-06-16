@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import std.sync.sleep
 import std.collection.*
-// import cactor.dispatcher.work_stealing.*
+import cactor.runtime.dispatcher.work_stealing.{WorkStealingQueue, WorkStealingDispatcher}
 import cactor.core.message.{Envelope, PingMessage, Message}
 import cactor.core.actor.{ActorRef, Actor}
 import cactor.core.context.ActorContext

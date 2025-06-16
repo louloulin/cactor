@@ -10,8 +10,7 @@ import std.time.*
 import std.collection.*
 import cactor.core.message.*
 import cactor.core.actor.*
-// import cactor.dispatcher.optimized.*
-// import cactor.mailbox.lockfree.*
+import cactor.runtime.dispatcher.optimized.{SchedulerConfig, WorkerLoadStats, LoadBalancer, OptimizedWorkStealingDispatcher, LoadBalancingStrategy, StealingStrategy, PerformanceReport}
 
 // 测试消息类型
 public class TestMessage <: Message {

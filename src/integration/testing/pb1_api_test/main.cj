@@ -7,7 +7,10 @@ package cactor.integration.testing.pb1_api_test
 
 import std.time.*
 import std.sync.*
-import cactor.*  // 测试简化的导入方式
+import cactor.core.actor.*
+import cactor.core.message.*
+import cactor.core.context.*
+import cactor.core.system.*
 
 /**
  * 测试Actor - 验证新的API

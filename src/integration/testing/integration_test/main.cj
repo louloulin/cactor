@@ -12,10 +12,8 @@ import cactor.core.actor.{Actor, ActorRef, ActorPath}
 import cactor.core.message.*
 import cactor.core.context.ActorContext
 import cactor.runtime.*
-// import cactor.pattern.*
-// import cactor.supervision.*
-// import cactor.routing.*
-// import cactor.circuit_breaker.*
+import cactor.patterns.circuit_breaker.{CircuitBreakerFactory}
+import cactor.patterns.routing.{Router, RouterFactory}
 import cactor.integration.monitoring.*
 
 /**
