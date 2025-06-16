@@ -69,3 +69,15 @@ output-type = "executable"
 # === Plan7综合功能验证测试 ===
 [package.package-configuration."cactor.integration.testing.plan7_comprehensive_test"]
 output-type = "executable"
+
+# === 简单性能测试 ===
+[package.package-configuration."cactor.integration.testing.simple_performance_test"]
+output-type = "executable"
+
+# === JCTools启发基准测试 ===
+[package.package-configuration."cactor.integration.testing.jctools_inspired_benchmark"]
+output-type = "executable"
+
+# === 极限性能测试 ===
+[package.package-configuration."cactor.integration.testing.extreme_performance_test"]
+output-type = "executable"
