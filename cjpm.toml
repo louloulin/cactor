@@ -38,7 +38,16 @@ output-type = "static"
 output-type = "static"
 
 # === API Layer ===
+[package.package-configuration."cactor.api"]
+output-type = "static"
+
+[package.package-configuration."cactor.api.config"]
+output-type = "static"
+
 [package.package-configuration."cactor.api.public"]
+output-type = "static"
+
+[package.package-configuration."cactor.api.extensions"]
 output-type = "static"
 
 # === 架构验证测试 ===
@@ -132,3 +141,17 @@ output-type = "executable"
 # === XF API设计验证测试 ===
 [package.package-configuration."cactor.integration.testing.xf_api_design_test"]
 output-type = "executable"
+
+# === 新API测试 ===
+[package.package-configuration."cactor.integration.testing.api_test"]
+output-type = "executable"
+
+# === 新API演示 ===
+[package.package-configuration."cactor.examples.api_demo"]
+output-type = "executable"
+
+# === 简单API测试 ===
+[package.package-configuration."cactor.api.test"]
+output-type = "executable"
+
+

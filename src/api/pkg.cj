@@ -6,5 +6,5 @@
 package cactor.api
 
 // API组件导出
+public import cactor.api.config.*
 public import cactor.api.public.*
-public import cactor.api.extensions.*
