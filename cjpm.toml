@@ -57,3 +57,11 @@ output-type = "executable"
 # === 无锁队列性能基准测试 ===
 [package.package-configuration."cactor.integration.testing.lockfree_queue_benchmark"]
 output-type = "executable"
+
+# === 无锁队列多线程性能基准测试 ===
+[package.package-configuration."cactor.integration.testing.lockfree_queue_multithread_benchmark"]
+output-type = "executable"
+
+# === 优化队列性能基准测试 ===
+[package.package-configuration."cactor.integration.testing.optimized_queue_benchmark"]
+output-type = "executable"
