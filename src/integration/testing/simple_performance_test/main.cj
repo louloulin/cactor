@@ -221,9 +221,10 @@ public class SimplePerformanceTestSuite {
     public func testMailboxPerformance(): Bool {
         println("🚀 测试3: 邮箱性能测试")
 
-        // 测试Foundation层的LockFreeQueue
-        let queue = LockFreeQueue<SimpleTestMessage>(1024)
-        let messageCount: Int64 = 5000
+        // 测试Foundation层的LockFreeQueue，使用更大的容量
+        let queueCapacity: Int64 = 8192
+        let queue = LockFreeQueue<SimpleTestMessage>(queueCapacity)
+        let messageCount: Int64 = 5000  // 小于队列容量
 
         let startTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
 
@@ -249,20 +250,26 @@ public class SimplePerformanceTestSuite {
         let duration = Float64(endTime - startTime) / 1000.0
         let throughput = Float64(enqueued + dequeued) / duration
 
-        println("  队列容量: 1024")
+        println("  队列容量: ${queueCapacity}")
+        println("  目标消息数: ${messageCount}")
         println("  入队数量: ${enqueued}")
         println("  出队数量: ${dequeued}")
         println("  测试时长: ${duration}秒")
         println("  吞吐量: ${throughput} ops/s")
 
         let stats = queue.getStats()
-        println("  成功率: ${stats.getSuccessRate() * 100.0}%")
+        let successRate = stats.getSuccessRate() * 100.0
+        println("  队列成功率: ${successRate}%")
 
-        let success = enqueued == messageCount && dequeued == enqueued
+        // 修改成功条件：入队数量应该等于目标数量，出队数量应该等于入队数量
+        let success = enqueued == messageCount && dequeued == enqueued && successRate >= 95.0
         if (success) {
             println("  ✅ 邮箱性能测试通过")
         } else {
             println("  ❌ 邮箱性能测试失败")
+            println("    预期入队: ${messageCount}, 实际入队: ${enqueued}")
+            println("    预期出队: ${enqueued}, 实际出队: ${dequeued}")
+            println("    成功率: ${successRate}% (要求 >= 95%)")
         }
 
         return success
