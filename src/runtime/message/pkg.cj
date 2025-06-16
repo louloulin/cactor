@@ -5,8 +5,4 @@
  */
 package cactor.runtime.message
 
-// 导出消息处理的Runtime实现
-public import cactor.runtime.message.{
-    BatchMessageProcessor,
-    BatchProcessorStats
-}
+// Message Runtime包 - 避免循环依赖，通过文件自动导出

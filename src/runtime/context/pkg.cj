@@ -5,10 +5,4 @@
  */
 package cactor.runtime.context
 
-// 导出Actor上下文的Runtime实现
-public import cactor.runtime.context.{
-    PooledActorContext,
-    PooledActorContextPool,
-    PooledContextStats,
-    PoolStats
-}
+// Context Runtime包 - 避免循环依赖，通过文件自动导出

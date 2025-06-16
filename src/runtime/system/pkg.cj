@@ -5,14 +5,4 @@
  */
 package cactor.runtime.system
 
-// 导出Runtime层的ActorSystem实现
-public import cactor.runtime.system.{
-    SimpleActorSystem,
-    HighPerformanceActorSystem,
-    HighPerformanceActorSystemConfig,
-    HighPerformanceActorRef,
-    SystemStats,
-    SystemPerformanceMonitor,
-    MonitorStats,
-    DispatcherStats
-}
+// Runtime系统包 - 避免循环依赖，通过文件自动导出

@@ -13,8 +13,11 @@ import cactor.core.system.{ActorSystem}
 import cactor.core.guardian.{GuardianType}
 import cactor.runtime.guardian.{RuntimeSystemGuardian, RuntimeUserGuardian}
 import cactor.runtime.system.{HighPerformanceActorSystem, HighPerformanceActorSystemConfig}
-import cactor.runtime.mailbox.{MailboxFactory}
-import cactor.runtime.dispatcher.{DispatcherFactory}
+import cactor.runtime.mailbox.factory.{AdvancedMailboxFactory, DefaultAdvancedMailboxFactory}
+import cactor.runtime.dispatcher.factory.{AdvancedDispatcherFactory, DefaultAdvancedDispatcherFactory}
+import cactor.runtime.system.{SimpleActorSystem}
+import cactor.core.guardian.{GuardianStats}
+import cactor.core.config.{MailboxConfig, DispatcherConfig}
 
 /**
  * CActorRuntime - 统一运行时管理器
@@ -33,8 +36,8 @@ public class CActorRuntime {
     private let userGuardian: RuntimeUserGuardian
     
     // 运行时组件
-    private let mailboxFactory: MailboxFactory
-    private let dispatcherFactory: DispatcherFactory
+    private let mailboxFactory: AdvancedMailboxFactory
+    private let dispatcherFactory: AdvancedDispatcherFactory
     private let highPerformanceSystem: HighPerformanceActorSystem
     
     // 运行时状态
@@ -57,8 +60,8 @@ public class CActorRuntime {
         this.userGuardian = RuntimeUserGuardian(actorSystem)
         
         // 创建运行时组件
-        this.mailboxFactory = MailboxFactory(config.mailboxConfig)
-        this.dispatcherFactory = DispatcherFactory(config.dispatcherConfig)
+        this.mailboxFactory = DefaultAdvancedMailboxFactory()
+        this.dispatcherFactory = DefaultAdvancedDispatcherFactory()
         this.highPerformanceSystem = HighPerformanceActorSystem(config.highPerformanceConfig)
         
         // 初始化状态
@@ -195,6 +198,27 @@ public class CActorRuntime {
         // 这里应该使用Core层的基础实现
         SimpleActorSystem(name)
     }
+
+    /**
+     * 获取邮箱工厂
+     */
+    public func getMailboxFactory(): AdvancedMailboxFactory {
+        mailboxFactory
+    }
+
+    /**
+     * 获取调度器工厂
+     */
+    public func getDispatcherFactory(): AdvancedDispatcherFactory {
+        dispatcherFactory
+    }
+
+    /**
+     * 获取基础Actor系统
+     */
+    public func getActorSystem(): ActorSystem {
+        actorSystem
+    }
     
     private func generateActorName(): String {
         let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
@@ -216,10 +240,10 @@ public struct CActorRuntimeConfig {
     public let highPerformanceConfig: HighPerformanceActorSystemConfig
     public let enableMonitoring: Bool
     public let enablePersistence: Bool
-    
+
     public init(
         mailboxConfig: MailboxConfig,
-        dispatcherConfig: DispatcherConfig, 
+        dispatcherConfig: DispatcherConfig,
         highPerformanceConfig: HighPerformanceActorSystemConfig,
         enableMonitoring: Bool,
         enablePersistence: Bool
@@ -236,21 +260,21 @@ public struct CActorRuntimeConfig {
      */
     public static func createDefault(): CActorRuntimeConfig {
         CActorRuntimeConfig(
-            MailboxConfig.createDefault(),
-            DispatcherConfig.createDefault(),
+            MailboxConfig.createUnbounded(),
+            DispatcherConfig.createThreadPool(),
             HighPerformanceActorSystemConfig.createDefault(),
             true,  // 启用监控
             false  // 禁用持久化
         )
     }
-    
+
     /**
      * 创建生产级配置
      */
     public static func createProduction(): CActorRuntimeConfig {
         CActorRuntimeConfig(
-            MailboxConfig.createProduction(),
-            DispatcherConfig.createProduction(),
+            MailboxConfig.createBounded(10000),
+            DispatcherConfig.createWorkStealing(),
             HighPerformanceActorSystemConfig.createExtreme(),
             true,  // 启用监控
             true   // 启用持久化
