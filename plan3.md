@@ -1,1395 +1,433 @@
-# CActor 3.0 - 低延时高吞吐仓颉Actor框架全面升级计划
+# CActor 完整Actor系统实现计划 - plan3.md
 
-## 🎯 项目愿景
+## 🎯 总体愿景
 
-基于对Akka、Actix、ProtoActor等顶级Actor框架的深度分析，结合仓颉语言的独特优势（宏系统、高性能并发、零成本抽象），构建世界级的低延时高吞吐Actor框架。
+基于对Akka、Actix、ProtoActor等世界级Actor框架的深度分析，结合CActor现有代码库的全面审查，制定一个完整的Actor功能实现计划。目标是构建一个高性能、类型安全、功能完整的仓颉语言Actor系统，支持灵活的配置和企业级特性。
 
-## 📊 当前CActor分析总结
+## 📊 主流Actor框架核心特性分析
 
-### ✅ 已实现的核心功能
-- **基础Actor系统**: Actor接口、消息传递、上下文管理
-- **高级邮箱系统**: 环形缓冲、优先级队列、批量处理
-- **监督策略**: 重启、停止、恢复等故障处理机制
-- **路由系统**: 轮询、随机、一致性哈希等路由策略
-- **远程通信**: 序列化、网络传输、集群管理
-- **持久化系统**: 事件存储、快照管理、状态恢复
-- **流处理**: 背压控制、流水线处理、性能监控
-- **性能优化**: 内存池、对象复用、原子操作
+### 🏆 Akka架构精髓
+**核心设计原则**:
+- **Actor层次结构**: 严格的监督树，每个Actor都有明确的父子关系
+- **位置透明**: ActorRef抽象，本地和远程Actor使用相同接口
+- **消息驱动**: 纯异步消息传递，无共享状态
+- **弹性设计**: Let-it-crash哲学，通过监督策略处理故障
+- **配置驱动**: 通过配置文件灵活配置Dispatcher、Mailbox等
 
-### 🔍 性能瓶颈分析
-1. **消息传递延时**: 当前实现存在不必要的内存分配
-2. **序列化开销**: 缺乏零拷贝序列化机制
-3. **调度器效率**: 未充分利用仓颉轻量级线程优势
-4. **内存管理**: 对象池策略需要优化
-5. **网络I/O**: 缺乏高性能异步I/O实现
-
-### 🚀 优化机会
-1. **宏系统DSL**: 利用仓颉宏实现编译时优化
-2. **零拷贝消息**: 基于仓颉内存模型的零拷贝实现
-3. **NUMA感知**: 利用硬件特性优化性能
-4. **JIT友好**: 设计JIT编译器友好的代码结构
-5. **协程调度**: 深度集成仓颉协程系统
-
-## 🏗️ CActor 3.0 架构设计
-
-### 核心设计原则
-1. **零拷贝优先**: 最小化内存分配和拷贝
-2. **编译时优化**: 利用宏系统实现编译时代码生成
-3. **硬件感知**: 充分利用现代硬件特性
-4. **类型安全**: 保持仓颉语言的类型安全优势
-5. **可观测性**: 内置全面的监控和调试能力
-
-### 技术栈选择
-- **核心语言**: 仓颉 0.53.4+
-- **宏系统**: 仓颉宏用于DSL和代码生成
-- **并发模型**: 仓颉轻量级线程 + 协程
-- **内存管理**: 自定义内存池 + 零拷贝
-- **网络I/O**: 基于仓颉net库的高性能实现
-- **序列化**: 自研零拷贝序列化框架
-
-## 🎭 Phase 1: 宏驱动的Actor DSL系统
-
-### 1.1 Actor定义宏
-```cangjie
-// 目标语法
-@actor
-struct CounterActor {
-    var count: Int64 = 0
-    
-    @handler
-    func increment(msg: IncrementMsg) -> Unit {
-        count += msg.value
+**关键配置模式**:
+```hocon
+akka {
+  actor {
+    default-dispatcher {
+      type = Dispatcher
+      executor = "thread-pool-executor"
+      thread-pool-executor {
+        fixed-pool-size = 16
+      }
+      throughput = 100
     }
     
-    @handler  
-    func getCount(msg: GetCountMsg) -> CountResponse {
-        CountResponse(count)
+    default-mailbox {
+      mailbox-type = "akka.dispatch.UnboundedMailbox"
     }
-}
-```
-
-### 1.2 消息路由宏
-```cangjie
-// 编译时生成高效路由代码
-@route_table
-enum MessageType {
-    | Increment(IncrementMsg)
-    | GetCount(GetCountMsg)
-    | Reset(ResetMsg)
-}
-```
-
-### 1.3 性能监控宏
-```cangjie
-// 自动注入性能监控代码
-@monitored
-@actor
-struct HighPerfActor {
-    // 编译时自动生成监控代码
-}
-```
-
-### 实现计划
-- [x] ✅ **设计Actor定义宏语法** - 已完成基础宏语法设计和验证
-- [x] ✅ **实现基础宏功能** - 已实现log_info、time_it、repeat_3_times、simple_actor宏
-- [x] ✅ **建立宏编译流程** - 已掌握--compile-macro编译选项和正确的开发流程
-- [x] ✅ **创建宏测试框架** - 已实现完整的宏功能测试验证
-- [x] ✅ **实现高级Actor宏** - 已实现actor_def、message_handler、route_table、actor_perf_monitor等高级宏
-- [x] ✅ **宏系统稳定性验证** - 通过了完整的Plan3宏功能测试，验证了宏系统的稳定性和可靠性
-- [x] ✅ **修复编译问题** - 2024年12月成功修复所有编译和链接错误，系统可正常运行
-- [x] ✅ **基础功能验证** - Actor系统基础功能测试通过，处理10,000条消息，处理率100%
-- [ ] 🔄 实现消息处理器代码生成 - 基础框架已建立，需要扩展复杂功能
-- [ ] 开发路由表编译时优化
-- [ ] 集成性能监控代码注入
-- [ ] 创建DSL语法验证和错误报告
-
-### ✅ 已完成的宏功能验证
-- **基础宏系统**: 成功实现日志、计时、重复执行等实用宏
-- **Actor增强宏**: 实现simple_actor宏，可为结构体添加Actor功能
-- **高级Actor宏**: 实现了actor_def、message_handler、route_table、actor_perf_monitor等复杂宏
-- **宏组合使用**: 验证了多个宏的组合使用和嵌套调用
-- **编译和测试**: 建立了完整的宏编译、测试、验证流程
-- **技术突破**: 掌握了Cangjie宏系统的核心概念和最佳实践
-- **系统稳定性**: 通过了完整的Plan3测试套件，验证了宏系统的稳定性和可靠性
-
-### 🎉 Phase 1 宏系统里程碑达成
-**2024年12月 - CActor宏驱动DSL系统基础完成**
-- ✅ 基础宏功能实现并验证
-- ✅ 高级Actor宏系统建立
-- ✅ 宏编译和测试流程完善
-- ✅ 宏系统稳定性验证通过
-- ✅ 编译问题全面修复，系统稳定运行
-- ✅ 基础功能验证通过，性能测试达标
-- 🚀 为Phase 2零拷贝消息系统奠定了坚实基础
-
-### 🎉 Phase 2 零拷贝消息系统基础完成
-**2024年12月 - CActor零拷贝消息传递系统框架建立**
-- ✅ 零拷贝消息接口设计和实现
-- ✅ NUMA感知内存池系统建立
-- ✅ 零拷贝序列化框架实现
-- ✅ 基础消息传递优化完成
-- ✅ 编译问题全面修复，系统稳定运行
-- ✅ 基础零拷贝测试通过，性能验证达标
-- 🚀 为Phase 3高性能调度器系统奠定了基础
-
-### 🎉 编译修复里程碑达成
-**2024年12月 - CActor编译和链接问题全面解决**
-- ✅ 类型不匹配错误修复
-- ✅ 基础零拷贝系统验证通过
-- ✅ 性能测试达标（10,000条消息处理）
-- ✅ 系统稳定性验证完成
-- ✅ 并发测试通过（5个Actor并发处理）
-- ✅ 生命周期管理正常
-- ✅ 零拷贝消息传递性能优异
-- 🚀 为继续实现plan3.md功能扫清了障碍
-
-### 🎯 系统验证状态
-**核心功能测试结果**:
-- **编译状态**: ✅ 成功 (无链接错误)
-- **零拷贝测试**: ✅ 通过 (8/8项测试)
-- **基础Actor测试**: ✅ 通过 (4/4项测试)
-- **性能基准**: ✅ 达标 (10,000条消息/秒级处理)
-- **并发安全**: ✅ 验证通过
-- **内存管理**: ✅ NUMA感知内存池正常
-
-## ⚡ Phase 2: 零拷贝消息传递系统
-
-### 2.1 零拷贝消息设计
-```cangjie
-// 基于仓颉内存模型的零拷贝消息
-public interface ZeroCopyMessage {
-    func getMessageId(): UInt64
-    func getPayloadPtr(): UnsafePointer<UInt8>
-    func getPayloadSize(): UInt64
-    func release(): Unit
-}
-```
-
-### 2.2 内存池优化
-```cangjie
-// NUMA感知的内存池
-public class NumaAwareMemoryPool {
-    private let pools: Array<LocalMemoryPool>
     
-    public func allocate<T>(size: UInt64, numaNode: Int32): UnsafePointer<T>
-    public func deallocate<T>(ptr: UnsafePointer<T>, numaNode: Int32): Unit
+    mailbox {
+      bounded-mailbox {
+        mailbox-type = "akka.dispatch.BoundedMailbox"
+        mailbox-capacity = 1000
+      }
+    }
+  }
 }
 ```
 
-### 2.3 消息序列化
+### ⚡ Actix架构特色 (Rust)
+**核心特性**:
+- **类型安全**: 编译时消息类型检查
+- **零成本抽象**: 高性能异步运行时
+- **监督策略**: 灵活的错误处理和恢复机制
+- **背压控制**: 自动流量控制防止系统过载
+
+### 🚀 ProtoActor架构优势
+**核心特性**:
+- **跨语言**: Go、C#、Java/Kotlin统一API
+- **高性能**: 优化的消息传递和内存管理
+- **集群支持**: 内置分布式Actor支持
+- **简洁API**: 最小化配置，开箱即用
+
+## 🔍 CActor现状分析
+
+### ✅ 已有优势
+1. **Foundation层**: 高性能LockFreeQueue，支持百万级操作/秒
+2. **Core层**: 完整的Actor接口和生命周期管理
+3. **Runtime层**: 基础的Mailbox和Dispatcher实现
+4. **工作窃取调度器**: 高性能并发调度
+5. **类型安全**: 基于仓颉强类型系统
+
+### ❌ 关键缺陷
+1. **配置系统不完整**: 缺乏灵活的Mailbox/Dispatcher配置
+2. **Actor创建流程**: 没有完整的配置绑定机制
+3. **监督策略**: 缺乏完整的错误处理和恢复机制
+4. **路由系统**: 缺乏负载均衡和消息分发
+5. **集群支持**: 缺乏分布式Actor支持
+
+## 🎯 完整实现计划
+
+### Phase 1: 核心配置系统重构 (优先级: 🔥 极高)
+
+#### 1.1 Actor配置框架设计
+**目标**: 建立完整的Actor配置系统，支持灵活的Mailbox和Dispatcher配置
+
 ```cangjie
-// 零拷贝序列化框架
-@serializable
-struct HighPerfMessage {
-    let id: UInt64
-    let data: Array<UInt8>
-    let timestamp: Int64
+// src/core/config/actor_config.cj
+public interface ActorConfiguration {
+    func getMailboxConfig(): MailboxConfig
+    func getDispatcherConfig(): DispatcherConfig
+    func getSupervisionConfig(): SupervisionConfig
+    func getRoutingConfig(): Option<RoutingConfig>
 }
-```
 
-### 实现计划
-- [x] ✅ **设计零拷贝消息接口** - 已实现ZeroCopyMessage接口和ZeroCopyMessageImpl
-- [x] ✅ **实现NUMA感知内存池** - 已实现NumaAwareMemoryPool和相关内存管理组件
-- [x] ✅ **开发零拷贝序列化框架** - 已实现ZeroCopySerializer和相关序列化组件
-- [x] ✅ **基础消息传递路径** - 已实现OptimizedMessagePassing和基础消息传递优化
-- [ ] 🔄 优化消息传递路径 - 基础框架已建立，需要进一步性能优化
-- [ ] 集成内存使用监控
-
-## 🚀 Phase 3: 高性能调度器系统
-
-### 3.1 工作窃取调度器
-```cangjie
-// 基于仓颉协程的工作窃取调度器
-public class WorkStealingScheduler {
-    private let workers: Array<WorkerThread>
-    private let globalQueue: LockFreeQueue<ActorTask>
+public class MailboxConfig {
+    public let mailboxType: MailboxType
+    public let capacity: Int64
+    public let pushTimeout: Duration
+    public let stashCapacity: Int64
     
-    public func schedule(actor: ActorRef, message: Message): Unit
-    public func steal(): Option<ActorTask>
+    public enum MailboxType {
+        | Unbounded
+        | Bounded(capacity: Int64)
+        | Priority(comparator: (Message, Message) -> Int32)
+        | Stashing(stashCapacity: Int64)
+        | Custom(factory: () -> Mailbox)
+    }
 }
-```
 
-### 3.2 优先级调度
-```cangjie
-// 多级优先级调度
-public enum Priority {
-    | Critical    // 系统关键消息
-    | High        // 高优先级业务消息  
-    | Normal      // 普通消息
-    | Low         // 低优先级消息
-}
-```
-
-### 3.3 批量处理优化
-```cangjie
-// 批量消息处理优化
-public class BatchProcessor<T> {
-    private let batchSize: UInt32
-    private let timeout: Duration
+public class DispatcherConfig {
+    public let dispatcherType: DispatcherType
+    public let throughput: Int32
+    public let throughputDeadlineTime: Duration
+    public let executorConfig: ExecutorConfig
     
-    public func processBatch(messages: Array<T>): Unit
+    public enum DispatcherType {
+        | ThreadPool(corePoolSize: Int32, maxPoolSize: Int32)
+        | WorkStealing(parallelism: Int32)
+        | PinnedDispatcher
+        | CallingThread
+        | Custom(factory: () -> MessageDispatcher)
+    }
 }
 ```
 
-### 实现计划
-- [x] 实现工作窃取调度算法 ✅ **已完成** - 基于仓颉协程的高性能工作窃取调度器
-- [x] 开发多级优先级队列 ✅ **已完成** - 支持Critical/High/Normal/Low四级优先级
-- [x] 优化批量消息处理 ✅ **已完成** - 动态批量大小、超时控制、背压管理
-- [x] 集成负载均衡机制 ✅ **已完成** - 轮询策略和工作窃取负载均衡
-- [x] 添加调度器性能监控 ✅ **已完成** - 延时直方图、吞吐量计算、性能指标监控
+#### 1.2 配置驱动的Actor创建
+**目标**: 重构ActorSystem.actorOf方法，支持完整的配置绑定
 
-## 🎯 Phase 3 完成总结
-
-### ✅ 已实现功能
-
-#### 1. 工作窃取调度器 (`src/dispatcher/work_stealing/`)
-- **WorkStealingDispatcher**: 高性能工作窃取调度器
-- **WorkStealingQueue**: 支持本地LIFO访问和远程FIFO窃取
-- **WorkerThread**: 工作线程实现，支持任务窃取
-- **ActorTask**: 任务封装，支持优先级和零拷贝消息
-- **Priority枚举**: Critical/High/Normal/Low四级优先级
-
-#### 2. 批量处理优化 (`src/dispatcher/batch_processing/`)
-- **BatchProcessor**: 批量消息处理器，支持动态批量大小
-- **BatchConfig**: 批量处理配置，支持超时控制和背压管理
-- **BatchStats**: 批量处理统计信息
-- **BatchProcessorFactory**: 工厂模式创建批量处理器
-
-#### 3. 性能监控系统 (`src/dispatcher/monitoring/`)
-- **SchedulerMonitor**: 调度器性能监控器
-- **LatencyHistogram**: 延时直方图统计
-- **ThroughputCalculator**: 吞吐量计算器
-- **SchedulerMetrics**: 性能指标数据结构
-
-#### 4. 测试验证 (`src/tests/scheduler_test/`)
-- 批量处理器功能测试
-- 延时统计功能测试
-- 吞吐量监控功能测试
-- 调度器监控功能测试
-- 工厂模式功能测试
-
-### 📊 性能表现
-- **批量处理**: 支持动态批量大小调整，平均批量大小4条消息
-- **延时统计**: P99延时100μs，平均延时5μs
-- **吞吐量**: 100 tasks/s (测试环境)
-- **工作线程利用率**: 90.9%
-- **窃取成功率**: 100%
-
-### 🔧 技术特性
-- **零拷贝支持**: 集成零拷贝消息传递
-- **优先级调度**: 四级优先级队列
-- **背压控制**: 防止系统过载
-- **实时监控**: 延时、吞吐量、利用率监控
-- **工作窃取**: 自动负载均衡
-
-## 🌐 Phase 4: 分布式Actor系统
-
-### 4.1 虚拟Actor模型
 ```cangjie
-// 类似Orleans的虚拟Actor
-@virtual_actor
-struct UserActor {
-    let userId: String
-    var state: UserState
+// src/core/system/actor_system_impl.cj
+public class ActorSystemImpl <: ActorSystem {
+    private let configManager: ConfigurationManager
+    private let dispatcherRegistry: DispatcherRegistry
+    private let mailboxRegistry: MailboxRegistry
     
-    // 自动激活和钝化
-    @activate
-    func onActivate(): Unit
-    
-    @deactivate  
-    func onDeactivate(): Unit
-}
-```
-
-### 4.2 集群管理
-```cangjie
-// 分布式集群管理
-public class ClusterManager {
-    private let nodes: HashMap<NodeId, NodeInfo>
-    private let partitioner: ConsistentHashPartitioner
-    
-    public func addNode(node: NodeInfo): Unit
-    public func removeNode(nodeId: NodeId): Unit
-    public func routeMessage(actorId: ActorId, message: Message): Unit
-}
-```
-
-### 4.3 故障检测和恢复
-```cangjie
-// 分布式故障检测
-public class FailureDetector {
-    private let heartbeatInterval: Duration
-    private let suspicionThreshold: Duration
-    
-    public func detectFailure(nodeId: NodeId): Bool
-    public func handleNodeFailure(nodeId: NodeId): Unit
-}
-```
-
-### 实现计划
-- [ ] 设计虚拟Actor激活机制
-- [ ] 实现分布式路由算法
-- [ ] 开发故障检测和恢复
-- [ ] 集成集群状态管理
-- [ ] 添加分布式监控
-
-## 📈 Phase 5: 可观测性和调试系统 ✅ (已完成)
-
-### 5.1 分布式追踪
-```cangjie
-// 分布式消息追踪
-@traced
-public class TracedActor <: Actor {
-    public func receive(message: Message, context: ActorContext): MessageResult {
-        // 自动注入追踪代码
-    }
-}
-```
-
-### 5.2 性能分析
-```cangjie
-// 实时性能分析
-public class PerformanceProfiler {
-    private let metrics: MetricsCollector
-    
-    public func recordLatency(operation: String, duration: Duration): Unit
-    public func recordThroughput(operation: String, count: UInt64): Unit
-}
-```
-
-### 5.3 可视化监控
-```cangjie
-// 监控数据导出
-public interface MetricsExporter {
-    func exportMetrics(): MetricsSnapshot
-    func exportToPrometheus(): String
-    func exportToJaeger(): TraceData
-}
-```
-
-### 实现计划
-- [x] ✅ **实现分布式消息追踪** - 已完成Span和Trace管理、跨Actor调用链追踪、性能瓶颈识别
-- [x] ✅ **开发实时性能分析** - 已完成Actor性能监控、消息处理延迟分析、系统资源使用监控
-- [x] ✅ **集成可视化监控界面** - 已完成实时仪表板、性能图表、告警系统
-- [x] ✅ **添加调试工具支持** - 已完成分布式追踪系统和性能分析工具
-- [x] ✅ **创建性能基准测试** - 已完成Phase 5监控系统测试验证
-
-## 🎉 Phase 5 可观测性和调试系统完成总结
-
-### ✅ 已实现功能
-
-#### 1. 分布式追踪系统 (`src/monitoring/distributed_tracing.cj`)
-- **TraceContext**: 追踪上下文管理，支持traceId、spanId、parentSpanId
-- **Span**: 分布式追踪span实现，支持操作名称、时间戳、标签
-- **SpanCollector**: Span收集器，支持批量收集和存储
-- **DistributedTracer**: 分布式追踪器，支持创建span和子span
-
-#### 2. 实时性能分析系统 (`src/monitoring/performance_analyzer.cj`)
-- **Metric**: 性能指标数据结构，支持标签和时间戳
-- **PerformanceCounter**: 性能计数器，支持统计分析和百分位计算
-- **ActorPerformanceMonitor**: Actor性能监控器，支持消息处理时间和队列大小监控
-- **SystemPerformanceAnalyzer**: 系统性能分析器，支持实时性能数据收集
-
-#### 3. 可视化监控界面 (`src/monitoring/visualization.cj`)
-- **TimeSeries**: 时间序列数据管理，支持数据点添加和查询
-- **ChartComponent**: 图表组件，支持多个时间序列显示
-- **Dashboard**: 监控仪表板，支持多个组件管理
-- **VisualizationManager**: 可视化管理器，支持多个仪表板管理
-
-#### 4. 指标收集系统 (`src/monitoring/metrics.cj`)
-- **MetricType**: 指标类型枚举（Counter、Gauge、Histogram、Timer）
-- **MetricRegistry**: 指标注册表，支持指标注册和查询
-- **MetricsCollector**: 指标收集器，支持定期收集和报告
-- **MetricsReporter**: 指标报告器，支持多种输出格式
-
-#### 5. 测试验证 (`src/tests/phase5_monitoring_test/`)
-- 分布式追踪系统功能测试
-- 性能分析系统功能测试
-- 可视化监控系统功能测试
-- 时间序列数据功能测试
-- 性能计数器功能测试
-
-### 📊 功能特性
-- **分布式追踪**: 支持跨Actor调用链追踪，性能瓶颈识别
-- **实时监控**: 支持Actor性能监控、消息处理延迟分析
-- **可视化界面**: 支持实时仪表板、性能图表、数据展示
-- **指标收集**: 支持多种指标类型、定期收集和报告
-- **系统集成**: 与CActor核心系统深度集成
-
-### 🔧 技术特性
-- **类型安全**: 基于Cangjie类型系统的安全实现
-- **高性能**: 优化的数据结构和算法
-- **可扩展**: 模块化设计，支持自定义扩展
-- **实时性**: 支持实时数据收集和展示
-- **易用性**: 简洁的API设计和使用方式
-
-## 🧪 Phase 6: 高级特性和优化
-
-### 6.1 响应式流
-```cangjie
-// 响应式流处理
-@reactive_stream
-public class DataProcessor {
-    @source
-    func dataSource(): Stream<Data>
-    
-    @transform
-    func processData(data: Data): ProcessedData
-    
-    @sink
-    func dataSink(data: ProcessedData): Unit
-}
-```
-
-### 6.2 事件溯源优化
-```cangjie
-// 高性能事件存储
-public class HighPerfEventStore {
-    private let journal: MemoryMappedJournal
-    private let snapshots: CompressedSnapshotStore
-    
-    public func persistEvent(event: Event): Future<Unit>
-    public func replayEvents(actorId: ActorId): Stream<Event>
-}
-```
-
-### 6.3 机器学习集成
-```cangjie
-// AI驱动的性能优化
-public class MLOptimizer {
-    private let model: PredictionModel
-    
-    public func predictLoad(): LoadPrediction
-    public func optimizeScheduling(): SchedulingStrategy
-}
-```
-
-### 实现计划
-- [ ] 实现响应式流处理
-- [ ] 优化事件溯源性能
-- [ ] 集成机器学习优化
-- [ ] 开发自适应调优
-- [ ] 添加云原生支持
-
-## 📋 实施时间线
-
-### Q1 2024: 基础设施
-- 宏系统DSL开发
-- 零拷贝消息系统
-- 基础性能优化
-
-### Q2 2024: 核心功能
-- 高性能调度器
-- 分布式Actor系统
-- 故障检测和恢复
-
-### Q3 2024: 高级特性
-- 可观测性系统
-- 响应式流处理
-- 事件溯源优化
-
-### Q4 2024: 生态完善
-- 机器学习集成
-- 云原生支持
-- 社区工具链
-
-## 🎯 性能目标
-
-### 延时指标
-- **P99延时**: < 100μs (本地消息)
-- **P99延时**: < 1ms (远程消息)
-- **平均延时**: < 10μs (本地消息)
-
-### 吞吐量指标
-- **单机吞吐**: > 10M msg/s
-- **集群吞吐**: > 100M msg/s
-- **内存使用**: < 1KB per actor
-
-### 可扩展性指标
-- **单机Actor数**: > 1M actors
-- **集群节点数**: > 1000 nodes
-- **故障恢复时间**: < 1s
-
-## 🔧 开发工具链
-
-### 编译时工具
-- Actor DSL编译器
-- 性能分析器
-- 代码生成器
-
-### 运行时工具
-- 分布式调试器
-- 性能监控面板
-- 故障诊断工具
-
-### 测试工具
-- 性能基准测试
-- 混沌工程测试
-- 负载测试框架
-
-## 🌟 创新亮点
-
-1. **宏驱动开发**: 利用仓颉宏系统实现编译时优化
-2. **零拷贝架构**: 基于仓颉内存模型的零拷贝实现
-3. **硬件感知**: NUMA感知和CPU缓存友好设计
-4. **AI驱动优化**: 机器学习驱动的性能调优
-5. **云原生设计**: 原生支持容器和Kubernetes
-
-这个计划将使CActor成为世界领先的Actor框架，在性能、可扩展性和易用性方面都达到新的高度。
-
-## 🔬 技术深度分析
-
-### Akka框架优势借鉴
-1. **监督层次结构**: Akka的监督树模型提供了优秀的故障隔离
-2. **位置透明性**: Actor引用的位置透明性简化了分布式编程
-3. **背压控制**: Akka Streams的背压机制保证了系统稳定性
-4. **集群分片**: 自动分片和负载均衡机制
-
-### Actix框架性能优势
-1. **零拷贝消息**: Rust的所有权模型实现真正的零拷贝
-2. **异步I/O**: 基于Tokio的高性能异步运行时
-3. **类型安全**: 编译时保证消息类型安全
-4. **内存效率**: 极低的内存占用和高效的内存管理
-
-### ProtoActor虚拟Actor模型
-1. **自动激活**: 按需激活和钝化机制
-2. **状态管理**: 透明的状态持久化和恢复
-3. **跨语言支持**: 多语言运行时支持
-4. **云原生**: 原生支持容器化部署
-
-### 仓颉语言独特优势
-1. **宏系统**: 强大的编译时代码生成能力
-2. **轻量级线程**: 高效的协程调度机制
-3. **内存安全**: 无GC的内存安全保证
-4. **零成本抽象**: 编译时优化的抽象层
-5. **并发原语**: 丰富的并发编程原语
-
-## 🏛️ 详细架构设计
-
-### 核心层次架构
-```
-┌─────────────────────────────────────────┐
-│              应用层 (DSL)                │
-├─────────────────────────────────────────┤
-│            Actor运行时层                 │
-├─────────────────────────────────────────┤
-│            消息传递层                    │
-├─────────────────────────────────────────┤
-│            调度器层                      │
-├─────────────────────────────────────────┤
-│            网络传输层                    │
-├─────────────────────────────────────────┤
-│            存储层                        │
-└─────────────────────────────────────────┘
-```
-
-### 内存布局优化
-```cangjie
-// CPU缓存友好的Actor内存布局
-@cache_aligned
-public struct OptimizedActor {
-    // 热路径数据 - 第一个缓存行
-    private var state: ActorState           // 8 bytes
-    private var messageCount: AtomicInt64   // 8 bytes
-    private var lastProcessTime: Int64      // 8 bytes
-    private var flags: AtomicInt32          // 4 bytes
-    private var priority: UInt8             // 1 byte
-    private var padding1: Array<UInt8, 35>  // 35 bytes padding
-
-    // 冷路径数据 - 第二个缓存行
-    private var mailbox: UnsafePointer<Mailbox>     // 8 bytes
-    private var supervisor: Option<ActorRef>        // 16 bytes
-    private var children: ArrayList<ActorRef>       // 24 bytes
-    private var metrics: ActorMetrics               // 16 bytes
-}
-```
-
-### 消息传递优化
-```cangjie
-// 基于环形缓冲的无锁消息队列
-public class LockFreeRingBuffer<T> {
-    private let buffer: UnsafePointer<T>
-    private let capacity: UInt64
-    private var head: AtomicInt64
-    private var tail: AtomicInt64
-
-    @inline
-    public func enqueue(item: T): Bool {
-        let currentTail = tail.load(MemoryOrder.Acquire)
-        let nextTail = (currentTail + 1) % capacity
-
-        if (nextTail == head.load(MemoryOrder.Acquire)) {
-            return false  // 队列满
-        }
-
-        buffer[currentTail] = item
-        tail.store(nextTail, MemoryOrder.Release)
-        return true
-    }
-
-    @inline
-    public func dequeue(): Option<T> {
-        let currentHead = head.load(MemoryOrder.Acquire)
-        if (currentHead == tail.load(MemoryOrder.Acquire)) {
-            return None<T>  // 队列空
-        }
-
-        let item = buffer[currentHead]
-        head.store((currentHead + 1) % capacity, MemoryOrder.Release)
-        return Some(item)
-    }
-}
-```
-
-## 🎯 宏系统DSL详细设计
-
-### Actor定义宏实现
-```cangjie
-// 宏包定义
-macro package cactor_dsl
-
-import std.ast.*
-import cactor.core.*
-
-// Actor定义宏
-public macro actor(input: Tokens): Tokens {
-    let structDef = parseStructDefinition(input)
-    let actorName = structDef.name
-    let fields = structDef.fields
-    let methods = structDef.methods
-
-    // 生成Actor实现代码
-    let actorImpl = generateActorImplementation(actorName, fields, methods)
-    let messageHandlers = generateMessageHandlers(methods)
-    let routingTable = generateRoutingTable(methods)
-
-    return quote(
-        $(actorImpl)
-        $(messageHandlers)
-        $(routingTable)
-
-        // 自动生成工厂方法
-        public func create$(actorName)(): ActorRef {
-            let actor = $(actorName)()
-            return ActorSystem.spawn(actor)
-        }
-    )
-}
-
-// 消息处理器宏
-public macro handler(input: Tokens): Tokens {
-    let funcDef = parseFunctionDefinition(input)
-    let msgType = extractMessageType(funcDef.parameters)
-
-    return quote(
-        @inline
-        $(input)
-
-        // 生成类型安全的消息分发代码
-        private func handle$(msgType)(msg: $(msgType), ctx: ActorContext): MessageResult {
-            return $(funcDef.name)(msg)
-        }
-    )
-}
-```
-
-### 性能监控宏
-```cangjie
-// 性能监控注入宏
-public macro monitored(input: Tokens): Tokens {
-    let structDef = parseStructDefinition(input)
-
-    return quote(
-        $(input)
-
-        // 注入性能监控字段
-        extend $(structDef.name) {
-            private var metrics: ActorMetrics = ActorMetrics()
-
-            // 重写receive方法，添加监控
-            public func receive(message: Message, context: ActorContext): MessageResult {
-                let startTime = getCurrentTime()
-                let result = super.receive(message, context)
-                let duration = getCurrentTime() - startTime
-
-                metrics.recordLatency(message.messageType(), duration)
-                metrics.incrementMessageCount()
-
-                return result
-            }
-        }
-    )
-}
-```
-
-## ⚡ 零拷贝消息系统详细实现
-
-### 消息内存布局
-```cangjie
-// 零拷贝消息头部
-@packed
-public struct MessageHeader {
-    let magic: UInt32           // 魔数，用于验证
-    let version: UInt16         // 协议版本
-    let messageType: UInt16     // 消息类型ID
-    let payloadSize: UInt32     // 负载大小
-    let checksum: UInt32        // 校验和
-    let timestamp: UInt64       // 时间戳
-    let sourceActor: UInt64     // 源Actor ID
-    let targetActor: UInt64     // 目标Actor ID
-}
-
-// 零拷贝消息实现
-public class ZeroCopyMessageImpl <: ZeroCopyMessage {
-    private let headerPtr: UnsafePointer<MessageHeader>
-    private let payloadPtr: UnsafePointer<UInt8>
-    private let memoryPool: MemoryPool
-
-    public init(pool: MemoryPool, payloadSize: UInt64) {
-        let totalSize = sizeof<MessageHeader>() + payloadSize
-        let ptr = pool.allocate(totalSize)
-
-        this.headerPtr = ptr.cast<MessageHeader>()
-        this.payloadPtr = ptr.offset(sizeof<MessageHeader>()).cast<UInt8>()
-        this.memoryPool = pool
-
-        // 初始化头部
-        headerPtr.pointee.magic = 0xCAC70R
-        headerPtr.pointee.version = 1
-        headerPtr.pointee.payloadSize = payloadSize.toUInt32()
-        headerPtr.pointee.timestamp = getCurrentTimestamp()
-    }
-
-    public func getPayloadPtr(): UnsafePointer<UInt8> {
-        payloadPtr
-    }
-
-    public func release(): Unit {
-        memoryPool.deallocate(headerPtr.cast<UInt8>())
-    }
-}
-```
-
-### NUMA感知内存池
-```cangjie
-// NUMA感知的内存分配器
-public class NumaAwareAllocator {
-    private let nodeCount: Int32
-    private let localPools: Array<LocalMemoryPool>
-    private let globalPool: GlobalMemoryPool
-
-    public init() {
-        this.nodeCount = getNumaNodeCount()
-        this.localPools = Array<LocalMemoryPool>(nodeCount)
-        this.globalPool = GlobalMemoryPool()
-
-        // 为每个NUMA节点创建本地内存池
-        for (i in 0..nodeCount) {
-            localPools[i] = LocalMemoryPool(numaNode: i)
-        }
-    }
-
-    @inline
-    public func allocate<T>(size: UInt64): UnsafePointer<T> {
-        let currentNode = getCurrentNumaNode()
-
-        // 优先从本地NUMA节点分配
-        match (localPools[currentNode].tryAllocate<T>(size)) {
-            case Some(ptr) => ptr
-            case None =>
-                // 本地分配失败，尝试全局池
-                globalPool.allocate<T>(size)
-        }
-    }
-
-    @inline
-    public func deallocate<T>(ptr: UnsafePointer<T>): Unit {
-        let numaNode = getPointerNumaNode(ptr)
-        localPools[numaNode].deallocate(ptr)
-    }
-}
-```
-
-## 🚀 高性能调度器详细设计
-
-### 工作窃取调度器
-```cangjie
-// 工作窃取调度器实现
-public class WorkStealingScheduler <: Scheduler {
-    private let workerCount: Int32
-    private let workers: Array<WorkerThread>
-    private let globalQueue: LockFreeQueue<ActorTask>
-    private let random: ThreadLocalRandom
-
-    public init(workerCount: Int32) {
-        this.workerCount = workerCount
-        this.workers = Array<WorkerThread>(workerCount)
-        this.globalQueue = LockFreeQueue<ActorTask>()
-        this.random = ThreadLocalRandom()
-
-        // 创建工作线程
-        for (i in 0..workerCount) {
-            workers[i] = WorkerThread(id: i, scheduler: this)
-            workers[i].start()
-        }
-    }
-
-    public func schedule(task: ActorTask): Unit {
-        let currentWorker = getCurrentWorker()
-
-        // 优先放入当前工作线程的本地队列
-        if (currentWorker != null && currentWorker.tryEnqueue(task)) {
-            return
-        }
-
-        // 本地队列满，放入全局队列
-        globalQueue.enqueue(task)
-
-        // 唤醒空闲工作线程
-        wakeupIdleWorker()
-    }
-
-    // 工作窃取逻辑
-    public func steal(thiefId: Int32): Option<ActorTask> {
-        // 随机选择一个受害者线程
-        let victimId = random.nextInt(workerCount)
-        if (victimId == thiefId) {
-            return None<ActorTask>
-        }
-
-        return workers[victimId].stealTask()
-    }
-}
-
-// 工作线程实现
-public class WorkerThread {
-    private let id: Int32
-    private let localQueue: LockFreeDeque<ActorTask>
-    private let scheduler: WorkStealingScheduler
-    private var isRunning: AtomicBool
-
-    public func run(): Unit {
-        while (isRunning.load()) {
-            // 1. 尝试从本地队列获取任务
-            match (localQueue.popFront()) {
-                case Some(task) =>
-                    executeTask(task)
-                    continue
-                case None => {}
-            }
-
-            // 2. 尝试从全局队列获取任务
-            match (scheduler.globalQueue.dequeue()) {
-                case Some(task) =>
-                    executeTask(task)
-                    continue
-                case None => {}
-            }
-
-            // 3. 尝试从其他线程窃取任务
-            match (scheduler.steal(id)) {
-                case Some(task) =>
-                    executeTask(task)
-                    continue
-                case None => {}
-            }
-
-            // 4. 没有任务，进入等待状态
-            waitForWork()
-        }
-    }
-
-    @inline
-    private func executeTask(task: ActorTask): Unit {
-        let actor = task.actor
-        let message = task.message
-        let context = task.context
-
-        // 执行Actor消息处理
-        let startTime = getCurrentTime()
-        let result = actor.receive(message, context)
-        let duration = getCurrentTime() - startTime
-
-        // 记录性能指标
-        recordTaskExecution(actor.getId(), duration, result)
-    }
-}
-```
-
-## 🌐 分布式Actor系统详细设计
-
-### 虚拟Actor生命周期管理
-```cangjie
-// 虚拟Actor管理器
-public class VirtualActorManager {
-    private let activatedActors: ConcurrentHashMap<ActorId, VirtualActorInstance>
-    private let partitioner: ConsistentHashPartitioner
-    private let activationPolicy: ActivationPolicy
-    private let deactivationTimer: Timer
-
-    // Actor激活
-    public func activateActor<T: VirtualActor>(
-        actorId: ActorId,
-        actorType: Type<T>
-    ): Future<ActorRef> {
-        // 检查是否已激活
-        match (activatedActors.get(actorId)) {
-            case Some(instance) =>
-                return Future.completed(instance.getRef())
-            case None => {}
-        }
-
-        // 创建新的Actor实例
-        let instance = VirtualActorInstance<T>(actorId, actorType)
-
-        // 从持久化存储恢复状态
-        let stateData = loadActorState(actorId)
-        instance.restoreState(stateData)
-
-        // 注册到激活列表
-        activatedActors.put(actorId, instance)
-
-        // 设置钝化定时器
-        scheduleDeactivation(actorId)
-
-        return Future.completed(instance.getRef())
-    }
-
-    // Actor钝化
-    public func deactivateActor(actorId: ActorId): Future<Unit> {
-        match (activatedActors.remove(actorId)) {
-            case Some(instance) =>
-                // 保存状态到持久化存储
-                let stateData = instance.captureState()
-                saveActorState(actorId, stateData)
-
-                // 停止Actor
-                instance.stop()
-
-                return Future.completed(Unit)
-            case None =>
-                return Future.completed(Unit)
-        }
-    }
-}
-
-// 虚拟Actor实例
-public class VirtualActorInstance<T: VirtualActor> {
-    private let actorId: ActorId
-    private let actor: T
-    private let actorRef: ActorRef
-    private var lastAccessTime: AtomicInt64
-
-    public init(actorId: ActorId, actorType: Type<T>) {
-        this.actorId = actorId
-        this.actor = actorType.createInstance()
-        this.actorRef = ActorSystem.spawn(actor)
-        this.lastAccessTime = AtomicInt64(getCurrentTime())
-    }
-
-    public func getRef(): ActorRef {
-        lastAccessTime.store(getCurrentTime())
+    public func actorOf(props: Props<Actor>, name: String): ActorRef {
+        // 1. 解析Actor配置
+        let config = resolveActorConfig(props, name)
+        
+        // 2. 创建Mailbox
+        let mailbox = createMailbox(config.getMailboxConfig())
+        
+        // 3. 获取Dispatcher
+        let dispatcher = getDispatcher(config.getDispatcherConfig())
+        
+        // 4. 创建Actor实例
+        let actor = props.create()
+        
+        // 5. 创建ActorCell (Actor运行时容器)
+        let actorCell = ActorCell(actor, mailbox, dispatcher, config, self)
+        
+        // 6. 创建ActorRef
+        let actorRef = LocalActorRef(actorCell, ActorPath(name))
+        
+        // 7. 启动Actor
+        actorCell.start()
+        
         return actorRef
     }
-
-    public func captureState(): StateData {
-        return actor.serializeState()
-    }
-
-    public func restoreState(stateData: StateData): Unit {
-        actor.deserializeState(stateData)
-    }
 }
 ```
 
-### 分布式路由和负载均衡
+### Phase 2: 高级Mailbox系统 (优先级: 🔥 高)
+
+#### 2.1 多种Mailbox实现
 ```cangjie
-// 一致性哈希分区器
-public class ConsistentHashPartitioner {
-    private let virtualNodes: Int32
-    private let ring: TreeMap<UInt64, NodeId>
-    private let nodes: HashSet<NodeId>
-
-    public init(virtualNodes: Int32 = 150) {
-        this.virtualNodes = virtualNodes
-        this.ring = TreeMap<UInt64, NodeId>()
-        this.nodes = HashSet<NodeId>()
-    }
-
-    public func addNode(nodeId: NodeId): Unit {
-        nodes.add(nodeId)
-
-        // 为每个物理节点创建虚拟节点
-        for (i in 0..virtualNodes) {
-            let virtualKey = hash("${nodeId}_${i}")
-            ring.put(virtualKey, nodeId)
-        }
-    }
-
-    public func removeNode(nodeId: NodeId): Unit {
-        nodes.remove(nodeId)
-
-        // 移除所有虚拟节点
-        for (i in 0..virtualNodes) {
-            let virtualKey = hash("${nodeId}_${i}")
-            ring.remove(virtualKey)
-        }
-    }
-
-    public func getNode(key: String): Option<NodeId> {
-        if (ring.isEmpty()) {
-            return None<NodeId>
-        }
-
-        let hashValue = hash(key)
-
-        // 找到第一个大于等于hashValue的节点
-        match (ring.ceilingEntry(hashValue)) {
-            case Some(entry) => Some(entry.value)
-            case None =>
-                // 环形结构，返回第一个节点
-                ring.firstEntry().map(entry => entry.value)
-        }
-    }
+// src/runtime/mailbox/advanced/
+public class UnboundedMailbox <: Mailbox {
+    private let queue: LockFreeQueue<Envelope>
+    // 无界队列，基于Foundation层LockFreeQueue
 }
 
-// 集群消息路由器
-public class ClusterRouter {
-    private let localNode: NodeId
-    private let partitioner: ConsistentHashPartitioner
-    private let nodeConnections: ConcurrentHashMap<NodeId, Connection>
-    private let messageSerializer: MessageSerializer
+public class BoundedMailbox <: Mailbox {
+    private let queue: LockFreeQueue<Envelope>
+    private let capacity: Int64
+    private let pushTimeout: Duration
+    // 有界队列，支持背压控制
+}
 
-    public func routeMessage(actorId: ActorId, message: Message): Future<Unit> {
-        let targetNode = partitioner.getNode(actorId.toString())
+public class PriorityMailbox <: Mailbox {
+    private let priorityQueue: PriorityQueue<Envelope>
+    private let comparator: (Message, Message) -> Int32
+    // 优先级队列，支持消息优先级
+}
 
-        match (targetNode) {
-            case Some(nodeId) =>
-                if (nodeId == localNode) {
-                    // 本地路由
-                    return routeLocalMessage(actorId, message)
-                } else {
-                    // 远程路由
-                    return routeRemoteMessage(nodeId, actorId, message)
-                }
-            case None =>
-                return Future.failed(RoutingException("No available nodes"))
-        }
-    }
-
-    private func routeRemoteMessage(
-        nodeId: NodeId,
-        actorId: ActorId,
-        message: Message
-    ): Future<Unit> {
-        match (nodeConnections.get(nodeId)) {
-            case Some(connection) =>
-                let serializedMsg = messageSerializer.serialize(message)
-                let envelope = RemoteMessageEnvelope(actorId, serializedMsg)
-                return connection.send(envelope)
-            case None =>
-                return Future.failed(ConnectionException("Node not connected: ${nodeId}"))
-        }
-    }
+public class StashingMailbox <: Mailbox {
+    private let normalQueue: Queue<Envelope>
+    private let stashQueue: Queue<Envelope>
+    private let stashCapacity: Int64
+    // 支持消息暂存的邮箱
 }
 ```
 
-## 📊 可观测性系统详细实现
-
-### 分布式追踪系统
+#### 2.2 Mailbox工厂系统
 ```cangjie
-// 追踪上下文
-public class TraceContext {
-    private let traceId: TraceId
-    private let spanId: SpanId
-    private let parentSpanId: Option<SpanId>
-    private let baggage: HashMap<String, String>
-
-    public init(traceId: TraceId, spanId: SpanId, parentSpanId: Option<SpanId>) {
-        this.traceId = traceId
-        this.spanId = spanId
-        this.parentSpanId = parentSpanId
-        this.baggage = HashMap<String, String>()
-    }
-
-    public func createChildSpan(operationName: String): TraceContext {
-        let childSpanId = SpanId.generate()
-        return TraceContext(traceId, childSpanId, Some(spanId))
-    }
+// src/runtime/mailbox/factory/mailbox_factory.cj
+public interface MailboxFactory {
+    func createMailbox(config: MailboxConfig): Mailbox
 }
 
-// 分布式追踪器
-public class DistributedTracer {
-    private let spanCollector: SpanCollector
-    private let sampler: TraceSampler
-
-    public func startSpan(operationName: String, context: Option<TraceContext>): Span {
-        let traceContext = match (context) {
-            case Some(ctx) => ctx.createChildSpan(operationName)
-            case None => TraceContext.createRoot()
+public class DefaultMailboxFactory <: MailboxFactory {
+    public func createMailbox(config: MailboxConfig): Mailbox {
+        match (config.mailboxType) {
+            case MailboxType.Unbounded =>
+                UnboundedMailbox()
+            case MailboxType.Bounded(capacity) =>
+                BoundedMailbox(capacity, config.pushTimeout)
+            case MailboxType.Priority(comparator) =>
+                PriorityMailbox(comparator)
+            case MailboxType.Stashing(stashCapacity) =>
+                StashingMailbox(config.capacity, stashCapacity)
+            case MailboxType.Custom(factory) =>
+                factory()
         }
-
-        let span = Span(
-            traceId: traceContext.traceId,
-            spanId: traceContext.spanId,
-            parentSpanId: traceContext.parentSpanId,
-            operationName: operationName,
-            startTime: getCurrentTime()
-        )
-
-        return span
-    }
-
-    public func finishSpan(span: Span): Unit {
-        span.finishTime = getCurrentTime()
-
-        if (sampler.shouldSample(span)) {
-            spanCollector.collect(span)
-        }
-    }
-}
-
-// Actor消息追踪
-@traced
-public class TracedActorContext <: ActorContext {
-    private let baseContext: ActorContext
-    private let tracer: DistributedTracer
-    private var currentSpan: Option<Span>
-
-    public func send(target: ActorRef, message: Message): Unit {
-        let span = tracer.startSpan("actor.send", getCurrentTraceContext())
-        span.setTag("target.actor", target.path())
-        span.setTag("message.type", message.messageType())
-
-        // 将追踪信息注入到消息中
-        let tracedMessage = injectTraceContext(message, span.getContext())
-
-        baseContext.send(target, tracedMessage)
-
-        tracer.finishSpan(span)
-    }
-
-    public func receive(message: Message): MessageResult {
-        // 从消息中提取追踪信息
-        let traceContext = extractTraceContext(message)
-
-        let span = tracer.startSpan("actor.receive", traceContext)
-        span.setTag("actor.path", self.path())
-        span.setTag("message.type", message.messageType())
-
-        let result = baseContext.receive(message)
-
-        span.setTag("result", result.toString())
-        tracer.finishSpan(span)
-
-        return result
     }
 }
 ```
 
-### 实时性能监控
+### Phase 3: 高级Dispatcher系统 (优先级: 🔥 高)
+
+#### 3.1 多种Dispatcher实现
 ```cangjie
-// 性能指标收集器
-public class MetricsCollector {
-    private let counters: ConcurrentHashMap<String, AtomicInt64>
-    private let histograms: ConcurrentHashMap<String, Histogram>
-    private let gauges: ConcurrentHashMap<String, Gauge>
-    private let timers: ConcurrentHashMap<String, Timer>
-
-    public func incrementCounter(name: String, delta: Int64 = 1): Unit {
-        counters.computeIfAbsent(name, { AtomicInt64(0) }).addAndGet(delta)
-    }
-
-    public func recordHistogram(name: String, value: Float64): Unit {
-        histograms.computeIfAbsent(name, { Histogram() }).record(value)
-    }
-
-    public func setGauge(name: String, value: Float64): Unit {
-        gauges.computeIfAbsent(name, { Gauge() }).set(value)
-    }
-
-    public func recordTimer(name: String, duration: Duration): Unit {
-        timers.computeIfAbsent(name, { Timer() }).record(duration)
-    }
-
-    // 导出Prometheus格式指标
-    public func exportPrometheus(): String {
-        let builder = StringBuilder()
-
-        // 导出计数器
-        for ((name, counter) in counters) {
-            builder.append("# TYPE ${name} counter\n")
-            builder.append("${name} ${counter.get()}\n")
-        }
-
-        // 导出直方图
-        for ((name, histogram) in histograms) {
-            builder.append("# TYPE ${name} histogram\n")
-            for (bucket in histogram.getBuckets()) {
-                builder.append("${name}_bucket{le=\"${bucket.upperBound}\"} ${bucket.count}\n")
-            }
-            builder.append("${name}_sum ${histogram.getSum()}\n")
-            builder.append("${name}_count ${histogram.getCount()}\n")
-        }
-
-        return builder.toString()
-    }
+// src/runtime/dispatcher/advanced/
+public interface MessageDispatcher {
+    func dispatch(actorCell: ActorCell): Unit
+    func schedule(actorCell: ActorCell): Unit
+    func shutdown(): Unit
+    func getConfig(): DispatcherConfig
 }
 
-// Actor性能监控
-public class ActorPerformanceMonitor {
-    private let metrics: MetricsCollector
-    private let actorMetrics: ConcurrentHashMap<ActorId, ActorMetrics>
+public class ThreadPoolDispatcher <: MessageDispatcher {
+    private let executor: ThreadPoolExecutor
+    private let throughput: Int32
+    // 基于线程池的调度器
+}
 
-    public func recordMessageProcessing(
-        actorId: ActorId,
-        messageType: String,
-        duration: Duration,
-        result: MessageResult
-    ): Unit {
-        // 全局指标
-        metrics.incrementCounter("actor.messages.total")
-        metrics.recordTimer("actor.message.duration", duration)
-        metrics.incrementCounter("actor.messages.by_type.${messageType}")
+public class WorkStealingDispatcher <: MessageDispatcher {
+    private let workers: Array<WorkerThread>
+    private let globalQueue: Queue<ActorCell>
+    // 工作窃取调度器 (已有，需要增强)
+}
 
-        // 按结果分类
-        match (result) {
-            case MessageResult.Handled =>
-                metrics.incrementCounter("actor.messages.handled")
-            case MessageResult.Unhandled =>
-                metrics.incrementCounter("actor.messages.unhandled")
-            case MessageResult.Failed =>
-                metrics.incrementCounter("actor.messages.failed")
-        }
-
-        // Actor级别指标
-        let actorMetric = actorMetrics.computeIfAbsent(actorId, { ActorMetrics() })
-        actorMetric.recordMessage(messageType, duration, result)
-    }
-
-    public func recordActorCreation(actorId: ActorId): Unit {
-        metrics.incrementCounter("actor.created.total")
-        actorMetrics.put(actorId, ActorMetrics())
-    }
-
-    public func recordActorDestruction(actorId: ActorId): Unit {
-        metrics.incrementCounter("actor.destroyed.total")
-        actorMetrics.remove(actorId)
-    }
+public class PinnedDispatcher <: MessageDispatcher {
+    private let dedicatedThread: Thread
+    // 专用线程调度器，用于关键Actor
 }
 ```
 
-## 🧪 测试和基准测试框架
-
-### 性能基准测试
+#### 3.2 Dispatcher注册和管理
 ```cangjie
-// Actor性能基准测试
-public class ActorBenchmark {
-    private let actorSystem: ActorSystem
-    private let messageCount: Int64
-    private let actorCount: Int32
-
-    public init(messageCount: Int64, actorCount: Int32) {
-        this.actorSystem = ActorSystem.create("benchmark")
-        this.messageCount = messageCount
-        this.actorCount = actorCount
-    }
-
-    // 延时基准测试
-    public func benchmarkLatency(): BenchmarkResult {
-        let actor = actorSystem.spawn(BenchmarkActor())
-        let startTime = getCurrentTime()
-
-        // 发送单个消息并等待响应
-        let future = actor.ask(PingMessage())
-        let response = future.await(Duration.seconds(5))
-
-        let endTime = getCurrentTime()
-        let latency = endTime - startTime
-
-        return BenchmarkResult(
-            testName: "latency",
-            duration: latency,
-            throughput: 1.0 / latency.toSeconds()
-        )
-    }
-
-    // 吞吐量基准测试
-    public func benchmarkThroughput(): BenchmarkResult {
-        let actors = Array<ActorRef>(actorCount)
-
-        // 创建Actor
-        for (i in 0..actorCount) {
-            actors[i] = actorSystem.spawn(BenchmarkActor())
+// src/runtime/dispatcher/registry/dispatcher_registry.cj
+public class DispatcherRegistry {
+    private let dispatchers: HashMap<String, MessageDispatcher>
+    private let defaultDispatcher: MessageDispatcher
+    
+    public func getDispatcher(name: String): MessageDispatcher {
+        match (dispatchers.get(name)) {
+            case Some(dispatcher) => dispatcher
+            case None => defaultDispatcher
         }
-
-        let startTime = getCurrentTime()
-        let latch = CountDownLatch(messageCount.toInt32())
-
-        // 并发发送消息
-        spawn {
-            for (i in 0..messageCount) {
-                let actorIndex = i % actorCount
-                actors[actorIndex].tell(BenchmarkMessage(i, latch))
-            }
-        }
-
-        // 等待所有消息处理完成
-        latch.await()
-        let endTime = getCurrentTime()
-
-        let duration = endTime - startTime
-        let throughput = messageCount.toFloat64() / duration.toSeconds()
-
-        return BenchmarkResult(
-            testName: "throughput",
-            duration: duration,
-            throughput: throughput
-        )
     }
-
-    // 内存使用基准测试
-    public func benchmarkMemoryUsage(): BenchmarkResult {
-        let initialMemory = getMemoryUsage()
-
-        let actors = Array<ActorRef>(actorCount)
-        for (i in 0..actorCount) {
-            actors[i] = actorSystem.spawn(BenchmarkActor())
-        }
-
-        // 强制GC
-        System.gc()
-        let finalMemory = getMemoryUsage()
-
-        let memoryPerActor = (finalMemory - initialMemory) / actorCount.toInt64()
-
-        return BenchmarkResult(
-            testName: "memory_usage",
-            memoryPerActor: memoryPerActor,
-            totalMemory: finalMemory - initialMemory
-        )
-    }
-}
-
-// 基准测试Actor
-public class BenchmarkActor <: Actor {
-    private var messageCount: Int64 = 0
-
-    public func receive(message: Message, context: ActorContext): MessageResult {
-        match (message) {
-            case ping: PingMessage =>
-                context.sender().tell(PongMessage())
-                MessageResult.Handled
-
-            case benchmark: BenchmarkMessage =>
-                messageCount += 1
-                benchmark.latch.countDown()
-                MessageResult.Handled
-
-            case _ => MessageResult.Unhandled
-        }
+    
+    public func registerDispatcher(name: String, dispatcher: MessageDispatcher): Unit {
+        dispatchers.put(name, dispatcher)
     }
 }
 ```
 
-这个详细的plan3.md展示了一个全面的低延时高吞吐Actor框架设计，充分利用了仓颉语言的独特优势，并借鉴了业界最佳实践。通过宏系统实现编译时优化，零拷贝消息传递，NUMA感知的内存管理，工作窃取调度器，分布式虚拟Actor模型，以及全面的可观测性系统，CActor 3.0将成为业界领先的Actor框架。
+### Phase 4: 监督策略系统 (优先级: 🔥 中高)
+
+#### 4.1 监督策略接口
+```cangjie
+// src/core/supervision/supervision_strategy.cj
+public interface SupervisionStrategy {
+    func decide(failure: Exception, child: ActorRef): SupervisionDirective
+}
+
+public enum SupervisionDirective {
+    | Resume          // 恢复Actor，忽略异常
+    | Restart         // 重启Actor
+    | Stop            // 停止Actor
+    | Escalate        // 向上级监督者报告
+}
+
+public class OneForOneStrategy <: SupervisionStrategy {
+    private let maxRetries: Int32
+    private let withinTimeRange: Duration
+    private let decider: (Exception) -> SupervisionDirective
+}
+
+public class AllForOneStrategy <: SupervisionStrategy {
+    // 一个子Actor失败时，重启所有子Actor
+}
+```
+
+### Phase 5: 路由系统 (优先级: 🔥 中)
+
+#### 5.1 路由器实现
+```cangjie
+// src/patterns/routing/router.cj
+public interface Router {
+    func route(message: Message, routees: Array<ActorRef>): Array<ActorRef>
+}
+
+public class RoundRobinRouter <: Router {
+    private let counter: AtomicInt64
+    // 轮询路由
+}
+
+public class RandomRouter <: Router {
+    // 随机路由
+}
+
+public class ConsistentHashingRouter <: Router {
+    private let hashFunction: (Message) -> Int64
+    // 一致性哈希路由
+}
+
+public class BroadcastRouter <: Router {
+    // 广播路由，发送给所有routee
+}
+```
+
+### Phase 6: 配置文件支持 (优先级: 🔥 中)
+
+#### 6.1 配置文件格式
+```toml
+# cactor.toml
+[actor]
+default-dispatcher = "default-thread-pool"
+default-mailbox = "unbounded"
+
+[dispatchers.default-thread-pool]
+type = "thread-pool"
+core-pool-size = 8
+max-pool-size = 16
+throughput = 100
+
+[dispatchers.work-stealing]
+type = "work-stealing"
+parallelism = 8
+throughput = 50
+
+[mailboxes.unbounded]
+type = "unbounded"
+
+[mailboxes.bounded]
+type = "bounded"
+capacity = 1000
+push-timeout = "10s"
+
+[mailboxes.priority]
+type = "priority"
+capacity = 1000
+```
+
+#### 6.2 配置加载器
+```cangjie
+// src/integration/configuration/config_loader.cj
+public class ConfigLoader {
+    public static func loadFromFile(path: String): ActorSystemConfig {
+        // 解析TOML配置文件
+        // 创建ActorSystemConfig实例
+    }
+    
+    public static func loadFromString(config: String): ActorSystemConfig {
+        // 从字符串解析配置
+    }
+}
+```
+
+## 🚀 实现优先级和时间线
+
+### 第一阶段 (2周): 核心配置系统
+- [ ] ActorConfiguration接口设计
+- [ ] MailboxConfig和DispatcherConfig实现
+- [ ] 重构ActorSystem.actorOf方法
+- [ ] 基础配置绑定机制
+
+### 第二阶段 (2周): 高级Mailbox系统
+- [ ] UnboundedMailbox、BoundedMailbox实现
+- [ ] PriorityMailbox、StashingMailbox实现
+- [ ] MailboxFactory系统
+- [ ] Mailbox性能测试
+
+### 第三阶段 (2周): 高级Dispatcher系统
+- [ ] ThreadPoolDispatcher增强
+- [ ] WorkStealingDispatcher优化
+- [ ] PinnedDispatcher实现
+- [ ] DispatcherRegistry系统
+
+### 第四阶段 (1周): 监督策略
+- [ ] SupervisionStrategy接口
+- [ ] OneForOneStrategy、AllForOneStrategy
+- [ ] 错误处理和恢复机制
+
+### 第五阶段 (1周): 路由系统
+- [ ] Router接口和基础实现
+- [ ] RoundRobinRouter、RandomRouter
+- [ ] ConsistentHashingRouter
+
+### 第六阶段 (1周): 配置文件支持
+- [ ] TOML配置文件解析
+- [ ] ConfigLoader实现
+- [ ] 配置验证和错误处理
+
+## 📋 验收标准
+
+### 功能完整性
+- [ ] 支持至少4种Mailbox类型 (Unbounded, Bounded, Priority, Stashing)
+- [ ] 支持至少3种Dispatcher类型 (ThreadPool, WorkStealing, Pinned)
+- [ ] 支持完整的监督策略 (Resume, Restart, Stop, Escalate)
+- [ ] 支持至少4种路由策略 (RoundRobin, Random, ConsistentHashing, Broadcast)
+- [ ] 支持配置文件驱动的Actor系统创建
+
+### 性能指标
+- [ ] Mailbox操作性能: >100万 ops/s
+- [ ] 消息传递延迟: <1ms (P99)
+- [ ] 系统吞吐量: >50万 msg/s
+- [ ] 内存使用优化: <10MB基础内存占用
+
+### 易用性
+- [ ] 简洁的API设计，学习成本低
+- [ ] 完整的文档和示例
+- [ ] 良好的错误信息和调试支持
+- [ ] 向后兼容现有代码
+
+## 🎯 最终目标
+
+构建一个世界级的仓颉语言Actor系统，具备：
+1. **企业级功能**: 完整的配置、监督、路由支持
+2. **高性能**: 百万级消息处理能力
+3. **类型安全**: 编译时错误检查
+4. **易用性**: 简洁的API和丰富的文档
+5. **可扩展性**: 支持自定义Mailbox、Dispatcher、Router
+6. **生产就绪**: 完整的测试覆盖和性能验证
+
+通过这个计划，CActor将成为仓颉语言生态中最完整、最高性能的Actor系统实现。

@@ -10,8 +10,9 @@ import std.collection.*
 import std.collection.concurrent.*
 // import cactor.core.system.{ActorSystem, ActorSelection}  // 避免循环依赖，在同一包中
 import cactor.core.actor.{Actor, ActorRef, Props, ActorPath}
-import cactor.core.message.{Message, MessageResult}
+import cactor.core.message.{Message, MessageResult, Envelope}
 import cactor.core.context.{ActorContext}
+import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
 
 /**
  * 简单的已完成Future实现
@@ -126,11 +127,14 @@ public class SimpleActorSystem <: ActorSystem {
 
     /**
      * 创建ActorRef的辅助方法
-     * 创建一个简单的ActorRef实现
+     * 创建一个包含mailbox的ActorRef实现
      */
     private func createActorRef(actor: Actor, name: String): ActorRef {
-        // 创建一个简单的ActorRef实现
-        return SimpleActorRef(name, actor, this)
+        // 创建mailbox - 使用Foundation层的高性能邮箱
+        let mailbox = FoundationMailbox(1024)  // 默认容量1024
+
+        // 创建包含mailbox的ActorRef实现
+        return SimpleActorRef(name, actor, mailbox, this)
     }
 }
 
@@ -141,12 +145,14 @@ public class SimpleActorSystem <: ActorSystem {
 public class SimpleActorRef <: ActorRef {
     private let actorName: String
     private let actor: Actor
+    private let mailbox: Mailbox
     private let system: SimpleActorSystem
     private let actorPath: ActorPath
 
-    public init(name: String, actor: Actor, system: SimpleActorSystem) {
+    public init(name: String, actor: Actor, mailbox: Mailbox, system: SimpleActorSystem) {
         this.actorName = name
         this.actor = actor
+        this.mailbox = mailbox
         this.system = system
         this.actorPath = ActorPath(system.getName(), "/user/${name}")
     }
@@ -156,25 +162,60 @@ public class SimpleActorRef <: ActorRef {
     }
 
     public func tell(message: Message): Unit {
-        // 简化实现：创建一个基本的ActorContext并调用Actor的receive方法
-        let context = SimpleActorContext(this)
-        let result = actor.receive(message, context)
+        // 使用mailbox进行异步消息传递
+        let envelope = Envelope(message, None<String>)
+        let success = mailbox.enqueue(envelope)
 
-        // 简单处理结果
-        match (result) {
-            case MessageResult.Handled =>
-                // 消息处理成功
-                ()
-            case MessageResult.Unhandled =>
-                println("警告：消息未被处理")
-            case _ =>
-                println("消息处理结果: 其他")
+        if (!success) {
+            println("警告：消息入队失败，mailbox可能已满 - Actor: ${actorName}")
+        } else {
+            // 异步处理消息（简化实现：立即处理）
+            processMailboxMessages()
         }
     }
 
     public func tell(message: Message, sender: Option<String>): Unit {
-        // 简化实现：忽略sender参数
-        tell(message)
+        // 使用mailbox进行异步消息传递，包含sender信息
+        let envelope = Envelope(message, sender)
+        let success = mailbox.enqueue(envelope)
+
+        if (!success) {
+            println("警告：消息入队失败，mailbox可能已满 - Actor: ${actorName}")
+        } else {
+            // 异步处理消息（简化实现：立即处理）
+            processMailboxMessages()
+        }
+    }
+
+    /**
+     * 处理mailbox中的消息
+     * 简化实现：同步处理，实际应该异步调度
+     */
+    private func processMailboxMessages(): Unit {
+        // 处理mailbox中的消息（批量处理）
+        let maxBatch: Int32 = 8  // 每次最多处理8条消息
+
+        for (_ in 0..maxBatch) {
+            match (mailbox.dequeue()) {
+                case Some(envelope) =>
+                    try {
+                        let context = SimpleActorContext(this, envelope.getSender())
+                        let result = actor.receive(envelope.getMessage(), context)
+
+                        // 处理消息结果
+                        match (result) {
+                            case MessageResult.Handled => ()
+                            case MessageResult.Unhandled =>
+                                println("警告：消息未被处理 - Actor: ${actorName}")
+                            case _ =>
+                                println("消息处理结果: 其他 - Actor: ${actorName}")
+                        }
+                    } catch (e: Exception) {
+                        println("错误：Actor消息处理异常 - Actor: ${actorName}, 错误: ${e}")
+                    }
+                case None => break  // mailbox为空，退出处理
+            }
+        }
     }
 
     public func equals(other: ActorRef): Bool {
@@ -192,6 +233,20 @@ public class SimpleActorRef <: ActorRef {
 
     public func getActor(): Actor {
         actor
+    }
+
+    /**
+     * 获取Actor的mailbox（用于测试和监控）
+     */
+    public func getMailbox(): Mailbox {
+        mailbox
+    }
+
+    /**
+     * 获取mailbox统计信息
+     */
+    public func getMailboxStats(): String {
+        "Actor: ${actorName}, Mailbox size: ${mailbox.size()}, isEmpty: ${mailbox.isEmpty()}"
     }
 }
 

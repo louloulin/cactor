@@ -93,3 +93,7 @@ output-type = "executable"
 # === 最终综合验证测试 ===
 [package.package-configuration."cactor.integration.testing.final_comprehensive_verification"]
 output-type = "executable"
+
+# === Mailbox配置验证测试 ===
+[package.package-configuration."cactor.integration.testing.mailbox_configuration_test"]
+output-type = "executable"
