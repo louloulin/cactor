@@ -373,5 +373,10 @@ public enum RouterType {
 }
 
 // 前向声明，避免循环依赖
-public interface MessageDispatcher
-public interface Router
+public interface MessageDispatcher {
+    // 前向声明，具体实现在其他文件中
+}
+
+public interface Router {
+    // 前向声明，具体实现在其他文件中
+}
