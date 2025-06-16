@@ -1,16 +1,18 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor Core - 批量消息处理器
+ * CActor Runtime - 批量消息处理器
  * 高性能批量消息处理，提升吞吐量
+ * 从Core层移动到Runtime层
  */
-package cactor.core.message
+package cactor.runtime.message
 
 import std.sync.*
 import std.time.*
 import std.collection.*
+import cactor.core.message.{Message, Envelope, StringMessage}
 
 /**
- * 批量消息处理器
+ * 批量消息处理器 - Runtime层实现
  * 
  * 性能优化:
  * 1. 批量处理消息，减少系统调用
@@ -302,7 +304,7 @@ public struct BatchProcessorStats {
     public let maxLatency: Int64
     public let minLatency: Int64
     public let currentBufferSize: Int32
-    
+
     public init(totalMessages: Int64, totalBatches: Int64, avgBatchSize: Int64,
                maxLatency: Int64, minLatency: Int64, currentBufferSize: Int32) {
         this.totalMessages = totalMessages
@@ -312,7 +314,7 @@ public struct BatchProcessorStats {
         this.minLatency = minLatency
         this.currentBufferSize = currentBufferSize
     }
-    
+
     public func getThroughput(): Float64 {
         if (totalBatches > 0) {
             return Float64(totalMessages) / Float64(totalBatches)

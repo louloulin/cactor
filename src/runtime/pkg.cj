@@ -6,6 +6,10 @@
 package cactor.runtime
 
 // 运行时组件导出
+public import cactor.runtime.actor.*
+public import cactor.runtime.context.*
+public import cactor.runtime.guardian.*
+public import cactor.runtime.message.*
 public import cactor.runtime.dispatcher.*
 public import cactor.runtime.mailbox.*
 public import cactor.runtime.scheduler.*

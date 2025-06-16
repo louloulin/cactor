@@ -1,26 +1,25 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor 3.0 - 高性能Actor系统
+ * CActor Runtime - 高性能Actor系统
  * 基于tu.md优化计划的高性能Actor系统实现
+ * 从Core层移动到Runtime层
  */
-package cactor.core.actor
+package cactor.runtime.system
 
 import std.sync.*
 import std.time.*
 import std.collection.*
+import cactor.core.actor.{ActorRef, ActorPath}
 import cactor.core.message.*
-import cactor.core.context.{PooledActorContext, PooledActorContextPool}
-// import cactor.mailbox.lockfree.*
+import cactor.runtime.context.{PooledActorContext, PooledActorContextPool, PoolStats}
+import cactor.runtime.actor.{HighPerformanceActor, HighPerformanceActorBehavior, ActorStats}
 import cactor.foundation.memory.*
-import cactor.core.context.{PoolStats}
 
 // 简化时间函数
 func getCurrentTimeNanos(): Int64 {
     let now = DateTime.now()
     now.toUnixTimeStamp().toMilliseconds() * 1000000
 }
-
-// 使用context包中的ActorPath定义
 
 /**
  * 高性能Actor系统配置
@@ -82,7 +81,7 @@ public struct HighPerformanceActorSystemConfig {
 }
 
 /**
- * 高性能Actor系统 - 简化版本
+ * 高性能Actor系统 - Runtime层实现
  * 实现tu.md中的核心优化：无锁邮箱、对象池化
  */
 public class HighPerformanceActorSystem {
@@ -261,58 +260,58 @@ public class HighPerformanceActorRef <: ActorRef {
     private let actorId: String
     private let actor: HighPerformanceActor
     private let system: HighPerformanceActorSystem
-    
+
     public init(actorId: String, actor: HighPerformanceActor, system: HighPerformanceActorSystem) {
         this.actorId = actorId
         this.actor = actor
         this.system = system
     }
-    
+
     public prop path: ActorPath {
         get() {
             ActorPath("cactor", "/user/${actorId}")
         }
     }
-    
+
     /**
      * 高性能消息发送
      */
     public func tell(message: Message): Unit {
         actor.tell(message)
     }
-    
+
     public func tell(message: Message, sender: Option<String>): Unit {
         actor.tell(message)
     }
-    
+
     /**
      * 批量消息处理
      */
     public func processBatch(batchSize: Int32): Int32 {
         actor.processBatch(batchSize)
     }
-    
+
     /**
      * 获取Actor统计信息
      */
     public func getStats(): ActorStats {
         actor.getStats()
     }
-    
+
     /**
      * 获取Actor状态值
      */
     public func getStateValue(): Int64 {
         actor.getStateValue()
     }
-    
+
     public func equals(other: ActorRef): Bool {
         match (other) {
             case ref: HighPerformanceActorRef => ref.actorId == this.actorId
             case _ => false
         }
     }
-    
+
     public func hashCode(): Int32 {
         Int32(actorId.hashCode())
     }
@@ -328,7 +327,7 @@ public struct SystemStats {
     public let poolStats: PoolStats
     public let dispatcherStats: DispatcherStats
     public let monitorStats: MonitorStats
-    
+
     public init(actorCount: Int64, messageCount: Int64, isRunning: Bool,
                 poolStats: PoolStats, dispatcherStats: DispatcherStats, monitorStats: MonitorStats) {
         this.actorCount = actorCount
@@ -338,7 +337,7 @@ public struct SystemStats {
         this.dispatcherStats = dispatcherStats
         this.monitorStats = monitorStats
     }
-    
+
     public func printReport(): Unit {
         println("=== 高性能Actor系统统计 ===")
         println("Actor数量: ${actorCount}")
@@ -362,7 +361,7 @@ public class SystemPerformanceMonitor {
     private let actorsDestroyed: AtomicInt64
     private let messagesSent: AtomicInt64
     private let messagesFailed: AtomicInt64
-    
+
     public init(enabled: Bool) {
         this.enabled = enabled
         this.startTime = AtomicInt64(0)
@@ -371,51 +370,51 @@ public class SystemPerformanceMonitor {
         this.messagesSent = AtomicInt64(0)
         this.messagesFailed = AtomicInt64(0)
     }
-    
+
     public func start(): Unit {
         if (enabled) {
             startTime.store(getCurrentTimeNanos())
             println("📊 性能监控已启动")
         }
     }
-    
+
     public func stop(): Unit {
         if (enabled) {
             println("📊 性能监控已停止")
         }
     }
-    
+
     public func recordActorCreated(): Unit {
         if (enabled) {
             actorsCreated.fetchAdd(1)
         }
     }
-    
+
     public func recordActorDestroyed(): Unit {
         if (enabled) {
             actorsDestroyed.fetchAdd(1)
         }
     }
-    
+
     public func recordMessageSent(): Unit {
         if (enabled) {
             messagesSent.fetchAdd(1)
         }
     }
-    
+
     public func recordMessageFailed(): Unit {
         if (enabled) {
             messagesFailed.fetchAdd(1)
         }
     }
-    
+
     public func getStats(): MonitorStats {
         let uptime = if (startTime.load() > 0) {
             getCurrentTimeNanos() - startTime.load()
         } else {
             0
         }
-        
+
         MonitorStats(
             actorsCreated.load(),
             actorsDestroyed.load(),
@@ -435,7 +434,7 @@ public struct MonitorStats {
     public let messagesSent: Int64
     public let messagesFailed: Int64
     public let uptime: Int64
-    
+
     public init(actorsCreated: Int64, actorsDestroyed: Int64, messagesSent: Int64, messagesFailed: Int64, uptime: Int64) {
         this.actorsCreated = actorsCreated
         this.actorsDestroyed = actorsDestroyed
@@ -443,7 +442,7 @@ public struct MonitorStats {
         this.messagesFailed = messagesFailed
         this.uptime = uptime
     }
-    
+
     public func getSuccessRate(): Float64 {
         let total = messagesSent + messagesFailed
         if (total == 0) {
@@ -451,12 +450,12 @@ public struct MonitorStats {
         }
         return Float64(messagesSent) / Float64(total) * 100.0
     }
-    
+
     public func getAverageLatency(): Float64 {
         // 简化实现，实际应该收集延迟数据
         return 0.5  // 假设0.5μs平均延迟
     }
-    
+
     public func getUptimeInSeconds(): Float64 {
         Float64(uptime) / 1000000000.0
     }
@@ -468,12 +467,12 @@ public struct MonitorStats {
 public struct DispatcherStats {
     public let processedMessages: Int64
     public let averageLatency: Float64
-    
+
     public init(processedMessages: Int64, averageLatency: Float64) {
         this.processedMessages = processedMessages
         this.averageLatency = averageLatency
     }
-    
+
     public func getThroughput(): Float64 {
         // 简化实现
         return Float64(processedMessages)

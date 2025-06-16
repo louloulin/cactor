@@ -5,4 +5,14 @@
  */
 package cactor.runtime.system
 
-// Runtime系统包 - 所有符号通过文件自动导出
+// 导出Runtime层的ActorSystem实现
+public import cactor.runtime.system.{
+    SimpleActorSystem,
+    HighPerformanceActorSystem,
+    HighPerformanceActorSystemConfig,
+    HighPerformanceActorRef,
+    SystemStats,
+    SystemPerformanceMonitor,
+    MonitorStats,
+    DispatcherStats
+}
