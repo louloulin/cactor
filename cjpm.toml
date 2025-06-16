@@ -142,28 +142,12 @@ output-type = "executable"
 [package.package-configuration."cactor.integration.testing.xf_api_design_test"]
 output-type = "executable"
 
-# === 新API测试 ===
-[package.package-configuration."cactor.integration.testing.api_test"]
-output-type = "executable"
-
 # === 新API演示 ===
 [package.package-configuration."cactor.examples.api_demo"]
 output-type = "executable"
 
-# === 简单API测试 ===
-[package.package-configuration."cactor.api.test"]
-output-type = "executable"
-
-# === 扩展方法测试 ===
-[package.package-configuration."cactor.api.extension_test"]
-output-type = "executable"
-
-# === API 2.0 测试 ===
-[package.package-configuration."cactor.api.api2_test"]
-output-type = "executable"
-
-# === 简化API 2.0 测试 ===
-[package.package-configuration."cactor.api.simple_api2_test"]
+# === API 2.0 全面测试 ===
+[package.package-configuration."cactor.api.api2_comprehensive_test"]
 output-type = "executable"
 
 
