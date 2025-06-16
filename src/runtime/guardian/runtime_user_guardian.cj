@@ -1,9 +1,10 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor Core - User Guardian实现
+ * CActor Runtime - User Guardian实现
  * 用户级Guardian，管理用户创建的Actor
+ * 从Core层移动到Runtime层
  */
-package cactor.core.guardian
+package cactor.runtime.guardian
 
 import std.sync.*
 import std.collection.*
@@ -12,12 +13,13 @@ import cactor.core.message.{Message, MessageResult}
 import cactor.core.context.{ActorContext}
 import cactor.core.supervision.{SupervisionStrategy, DefaultSupervisionStrategy, SupervisionDirective, ActorFailure}
 import cactor.core.system.{ActorSystem}
+import cactor.core.guardian.{GuardianType}
 
 /**
- * 用户Guardian实现
+ * Runtime层的用户Guardian实现
  * 管理用户创建的Actor
  */
-public class UserGuardian <: BaseGuardianActor {
+public class RuntimeUserGuardian <: BaseGuardianActor {
     private let actorSystem: ActorSystem
     private let userActors: HashMap<String, ActorRef>
     private let defaultSupervisionStrategy: SupervisionStrategy
@@ -188,7 +190,7 @@ public class UserGuardian <: BaseGuardianActor {
     }
     
     public prop description: String {
-        get() { "User Guardian - manages user-created actors" }
+        get() { "Runtime User Guardian - manages user-created actors" }
     }
     
     public func receive(message: Message, context: ActorContext): MessageResult {
@@ -222,15 +224,15 @@ public class UserGuardian <: BaseGuardianActor {
 public class CreateUserActorMessage <: Message {
     private let props: Props<Actor>
     private let actorName: String
-    
+
     public init(props: Props<Actor>, name: String) {
         this.props = props
         this.actorName = name
     }
-    
+
     public func getProps(): Props<Actor> { props }
     public func getName(): String { actorName }
-    
+
     public func getType(): String { "CreateUserActor" }
     public func getPayload(): String { "CreateUserActor(${actorName})" }
     public func messageType(): String { "CreateUserActor" }
@@ -241,13 +243,13 @@ public class CreateUserActorMessage <: Message {
  */
 public class ActorFailureMessage <: Message {
     private let failure: ActorFailure
-    
+
     public init(failure: ActorFailure) {
         this.failure = failure
     }
-    
+
     public func getFailure(): ActorFailure { failure }
-    
+
     public func getType(): String { "ActorFailure" }
     public func getPayload(): String { "ActorFailure(${failure.actor.path.toString()})" }
     public func messageType(): String { "ActorFailure" }
@@ -267,13 +269,13 @@ public class StopMessage <: Message {
  */
 public class RestartMessage <: Message {
     private let reason: Exception
-    
+
     public init(reason: Exception) {
         this.reason = reason
     }
-    
+
     public func getReason(): Exception { reason }
-    
+
     public func getType(): String { "Restart" }
     public func getPayload(): String { "Restart(${reason})" }
     public func messageType(): String { "Restart" }
@@ -286,27 +288,27 @@ public class SimpleUserActorRef <: ActorRef {
     private let actorName: String
     private let actor: Actor
     private let actorPath: ActorPath
-    
+
     public init(name: String, actor: Actor, path: ActorPath) {
         this.actorName = name
         this.actor = actor
         this.actorPath = path
     }
-    
+
     public prop path: ActorPath {
         get() { actorPath }
     }
-    
+
     public func tell(message: Message): Unit {
         let context = SimpleUserActorContext(this)
         actor.receive(message, context)
     }
-    
+
     public func tell(message: Message, sender: Option<String>): Unit {
         let context = SimpleUserActorContext(this, sender)
         actor.receive(message, context)
     }
-    
+
     public func equals(other: ActorRef): Bool {
         match (other) {
             case userRef: SimpleUserActorRef =>
@@ -314,7 +316,7 @@ public class SimpleUserActorRef <: ActorRef {
             case _ => false
         }
     }
-    
+
     public func hashCode(): Int32 {
         Int32(actorName.hashCode() & 0x7FFFFFFF)
     }
@@ -326,17 +328,17 @@ public class SimpleUserActorRef <: ActorRef {
 public class SimpleUserActorContext <: ActorContext {
     private let selfRef: ActorRef
     private let currentSender: Option<String>
-    
+
     public init(self: ActorRef) {
         this.selfRef = self
         this.currentSender = None<String>
     }
-    
+
     public init(self: ActorRef, sender: Option<String>) {
         this.selfRef = self
         this.currentSender = sender
     }
-    
+
     public func sender(): Option<String> {
         currentSender
     }

@@ -1,9 +1,10 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor Core - System Guardian实现
+ * CActor Runtime - System Guardian实现
  * 系统级Guardian，管理系统Actor和用户Guardian
+ * 从Core层移动到Runtime层
  */
-package cactor.core.guardian
+package cactor.runtime.guardian
 
 import std.sync.*
 import std.collection.*
@@ -12,14 +13,15 @@ import cactor.core.message.{Message, MessageResult}
 import cactor.core.context.{ActorContext}
 import cactor.core.supervision.{SupervisionStrategy, DefaultSupervisionStrategy}
 import cactor.core.system.{ActorSystem}
+import cactor.core.guardian.{GuardianType, UserGuardian}
 
 /**
- * 系统Guardian实现
+ * Runtime层的系统Guardian实现
  * 管理系统级Actor和用户Guardian
  */
-public class SystemGuardian <: BaseGuardianActor {
+public class RuntimeSystemGuardian <: BaseGuardianActor {
     private let actorSystem: ActorSystem
-    private let userGuardian: Option<ActorRef>
+    private var userGuardian: Option<ActorRef>
     private let systemActors: HashMap<String, ActorRef>
     private let defaultSupervisionStrategy: SupervisionStrategy
     
@@ -41,8 +43,7 @@ public class SystemGuardian <: BaseGuardianActor {
                 let userGuardianFactory = SimpleActorFactory<Actor>({ => UserGuardian(actorSystem) })
                 let userGuardianProps = Props<Actor>(userGuardianFactory)
                 let guardian = doCreateChild(userGuardianProps, "user")
-                // 这里需要更新userGuardian，但由于是let，我们需要重新设计
-                // 暂时返回创建的guardian
+                userGuardian = Some(guardian)
                 guardian
         }
     }
@@ -146,7 +147,7 @@ public class SystemGuardian <: BaseGuardianActor {
     }
     
     public prop description: String {
-        get() { "System Guardian - manages system actors and user guardian" }
+        get() { "Runtime System Guardian - manages system actors and user guardian" }
     }
     
     public func receive(message: Message, context: ActorContext): MessageResult {
@@ -185,8 +186,6 @@ public class CreateSystemActorMessage <: Message {
     public func getPayload(): String { "CreateSystemActor(${actorName})" }
     public func messageType(): String { "CreateSystemActor" }
 }
-
-
 
 /**
  * 简化的系统ActorRef实现

@@ -1,15 +1,18 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor 3.0 - 高性能Actor实现
+ * CActor Runtime - 高性能Actor实现
  * 基于tu.md优化计划的高性能Actor系统
+ * 从Core层移动到Runtime层
  */
-package cactor.core.actor
+package cactor.runtime.actor
 
 import std.sync.*
 import std.time.*
+import cactor.core.actor.{Actor}
 import cactor.core.message.*
 import cactor.core.context.*
 import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
+import cactor.runtime.context.{PooledActorContext}
 import cactor.foundation.memory.*
 
 /**
@@ -128,6 +131,12 @@ public interface HighPerformanceActorBehavior {
     }
 }
 
+// 简化时间函数
+func getCurrentTimeNanos(): Int64 {
+    let now = DateTime.now()
+    now.toUnixTimeStamp().toMilliseconds() * 1000000
+}
+
 /**
  * 高性能Actor实现
  * 基于tu.md优化计划：64字节内存占用，无锁邮箱，对象池化
@@ -213,101 +222,7 @@ public class HighPerformanceActor <: Actor {
         
         return result
     }
-    
-    /**
-     * 高性能消息发送
-     * 直接使用无锁邮箱
-     */
-    public func tell(message: Message): Unit {
-        let envelope = Envelope(message, None)
-        if (!mailbox.enqueue(envelope)) {
-            // 邮箱满，记录错误
-            incrementErrorCount()
-        }
-    }
-    
-    /**
-     * 批量消息处理 - 提升吞吐量
-     */
-    public func processBatch(batchSize: Int32): Int32 {
-        let messages = Array<Message>(Int64(batchSize), { i => StringMessage("") })
-        var processedCount: Int32 = 0
-        
-        // 批量出队
-        for (i in 0..Int64(batchSize)) {
-            match (mailbox.dequeue()) {
-                case Some(envelope) =>
-                    messages[i] = envelope.getMessage()
-                    processedCount += 1
-                case None =>
-                    break
-            }
-        }
-        
-        if (processedCount > 0) {
-            // 获取池化上下文
-            let pooledContext = contextPool.acquire()
-            
-            // 批量处理
-            let batchMessages = messages.slice(0, Int64(processedCount))
-            let results = behavior.receiveBatch(batchMessages, pooledContext)
-            
-            // 批量更新统计
-            for (result in results) {
-                updateStats(result)
-            }
-            
-            // 释放池化上下文
-            contextPool.release(pooledContext)
-            
-            // 更新最后活跃时间
-            lastActiveTime.store(getCurrentTimeNanos())
-        }
-        
-        return processedCount
-    }
-    
-    /**
-     * 启动Actor
-     */
-    public func start(): Unit {
-        stateValue.store(1)  // 1表示运行状态
-        behavior.preProcess(StartMessage())
-    }
 
-    /**
-     * 停止Actor
-     */
-    public func stop(): Unit {
-        stateValue.store(0)  // 0表示停止状态
-        behavior.postProcess(StopMessage(), MessageResult.Stop)
-    }
-
-    /**
-     * 获取Actor状态值
-     */
-    public func getStateValue(): Int64 {
-        stateValue.load()
-    }
-    
-    /**
-     * 获取性能统计
-     */
-    public func getStats(): ActorStats {
-        let statsValue = stats.load()
-        let processedMessages = UInt32((statsValue >> 32) & 0xFFFFFFFF)
-        let errorCount = UInt16((statsValue >> 16) & 0xFFFF)
-        let otherStats = UInt16(statsValue & 0xFFFF)
-        
-        ActorStats(
-            processedMessages,
-            errorCount,
-            createdAt,
-            lastActiveTime.load(),
-            mailbox.size()
-        )
-    }
-    
     /**
      * 更新统计信息
      */
@@ -323,7 +238,7 @@ public class HighPerformanceActor <: Actor {
         let newStats = (Int64(processedMessages) << 32) | (Int64(errorCount) << 16) | Int64(otherStats)
         stats.store(newStats)
     }
-    
+
     /**
      * 增加错误计数
      */
@@ -332,7 +247,7 @@ public class HighPerformanceActor <: Actor {
         let errorCount = UInt16((currentStats >> 16) & 0xFFFF) + 1
         let processedMessages = UInt32((currentStats >> 32) & 0xFFFFFFFF)
         let otherStats = UInt16(currentStats & 0xFFFF)
-        
+
         let newStats = (Int64(processedMessages) << 32) | (Int64(errorCount) << 16) | Int64(otherStats)
         stats.store(newStats)
     }
@@ -347,7 +262,7 @@ public struct ActorStats {
     public let createdAt: Int64
     public let lastActiveTime: Int64
     public let mailboxSize: Int64
-    
+
     public init(processedMessages: UInt32, errorCount: UInt16, createdAt: Int64, lastActiveTime: Int64, mailboxSize: Int64) {
         this.processedMessages = processedMessages
         this.errorCount = errorCount
@@ -355,18 +270,18 @@ public struct ActorStats {
         this.lastActiveTime = lastActiveTime
         this.mailboxSize = mailboxSize
     }
-    
+
     public func getSuccessRate(): Float64 {
         if (processedMessages == 0) {
             return 100.0
         }
         return (Float64(processedMessages - UInt32(errorCount)) / Float64(processedMessages)) * 100.0
     }
-    
+
     public func getAgeInSeconds(): Float64 {
         Float64(getCurrentTimeNanos() - createdAt) / 1000000000.0
     }
-    
+
     public func getIdleTimeInSeconds(): Float64 {
         Float64(getCurrentTimeNanos() - lastActiveTime) / 1000000000.0
     }
@@ -377,7 +292,7 @@ public struct ActorStats {
  */
 public struct StartMessage <: SystemMessage {
     public init() {}
-    
+
     public func messageType(): String {
         "StartMessage"
     }
