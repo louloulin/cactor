@@ -193,14 +193,15 @@ func benchmarkAtomicOperations(): Unit {
     let iterations = 1000000
     
     let startTime = DateTime.now()
-    
+
     for (_ in 0..iterations) {
         counter.fetchAdd(1)
     }
-    
+
     let endTime = DateTime.now()
+    let duration = endTime.toUnixTimeStamp().toNanoseconds() - startTime.toUnixTimeStamp().toNanoseconds()
     // 简化性能测试，不进行精确计时
-    println("✓ 原子操作性能测试完成")
+    println("✓ 原子操作性能测试完成，耗时: ${duration}ns")
     
     println("✓ 完成${iterations}次原子操作")
 }

@@ -213,15 +213,16 @@ func benchmarkActorPerformance(): Unit {
     
     let numMessages = 10000
     let startTime = DateTime.now()
-    
+
     for (i in 0..numMessages) {
         actor.sendMessage("Benchmark${i}")
     }
-    
+
     // 等待所有消息处理完成
     sleep(Duration.second)
-    
+
     let endTime = DateTime.now()
+    let duration = endTime.toUnixTimeStamp().toNanoseconds() - startTime.toUnixTimeStamp().toNanoseconds()
     let processedCount = actor.getMessageCount()
     
     actor.stop()
@@ -229,6 +230,7 @@ func benchmarkActorPerformance(): Unit {
     println("✓ 性能测试完成:")
     println("  - 发送消息: ${numMessages}")
     println("  - 处理消息: ${processedCount}")
+    println("  - 测试耗时: ${duration}ns")
     let rate = Float64(processedCount) / Float64(numMessages) * 100.0
     println("  - 处理率: ${Int32(rate)}%")
 }
