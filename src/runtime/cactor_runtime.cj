@@ -18,6 +18,13 @@ import cactor.runtime.dispatcher.factory.{AdvancedDispatcherFactory, DefaultAdva
 import cactor.runtime.system.{SimpleActorSystem}
 import cactor.core.guardian.{GuardianStats}
 import cactor.core.config.{MailboxConfig, DispatcherConfig}
+import cactor.runtime.lifecycle.{ActorLifecycleManager}
+import cactor.runtime.registry.{ActorRegistry}
+import cactor.runtime.supervision.{SupervisionManager, SupervisionConfig}
+import cactor.runtime.monitoring.{ActorSystemMetrics}
+import cactor.runtime.events.{ActorEventBus}
+import cactor.core.supervision.{SupervisionStrategy}
+import cactor.runtime.supervision.{SimpleSupervisionStrategy}
 
 /**
  * CActorRuntime - 统一运行时管理器
@@ -39,31 +46,45 @@ public class CActorRuntime {
     private let mailboxFactory: AdvancedMailboxFactory
     private let dispatcherFactory: AdvancedDispatcherFactory
     private let highPerformanceSystem: HighPerformanceActorSystem
-    
+
+    // plan10.md新增的企业级组件
+    private let lifecycleManager: ActorLifecycleManager
+    private let actorRegistry: ActorRegistry
+    private let supervisionManager: SupervisionManager
+    private let systemMetrics: ActorSystemMetrics
+    private let eventBus: ActorEventBus
+
     // 运行时状态
     private let isRunning: AtomicBool
     private let startTime: AtomicInt64
     private let actorCount: AtomicInt64
-    
+
     // 配置
     private let config: CActorRuntimeConfig
     
     public init(systemName: String, config: CActorRuntimeConfig) {
         this.systemName = systemName
         this.config = config
-        
+
         // 创建基础ActorSystem
-        this.actorSystem = createBaseActorSystem(systemName)
-        
+        this.actorSystem = SimpleActorSystem(systemName)
+
+        // 创建企业级组件 (plan10.md)
+        this.eventBus = ActorEventBus()
+        this.systemMetrics = ActorSystemMetrics()
+        this.actorRegistry = ActorRegistry()
+        this.supervisionManager = SupervisionManager(SupervisionConfig.createDefault())
+        this.lifecycleManager = ActorLifecycleManager()
+
         // 创建Guardian Actors
         this.systemGuardian = RuntimeSystemGuardian(actorSystem)
         this.userGuardian = RuntimeUserGuardian(actorSystem)
-        
+
         // 创建运行时组件
         this.mailboxFactory = DefaultAdvancedMailboxFactory()
         this.dispatcherFactory = DefaultAdvancedDispatcherFactory()
         this.highPerformanceSystem = HighPerformanceActorSystem(config.highPerformanceConfig)
-        
+
         // 初始化状态
         this.isRunning = AtomicBool(false)
         this.startTime = AtomicInt64(0)
@@ -106,17 +127,36 @@ public class CActorRuntime {
     }
     
     /**
-     * 创建Actor - 统一接口
+     * 创建Actor - 统一接口 (plan10.md设计)
+     * 实现完整的Actor创建流程
      */
     public func actorOf(props: Props<Actor>, name: String): ActorRef {
         if (!isRunning.load()) {
             throw Exception("Runtime系统未启动")
         }
-        
-        // 通过用户Guardian创建Actor
+
+        // 1. 验证和准备
+        validateActorCreation(name, None<ActorRef>)
+
+        // 2. 通过用户Guardian创建Actor
         let actorRef = userGuardian.createUserActor(props, name)
+
+        // 3. 注册到Actor注册表
+        actorRegistry.register(actorRef, Some("/user"))
+
+        // 4. 注册到生命周期管理器
+        lifecycleManager.registerActor(actorRef)
+
+        // 5. 设置监督策略
+        setupSupervision(actorRef, props, None<ActorRef>)
+
+        // 6. 启动Actor
+        lifecycleManager.startActor(actorRef)
+
+        // 7. 更新统计
+        systemMetrics.incrementActorCount()
         actorCount.fetchAdd(1)
-        
+
         return actorRef
     }
     
@@ -228,6 +268,76 @@ public class CActorRuntime {
     
     private func getCurrentTimeNanos(): Int64 {
         DateTime.now().toUnixTimeStamp().toMilliseconds() * 1000000
+    }
+
+    /**
+     * 验证Actor创建参数
+     */
+    private func validateActorCreation(name: String, parent: Option<ActorRef>): Unit {
+        if (name.isEmpty()) {
+            throw Exception("Actor名称不能为空")
+        }
+
+        // 检查名称是否已存在
+        match (actorRegistry.findByName(name)) {
+            case Some(existingActor) =>
+                throw Exception("Actor名称已存在: ${name}")
+            case None =>
+                ()  // 名称可用
+        }
+    }
+
+    /**
+     * 设置Actor监督策略
+     */
+    private func setupSupervision(actorRef: ActorRef, props: Props<Actor>, parent: Option<ActorRef>): Unit {
+        // 使用默认监督策略
+        let strategy = createDefaultSupervisionStrategy()
+        supervisionManager.supervise(actorRef, strategy)
+    }
+
+    /**
+     * 创建默认监督策略
+     */
+    private func createDefaultSupervisionStrategy(): SupervisionStrategy {
+        // 简化实现，返回一个基本的监督策略
+        // 这里需要实现一个具体的SupervisionStrategy
+        SimpleSupervisionStrategy(3, 60)
+    }
+
+    /**
+     * 获取生命周期管理器
+     */
+    public func getLifecycleManager(): ActorLifecycleManager {
+        lifecycleManager
+    }
+
+    /**
+     * 获取Actor注册表
+     */
+    public func getActorRegistry(): ActorRegistry {
+        actorRegistry
+    }
+
+    /**
+     * 获取监督管理器
+     */
+    public func getSupervisionManager(): SupervisionManager {
+        supervisionManager
+    }
+
+    /**
+     * 获取系统指标
+     */
+    public func getSystemMetrics(): ActorSystemMetrics {
+        systemMetrics
+    }
+
+    /**
+     * 获取事件总线
+     */
+    public func getEventBus(): ActorEventBus {
+        eventBus
     }
 }
 

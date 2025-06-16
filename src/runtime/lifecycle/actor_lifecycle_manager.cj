@@ -11,7 +11,7 @@ import std.time.*
 import cactor.core.actor.{Actor, ActorRef, Props}
 import cactor.core.message.{Message, SystemMessage}
 import cactor.core.context.{ActorContext}
-import cactor.runtime.events.{ActorEventBus, ActorLifecycleEvent}
+import cactor.runtime.events.{ActorEventBus, ActorLifecycleEvent, ActorStartedEvent, ActorStoppedEvent, ActorRestartedEvent, ActorRegisteredEvent, ActorUnregisteredEvent, ActorStartFailedEvent, ActorStopFailedEvent, ActorRestartFailedEvent}
 
 /**
  * Actor生命周期状态
@@ -64,13 +64,11 @@ public struct ActorLifecycleInfo {
  * 4. 发布生命周期事件
  */
 public class ActorLifecycleManager {
-    private let runtime: CActorRuntime
     private let lifecycleInfos: ConcurrentHashMap<String, ActorLifecycleInfo>
     private let eventBus: ActorEventBus
     private let isRunning: AtomicBool
-    
-    public init(runtime: CActorRuntime) {
-        this.runtime = runtime
+
+    public init() {
         this.lifecycleInfos = ConcurrentHashMap<String, ActorLifecycleInfo>()
         this.eventBus = ActorEventBus()
         this.isRunning = AtomicBool(true)
