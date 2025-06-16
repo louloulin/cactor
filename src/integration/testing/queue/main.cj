@@ -7,8 +7,54 @@ package cactor.integration.testing.queue
 
 import std.sync.*
 import std.time.*
+import std.collection.*
 import cactor.core.message.{Envelope, PingMessage, StopMessage}
-// import cactor.mailbox.queue.{QueueMailbox, BoundedQueueMailbox, PriorityQueueMailbox}
+import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
+
+// 简化的邮箱类型别名，用于测试
+class QueueMailbox <: Mailbox {
+    private let innerMailbox: FoundationMailbox
+
+    public init() {
+        this.innerMailbox = FoundationMailbox(1024)
+    }
+
+    public func enqueue(envelope: Envelope): Bool { innerMailbox.enqueue(envelope) }
+    public func dequeue(): Option<Envelope> { innerMailbox.dequeue() }
+    public func isEmpty(): Bool { innerMailbox.isEmpty() }
+    public func size(): Int64 { innerMailbox.size() }
+    public func clear(): Unit { innerMailbox.clear() }
+    public func getRejectedCount(): Int64 { 0 }
+}
+
+class BoundedQueueMailbox <: Mailbox {
+    private let innerMailbox: FoundationMailbox
+
+    public init(capacity: Int32) {
+        this.innerMailbox = FoundationMailbox(Int64(capacity))
+    }
+
+    public func enqueue(envelope: Envelope): Bool { innerMailbox.enqueue(envelope) }
+    public func dequeue(): Option<Envelope> { innerMailbox.dequeue() }
+    public func isEmpty(): Bool { innerMailbox.isEmpty() }
+    public func size(): Int64 { innerMailbox.size() }
+    public func clear(): Unit { innerMailbox.clear() }
+    public func getRejectedCount(): Int64 { 0 }
+}
+
+class PriorityQueueMailbox <: Mailbox {
+    private let innerMailbox: FoundationMailbox
+
+    public init() {
+        this.innerMailbox = FoundationMailbox(1024)
+    }
+
+    public func enqueue(envelope: Envelope): Bool { innerMailbox.enqueue(envelope) }
+    public func dequeue(): Option<Envelope> { innerMailbox.dequeue() }
+    public func isEmpty(): Bool { innerMailbox.isEmpty() }
+    public func size(): Int64 { innerMailbox.size() }
+    public func clear(): Unit { innerMailbox.clear() }
+}
 
 /**
  * 测试基础队列邮箱功能

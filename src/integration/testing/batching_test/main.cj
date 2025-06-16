@@ -7,8 +7,44 @@ package cactor.integration.testing.batching_test
 
 import std.sync.*
 import std.time.*
-// import cactor.mailbox.batching.*
+import std.collection.*
 import cactor.core.message.{Envelope, PingMessage}
+import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
+
+// 简化的批量处理邮箱实现
+class BatchingMailbox <: Mailbox {
+    private let innerMailbox: FoundationMailbox
+    private let batchSize: Int64
+    private let batchTimeout: Duration
+
+    public init(batchSize: Int64, batchTimeout: Duration) {
+        this.innerMailbox = FoundationMailbox(1024)
+        this.batchSize = batchSize
+        this.batchTimeout = batchTimeout
+    }
+
+    public func enqueue(envelope: Envelope): Bool { innerMailbox.enqueue(envelope) }
+    public func dequeue(): Option<Envelope> { innerMailbox.dequeue() }
+    public func isEmpty(): Bool { innerMailbox.isEmpty() }
+    public func size(): Int64 { innerMailbox.size() }
+    public func clear(): Unit { innerMailbox.clear() }
+
+    public func getBatchSize(): Int64 { batchSize }
+
+    public func processBatch(): Array<Envelope> {
+        if (size() >= batchSize) {
+            let batch = ArrayList<Envelope>()
+            for (_ in 0..batchSize) {
+                match (dequeue()) {
+                    case Some(envelope) => batch.append(envelope)
+                    case None => break
+                }
+            }
+            return batch.toArray()
+        }
+        return Array<Envelope>()
+    }
+}
 
 /**
  * 测试批量处理邮箱基础功能

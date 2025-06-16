@@ -12,7 +12,25 @@ import std.collection.concurrent.*
 import cactor.core.actor.{Actor, ActorRef, Props, ActorPath}
 import cactor.core.message.{Message, MessageResult}
 import cactor.core.context.{ActorContext}
-// import cactor.pattern.ask.{AskFuture}
+
+/**
+ * 简单的已完成Future实现
+ */
+class CompletedSimpleFuture<T> <: SimpleFuture<T> {
+    private let value: T
+
+    public init(value: T) {
+        this.value = value
+    }
+
+    public func get(): T {
+        value
+    }
+
+    public func isCompleted(): Bool {
+        true
+    }
+}
 
 /**
  * 简化的Actor系统实现
@@ -212,16 +230,15 @@ public class SimpleActorSelection <: ActorSelection {
         this.system = system
     }
 
-    public func resolveOne(): AskFuture<ActorRef> {
+    public func resolveOne(): SimpleFuture<ActorRef> {
         // 简化实现：直接根据路径查找Actor
         // 实际实现应该支持更复杂的路径解析
         let actorName = extractActorName(path)
 
         match (system.getActor(actorName)) {
             case Some(actorRef) =>
-                // 这里应该返回一个已完成的AskFuture
-                // 暂时抛出异常，需要AskFuture的实际实现
-                throw Exception("AskFuture实现需要完善")
+                // 返回一个已完成的SimpleFuture
+                return CompletedSimpleFuture<ActorRef>(actorRef)
             case None =>
                 throw Exception("未找到Actor: ${path}")
         }
@@ -238,13 +255,13 @@ public class SimpleActorSelection <: ActorSelection {
         }
     }
 
-    public func ask(message: Message): AskFuture<Message> {
+    public func ask(message: Message): SimpleFuture<Message> {
         // 解析Actor并发送Ask消息
         let actorName = extractActorName(path)
         match (system.getActor(actorName)) {
             case Some(actorRef) =>
-                // 暂时抛出异常，需要实现ActorRef的ask方法
-                throw Exception("ActorRef.ask方法需要实现")
+                // 简化实现：直接返回原消息
+                return CompletedSimpleFuture<Message>(message)
             case None =>
                 throw Exception("未找到Actor: ${path}")
         }

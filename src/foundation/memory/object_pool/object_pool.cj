@@ -37,7 +37,7 @@ public class SimpleObjectPool<T> <: ObjectPool<T> {
     public init(capacity: Int64, factory: () -> T) {
         this.capacity = capacity
         this.factory = factory
-        this.pool = Array<Option<T>>(capacity, { i => None })
+        this.pool = Array<Option<T>>(capacity, { _ => None })
         this.head = AtomicInt64(0)
         this.tail = AtomicInt64(0)
         this.size = AtomicInt64(0)
@@ -101,7 +101,7 @@ public class ThreadLocalObjectPool<T> <: ObjectPool<T> {
     public init(poolCount: Int32, poolCapacity: Int64, factory: () -> T) {
         this.poolCount = poolCount
         this.globalPool = SimpleObjectPool<T>(poolCapacity * Int64(poolCount), factory)
-        this.localPools = Array<SimpleObjectPool<T>>(Int64(poolCount), { i =>
+        this.localPools = Array<SimpleObjectPool<T>>(Int64(poolCount), { _ =>
             SimpleObjectPool<T>(poolCapacity, factory)
         })
     }

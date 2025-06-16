@@ -88,9 +88,9 @@ func testConcurrentAtomicOperations(): Bool {
     let expectedTotal = numThreads * incrementsPerThread
     
     // 启动多个线程并发增加计数器
-    for (i in 0..numThreads) {
+    for (_ in 0..numThreads) {
         spawn {
-            for (j in 0..incrementsPerThread) {
+            for (_ in 0..incrementsPerThread) {
                 counter.fetchAdd(1)
             }
         }
@@ -121,9 +121,9 @@ func testMutex(): Bool {
     let incrementsPerThread = 200
     
     // 使用互斥锁保护的计数器
-    for (i in 0..numThreads) {
+    for (_ in 0..numThreads) {
         spawn {
-            for (j in 0..incrementsPerThread) {
+            for (_ in 0..incrementsPerThread) {
                 mutex.lock()
                 try {
                     let current = sharedCounter.load()
@@ -162,7 +162,7 @@ func testSpawn(): Bool {
     let numTasks = 100
     
     // 启动大量轻量级线程
-    for (i in 0..numTasks) {
+    for (_ in 0..numTasks) {
         spawn {
             // 模拟一些工作
             sleep(Duration.millisecond * 10)
@@ -194,7 +194,7 @@ func benchmarkAtomicOperations(): Unit {
     
     let startTime = DateTime.now()
     
-    for (i in 0..iterations) {
+    for (_ in 0..iterations) {
         counter.fetchAdd(1)
     }
     

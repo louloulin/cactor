@@ -7,8 +7,152 @@ package cactor.integration.testing.ask_pattern_test
 
 import std.sync.*
 import std.time.*
-// import cactor.pattern.ask.*
+import std.collection.*
 import cactor.core.message.{Message, PingMessage}
+import cactor.core.actor.{ActorRef, ActorPath}
+
+// 简化的Ask模式类型定义
+class DummyActorRef <: ActorRef {
+    private let name: String
+    private let actorPath: ActorPath
+
+    public init(name: String) {
+        this.name = name
+        this.actorPath = ActorPath("test-system", "/user/${name}")
+    }
+
+    public prop path: ActorPath {
+        get() { actorPath }
+    }
+
+    public func tell(message: Message): Unit {
+        println("DummyActorRef ${name} 收到消息: ${message.messageType()}")
+    }
+
+    public func tell(message: Message, sender: Option<String>): Unit {
+        tell(message)
+    }
+
+    public func getName(): String { name }
+
+    public func equals(other: ActorRef): Bool {
+        match (other) {
+            case ref: DummyActorRef => ref.name == this.name
+            case _ => false
+        }
+    }
+
+    public func hashCode(): Int32 {
+        Int32(name.hashCode() & 0x7FFFFFFF)
+    }
+}
+
+class AskMessage <: Message {
+    private let requestId: String
+    private let originalMessage: Message
+    private let replyTo: ActorRef
+
+    public init(requestId: String, originalMessage: Message, replyTo: ActorRef) {
+        this.requestId = requestId
+        this.originalMessage = originalMessage
+        this.replyTo = replyTo
+    }
+
+    public func messageType(): String { "AskMessage" }
+    public func priority(): Int32 { 1 }
+    public func getRequestId(): String { requestId }
+    public func getOriginalMessage(): Message { originalMessage }
+    public func getReplyTo(): ActorRef { replyTo }
+}
+
+class AskResponse <: Message {
+    private let requestId: String
+    private let response: Message
+    private let success: Bool
+
+    public init(requestId: String, response: Message, success: Bool) {
+        this.requestId = requestId
+        this.response = response
+        this.success = success
+    }
+
+    public func messageType(): String { "AskResponse" }
+    public func priority(): Int32 { 1 }
+    public func getRequestId(): String { requestId }
+    public func getResponse(): Message { response }
+    public func isSuccess(): Bool { success }
+}
+
+enum AskResult<T> {
+    | Success(T)
+    | Failure(String)
+
+    public func isSuccess(): Bool {
+        match (this) {
+            case Success(_) => true
+            case Failure(_) => false
+        }
+    }
+
+    public func get(): T {
+        match (this) {
+            case Success(value) => value
+            case Failure(error) => throw Exception("AskResult失败: ${error}")
+        }
+    }
+}
+
+class AskFuture<T> where T <: Message {
+    private let requestId: String
+    private let timeout: Duration
+    private var completed: AtomicBool
+    private var timedOut: AtomicBool
+    private var result: Option<AskResult<T>>
+    private let mutex: ReentrantMutex
+
+    public init(requestId: String, timeout: Duration) {
+        this.requestId = requestId
+        this.timeout = timeout
+        this.completed = AtomicBool(false)
+        this.timedOut = AtomicBool(false)
+        this.result = None
+        this.mutex = ReentrantMutex()
+    }
+
+    public func getRequestId(): String { requestId }
+    public func isCompleted(): Bool { completed.load() }
+    public func isTimedOut(): Bool { timedOut.load() }
+
+    public func complete(value: T): Unit {
+        mutex.lock()
+        if (!completed.load()) {
+            this.result = Some(AskResult.Success(value))
+            completed.store(true)
+        }
+        mutex.unlock()
+    }
+
+    public func fail(error: String): Unit {
+        mutex.lock()
+        if (!completed.load()) {
+            this.result = Some(AskResult.Failure(error))
+            completed.store(true)
+        }
+        mutex.unlock()
+    }
+
+    public func get(): AskResult<T> {
+        mutex.lock()
+        match (result) {
+            case Some(res) =>
+                mutex.unlock()
+                res
+            case None =>
+                mutex.unlock()
+                throw Exception("Future未完成")
+        }
+    }
+}
 
 /**
  * 测试Ask消息

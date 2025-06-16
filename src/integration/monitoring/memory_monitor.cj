@@ -3,12 +3,12 @@
  * CActor 3.0 - 内存使用监控系统
  * 实时监控内存使用情况，提供性能分析和优化建议
  */
-package cactor.core.monitoring
+package cactor.integration.monitoring
 
 import std.sync.*
 import std.collection.*
 import std.time.*
-// import cactor.core.memory.*
+import cactor.foundation.memory.{NumaAwareMemoryPool}
 
 // 内存监控接口
 public interface MemoryMonitor {

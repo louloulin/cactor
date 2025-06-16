@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import cactor.core.message.{Message, StringMessage}
 import cactor.core.actor.{ActorRef, ActorPath}
-import cactor.foundation.network.{NetworkAddress, NetworkMessage}
+import cactor.foundation.network.{NetworkAddress}
 import cactor.distribution.remote.{SimpleRemoteManager}
 import cactor.foundation.network.{TransportProtocol}
 
