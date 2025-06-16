@@ -104,3 +104,7 @@ output-type = "executable"
 # === Actor配置系统验证测试 ===
 [package.package-configuration."cactor.integration.testing.actor_config_test"]
 output-type = "executable"
+
+# === Actor DSL宏系统验证测试 ===
+[package.package-configuration."cactor.integration.testing.actor_dsl_test"]
+output-type = "executable"

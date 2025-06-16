@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-基于对Akka、Actix、ProtoActor等成熟Actor框架的深入研究，结合仓颉语言的独特特性和CangjieMagic项目的模块化架构经验，设计一个高性能、低延时的现代化Actor系统。
+基于对Akka、Actix、ProtoActor等成熟Actor框架的深入研究，结合仓颉语言的独特特性和项目的模块化架构经验，设计一个高性能、低延时的现代化Actor系统。
 
 ## 设计理念
 
