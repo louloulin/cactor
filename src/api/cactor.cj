@@ -6,7 +6,8 @@
 package cactor.api
 
 import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory}
-import cactor.core.system.{ActorSystem, SimpleActorSystem}
+import cactor.core.system.{ActorSystem}
+import cactor.runtime.system.{SimpleActorSystem}
 
 /**
  * CActor统一API入口

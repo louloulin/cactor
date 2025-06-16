@@ -13,6 +13,7 @@ import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
 import cactor.core.system.*
+import cactor.runtime.system.{SimpleActorSystem}
 import cactor.runtime.mailbox.*
 import cactor.foundation.queue.*
 import cactor.foundation.memory.*
@@ -158,7 +159,7 @@ public class ExtremePerformanceTestSuite {
         // 创建Actor
         for (i in 0..Int64(actorCount)) {
             let actor = actors[i]
-            let actorRef = system.actorOf(PropsFactory.create({ => actor }), "extreme-actor-${i}")
+            let actorRef = system.actorOf(Props<Actor>(SimpleActorFactory<Actor>({ => actor })), "extreme-actor-${i}")
             actorRefs[i] = Some(actorRef)
         }
 
@@ -245,7 +246,7 @@ public class ExtremePerformanceTestSuite {
 
         let system = SimpleActorSystem("extreme-latency-test")
         let actor = ExtremePerformanceActor()
-        let actorRef = system.actorOf(PropsFactory.create({ => actor }), "latency-test-actor")
+        let actorRef = system.actorOf(Props<Actor>(SimpleActorFactory<Actor>({ => actor })), "latency-test-actor")
 
         let messageCount: Int64 = 100000  // 10万消息用于延迟测试
 
@@ -315,7 +316,7 @@ public class ExtremePerformanceTestSuite {
         // 创建Actor
         for (i in 0..Int64(actorCount)) {
             let actor = actors[i]
-            let actorRef = system.actorOf(PropsFactory.create({ => actor }), "memory-actor-${i}")
+            let actorRef = system.actorOf(Props<Actor>(SimpleActorFactory<Actor>({ => actor })), "memory-actor-${i}")
             actorRefs[i] = Some(actorRef)
         }
 

@@ -12,6 +12,7 @@ import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
 import cactor.core.system.*
+import cactor.runtime.system.{SimpleActorSystem}
 import cactor.runtime.mailbox.*
 import cactor.foundation.queue.*
 
@@ -113,7 +114,8 @@ public class PerformanceTargetVerificationSuite {
         // 创建Actor
         for (i in 0..Int64(actorCount)) {
             let actor = actors[i]
-            let actorRef = system.actorOf(PropsFactory.create({ => actor }), "hp-actor-${i}")
+            let props = Props<Actor>(SimpleActorFactory<Actor>({ => actor }))
+            let actorRef = system.actorOf(props, "hp-actor-${i}")
             actorRefs[i] = Some(actorRef)
         }
 
@@ -190,7 +192,8 @@ public class PerformanceTargetVerificationSuite {
 
         let system = SimpleActorSystem("latency-target-test")
         let actor = HighPerformanceActor()
-        let actorRef = system.actorOf(PropsFactory.create({ => actor }), "latency-test-actor")
+        let props = Props<Actor>(SimpleActorFactory<Actor>({ => actor }))
+        let actorRef = system.actorOf(props, "latency-test-actor")
 
         let messageCount: Int64 = 50000  // 5万消息用于延迟测试
 
@@ -256,7 +259,8 @@ public class PerformanceTargetVerificationSuite {
         // 创建Actor
         for (i in 0..Int64(actorCount)) {
             let actor = actors[i]
-            let actorRef = system.actorOf(PropsFactory.create({ => actor }), "memory-actor-${i}")
+            let props = Props<Actor>(SimpleActorFactory<Actor>({ => actor }))
+            let actorRef = system.actorOf(props, "memory-actor-${i}")
             actorRefs[i] = Some(actorRef)
         }
 

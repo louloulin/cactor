@@ -6,7 +6,8 @@
 package cactor.api.extensions
 
 import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory}
-import cactor.core.system.{ActorSystem, SimpleActorSystem}
+import cactor.core.system.{ActorSystem}
+import cactor.runtime.system.{SimpleActorSystem}
 import cactor.api.config.{MailboxConfig, DispatcherConfig, SupervisionConfig}
 
 /**

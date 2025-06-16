@@ -37,6 +37,22 @@ output-type = "static"
 [package.package-configuration."cactor.core.config"]
 output-type = "static"
 
+# === Runtime Layer ===
+[package.package-configuration."cactor.runtime.mailbox"]
+output-type = "dynamic"
+
+[package.package-configuration."cactor.runtime.dispatcher"]
+output-type = "dynamic"
+
+[package.package-configuration."cactor.runtime.scheduler"]
+output-type = "dynamic"
+
+[package.package-configuration."cactor.runtime.execution"]
+output-type = "dynamic"
+
+[package.package-configuration."cactor.runtime.system"]
+output-type = "dynamic"
+
 # === API Layer ===
 [package.package-configuration."cactor.api"]
 output-type = "static"

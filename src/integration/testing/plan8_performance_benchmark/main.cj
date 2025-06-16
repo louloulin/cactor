@@ -7,7 +7,8 @@ package cactor.integration.testing.plan8_performance_benchmark
 import std.time.*
 import std.sync.*
 import cactor.core.actor.{Actor, ActorRef, Props, SimpleActorFactory}
-import cactor.core.system.{ActorSystem, SimpleActorSystem}
+import cactor.core.system.{ActorSystem}
+import cactor.runtime.system.{SimpleActorSystem}
 import cactor.core.message.{Message, StringMessage, MessageResult}
 import cactor.core.context.ActorContext
 

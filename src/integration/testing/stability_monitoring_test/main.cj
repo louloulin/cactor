@@ -12,6 +12,7 @@ import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
 import cactor.core.system.*
+import cactor.runtime.system.{SimpleActorSystem}
 import cactor.runtime.mailbox.*
 import cactor.foundation.queue.*
 
@@ -184,7 +185,8 @@ public class StabilityMonitoringTestSuite {
         // 创建Actor
         for (i in 0..Int64(actorCount)) {
             let actor = actors[i]
-            let actorRef = system.actorOf(PropsFactory.create({ => actor }), "stability-actor-${i}")
+            let props = Props<Actor>(SimpleActorFactory<Actor>({ => actor }))
+            let actorRef = system.actorOf(props, "stability-actor-${i}")
             actorRefs[i] = Some(actorRef)
         }
 
@@ -306,7 +308,8 @@ public class StabilityMonitoringTestSuite {
             // 创建Actor
             for (i in 0..Int64(actorsPerCycle)) {
                 let actor = actors[i]
-                let actorRef = system.actorOf(PropsFactory.create({ => actor }), "memory-actor-${cycle}-${i}")
+                let props = Props<Actor>(SimpleActorFactory<Actor>({ => actor }))
+                let actorRef = system.actorOf(props, "memory-actor-${cycle}-${i}")
                 actorRefs[i] = Some(actorRef)
             }
 
