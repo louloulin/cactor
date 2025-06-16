@@ -118,6 +118,10 @@ output-type = "executable"
 [package.package-configuration."cactor.integration.testing.actor_dsl_test"]
 output-type = "executable"
 
+# === Plan8高性能压测系统 ===
+[package.package-configuration."cactor.integration.testing.plan8_performance_benchmark"]
+output-type = "executable"
+
 # === 生产级Actor系统验证测试 ===
 # [package.package-configuration."cactor.integration.testing.production_actor_test"]
 # output-type = "executable"

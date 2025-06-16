@@ -131,7 +131,7 @@ public class SimpleActorSystem <: ActorSystem {
      */
     private func createActorRef(actor: Actor, name: String): ActorRef {
         // 创建mailbox - 使用Foundation层的高性能邮箱
-        let mailbox = FoundationMailbox(1024)  // 默认容量1024
+        let mailbox = FoundationMailbox(65535)  // 默认容量1024
 
         // 创建包含mailbox的ActorRef实现
         return SimpleActorRef(name, actor, mailbox, this)
