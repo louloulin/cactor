@@ -34,6 +34,9 @@ output-type = "static"
 [package.package-configuration."cactor.core.context"]
 output-type = "static"
 
+[package.package-configuration."cactor.core.config"]
+output-type = "static"
+
 # === API Layer ===
 [package.package-configuration."cactor.api.public"]
 output-type = "static"
@@ -96,4 +99,8 @@ output-type = "executable"
 
 # === Mailbox配置验证测试 ===
 [package.package-configuration."cactor.integration.testing.mailbox_configuration_test"]
+output-type = "executable"
+
+# === Actor配置系统验证测试 ===
+[package.package-configuration."cactor.integration.testing.actor_config_test"]
 output-type = "executable"
