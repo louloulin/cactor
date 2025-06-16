@@ -20,7 +20,23 @@ import cactor.api.config.{MailboxConfig, DispatcherConfig, SupervisionConfig}
 
 /**
  * ActorSystem便利工厂方法
+ * 改为普通函数避免静态方法链接问题
  */
+
+/**
+ * 创建默认配置的ActorSystem
+ */
+public func createDefaultActorSystem(): ActorSystem {
+    SimpleActorSystem("default")
+}
+
+/**
+ * 创建命名的ActorSystem
+ */
+public func createActorSystem(name: String): ActorSystem {
+    SimpleActorSystem(name)
+}
+
 public struct ActorSystemExtensions {
     /**
      * 创建默认配置的ActorSystem

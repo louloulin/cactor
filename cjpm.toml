@@ -154,4 +154,8 @@ output-type = "executable"
 [package.package-configuration."cactor.api.test"]
 output-type = "executable"
 
+# === 扩展方法测试 ===
+[package.package-configuration."cactor.api.extension_test"]
+output-type = "executable"
+
 
