@@ -53,3 +53,7 @@ output-type = "executable"
 # === 内存优化测试 ===
 [package.package-configuration."cactor.integration.testing.memory_optimization_test"]
 output-type = "executable"
+
+# === 无锁队列性能基准测试 ===
+[package.package-configuration."cactor.integration.testing.lockfree_queue_benchmark"]
+output-type = "executable"
