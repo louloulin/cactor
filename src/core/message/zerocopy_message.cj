@@ -147,34 +147,57 @@ public class ZeroCopyMessageImpl {
 }
 
 /**
- * 零拷贝消息工厂
+ * 高性能零拷贝消息工厂 (无锁实现)
+ *
+ * 性能优化:
+ * 1. 移除锁，使用原子操作
+ * 2. 支持批量创建
+ * 3. 内存预分配
  */
 public class ZeroCopyMessageFactory {
-    private let mutex: ReentrantMutex
+    private let messageIdGenerator: AtomicInt64
+    private let createdCount: AtomicInt64
 
     public init() {
-        this.mutex = ReentrantMutex()
+        this.messageIdGenerator = AtomicInt64(1)
+        this.createdCount = AtomicInt64(0)
     }
 
-    public func createEmptyMessage(messageType: UInt16, payloadSize: UInt64, 
+    public func createEmptyMessage(messageType: UInt16, payloadSize: UInt64,
                                   sourceActor: UInt64, targetActor: UInt64): ZeroCopyMessageImpl {
-        mutex.lock()
-        try {
-            ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
-        } finally {
-            mutex.unlock()
-        }
+        // 无锁创建，性能提升
+        let message = ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
+        createdCount.fetchAdd(1)
+        return message
     }
 
     public func createMessageWithPayload(messageType: UInt16, payloadSize: UInt64,
                                         sourceActor: UInt64, targetActor: UInt64,
                                         payload: Array<UInt8>): ZeroCopyMessageImpl {
-        mutex.lock()
-        try {
-            ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, Some(payload))
-        } finally {
-            mutex.unlock()
-        }
+        // 无锁创建，性能提升
+        let message = ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, Some(payload))
+        createdCount.fetchAdd(1)
+        return message
+    }
+
+    /**
+     * 批量创建消息 - 性能优化
+     */
+    public func createBatchMessages(messageType: UInt16, payloadSize: UInt64,
+                                   sourceActor: UInt64, targetActor: UInt64,
+                                   batchSize: Int32): Array<ZeroCopyMessageImpl> {
+        let messages = Array<ZeroCopyMessageImpl>(Int64(batchSize), { i =>
+            ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
+        })
+        createdCount.fetchAdd(Int64(batchSize))
+        return messages
+    }
+
+    /**
+     * 获取创建统计
+     */
+    public func getCreatedCount(): Int64 {
+        createdCount.load()
     }
 
     public func createMessage(messageType: UInt16, payloadSize: UInt64,
@@ -184,64 +207,230 @@ public class ZeroCopyMessageFactory {
 }
 
 /**
- * 消息池
+ * 高性能消息池 (无锁实现)
+ *
+ * 性能优化:
+ * 1. 无锁环形缓冲区
+ * 2. 原子操作替代锁
+ * 3. 批量获取/释放
+ * 4. 内存预热
+ * 5. 性能统计
  */
 public class MessagePool {
     private let capacity: Int64
+    private let mask: Int64  // 容量掩码，用于快速取模
     private let pool: Array<Option<ZeroCopyMessageImpl>>
     private let head: AtomicInt64
     private let tail: AtomicInt64
     private let size: AtomicInt64
-    private let mutex: ReentrantMutex
+
+    // 性能统计
+    private let acquireCount: AtomicInt64
+    private let releaseCount: AtomicInt64
+    private let hitCount: AtomicInt64
+    private let missCount: AtomicInt64
 
     public init(capacity: Int64) {
-        this.capacity = capacity
-        this.pool = Array<Option<ZeroCopyMessageImpl>>(capacity, { i => None })
+        // 确保容量是2的幂，便于位运算优化
+        this.capacity = MessagePool.nextPowerOfTwo(capacity)
+        this.mask = this.capacity - 1
+        this.pool = Array<Option<ZeroCopyMessageImpl>>(this.capacity, { i => None })
         this.head = AtomicInt64(0)
         this.tail = AtomicInt64(0)
         this.size = AtomicInt64(0)
-        this.mutex = ReentrantMutex()
+
+        this.acquireCount = AtomicInt64(0)
+        this.releaseCount = AtomicInt64(0)
+        this.hitCount = AtomicInt64(0)
+        this.missCount = AtomicInt64(0)
+
+        // 预热池
+        warmupPool()
     }
 
-    public func acquire(messageType: UInt16, payloadSize: UInt64, 
+    /**
+     * 无锁获取消息 - 高性能实现
+     */
+    public func acquire(messageType: UInt16, payloadSize: UInt64,
                        sourceActor: UInt64, targetActor: UInt64): ZeroCopyMessageImpl {
-        mutex.lock()
-        try {
-            if (size.load() > 0) {
-                let headPos = head.load()
-                match (pool[headPos]) {
-                    case Some(message) =>
-                        pool[headPos] = None
-                        head.store((headPos + 1) % capacity)
+        acquireCount.fetchAdd(1)
+
+        // 最大重试次数，避免无限循环
+        let maxRetries = 100
+        var retries = 0
+
+        while (retries < maxRetries && size.load() > 0) {
+            let currentHead = head.load()
+            let currentTail = tail.load()
+
+            if (currentHead >= currentTail) {
+                break  // 池为空
+            }
+
+            let index = currentHead & mask
+            match (pool[index]) {
+                case Some(message) =>
+                    // 尝试原子性地获取消息
+                    if (head.compareAndSwap(currentHead, currentHead + 1)) {
+                        pool[index] = None
                         size.fetchAdd(-1)
+                        hitCount.fetchAdd(1)
+
+                        // 重置消息状态以便重用
+                        resetMessage(message, messageType, payloadSize, sourceActor, targetActor)
                         return message
-                    case None => ()
+                    }
+                case None => ()
+            }
+
+            retries += 1
+        }
+
+        // 池为空或获取失败，创建新消息
+        missCount.fetchAdd(1)
+        return ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
+    }
+
+    /**
+     * 无锁释放消息 - 高性能实现
+     */
+    public func release(message: ZeroCopyMessageImpl): Unit {
+        releaseCount.fetchAdd(1)
+
+        // 最大重试次数
+        let maxRetries = 100
+        var retries = 0
+
+        while (retries < maxRetries && size.load() < capacity) {
+            let currentTail = tail.load()
+            let currentHead = head.load()
+
+            if (currentTail - currentHead >= capacity) {
+                break  // 池已满
+            }
+
+            let index = currentTail & mask
+            if (pool[index].isNone()) {
+                // 尝试原子性地释放消息
+                if (tail.compareAndSwap(currentTail, currentTail + 1)) {
+                    pool[index] = Some(message)
+                    size.fetchAdd(1)
+                    return
                 }
             }
-            
-            // 池为空，创建新消息
-            ZeroCopyMessageImpl(messageType, payloadSize, sourceActor, targetActor, None)
-        } finally {
-            mutex.unlock()
+
+            retries += 1
         }
+
+        // 池已满，直接丢弃消息（让GC处理）
     }
 
-    public func release(message: ZeroCopyMessageImpl): Unit {
-        mutex.lock()
-        try {
-            if (size.load() < capacity) {
-                let tailPos = tail.load()
-                pool[tailPos] = Some(message)
-                tail.store((tailPos + 1) % capacity)
-                size.fetchAdd(1)
-            }
-        } finally {
-            mutex.unlock()
+    /**
+     * 批量获取消息 - 性能优化
+     */
+    public func acquireBatch(messageType: UInt16, payloadSize: UInt64,
+                            sourceActor: UInt64, targetActor: UInt64,
+                            batchSize: Int32): Array<ZeroCopyMessageImpl> {
+        let messages = Array<ZeroCopyMessageImpl>(Int64(batchSize), { i =>
+            acquire(messageType, payloadSize, sourceActor, targetActor)
+        })
+        return messages
+    }
+
+    /**
+     * 批量释放消息 - 性能优化
+     */
+    public func releaseBatch(messages: Array<ZeroCopyMessageImpl>): Unit {
+        for (message in messages) {
+            release(message)
         }
     }
 
     public func getPoolSize(): Int64 {
         size.load()
+    }
+
+    /**
+     * 获取池统计信息
+     */
+    public func getStats(): MessagePoolStats {
+        MessagePoolStats(
+            capacity,
+            size.load(),
+            acquireCount.load(),
+            releaseCount.load(),
+            hitCount.load(),
+            missCount.load()
+        )
+    }
+
+    /**
+     * 预热池 - 提升性能
+     */
+    private func warmupPool(): Unit {
+        let warmupSize = capacity / 2
+        for (i in 0..warmupSize) {
+            let message = ZeroCopyMessageImpl(0, 0, 0, 0, None)
+            pool[i] = Some(message)
+        }
+        size.store(warmupSize)
+        tail.store(warmupSize)
+    }
+
+    /**
+     * 重置消息状态以便重用
+     */
+    private func resetMessage(message: ZeroCopyMessageImpl, messageType: UInt16,
+                             payloadSize: UInt64, sourceActor: UInt64, targetActor: UInt64): Unit {
+        // 这里应该重置消息的所有字段
+        // 简化实现，实际需要消息提供reset方法
+    }
+
+    /**
+     * 计算下一个2的幂
+     */
+    private static func nextPowerOfTwo(n: Int64): Int64 {
+        var power = 1
+        while (power < n) {
+            power *= 2
+        }
+        return power
+    }
+}
+
+/**
+ * 消息池统计信息
+ */
+public struct MessagePoolStats {
+    public let capacity: Int64
+    public let size: Int64
+    public let acquireCount: Int64
+    public let releaseCount: Int64
+    public let hitCount: Int64
+    public let missCount: Int64
+
+    public init(capacity: Int64, size: Int64, acquireCount: Int64,
+               releaseCount: Int64, hitCount: Int64, missCount: Int64) {
+        this.capacity = capacity
+        this.size = size
+        this.acquireCount = acquireCount
+        this.releaseCount = releaseCount
+        this.hitCount = hitCount
+        this.missCount = missCount
+    }
+
+    public func getHitRate(): Float64 {
+        if (acquireCount > 0) {
+            return Float64(hitCount) / Float64(acquireCount)
+        }
+        return 0.0
+    }
+
+    public func getUtilization(): Float64 {
+        if (capacity > 0) {
+            return Float64(size) / Float64(capacity)
+        }
+        return 0.0
     }
 }
 

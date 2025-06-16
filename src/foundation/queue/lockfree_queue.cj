@@ -267,7 +267,41 @@ public class LockFreeQueue<T> <: Queue<T> {
             }
         }
     }
-    
+
+    /**
+     * 批量入队操作 - 性能优化
+     */
+    public func enqueueBatch(items: Array<T>): Int32 {
+        var successCount: Int32 = 0
+        for (item in items) {
+            if (enqueue(item)) {
+                successCount += 1
+            } else {
+                break  // 队列已满，停止批量操作
+            }
+        }
+        return successCount
+    }
+
+    /**
+     * 批量出队操作 - 性能优化
+     */
+    public func dequeueBatch(maxCount: Int32): Array<T> {
+        let results = ArrayList<T>()
+        var count: Int32 = 0
+
+        while (count < maxCount) {
+            match (dequeue()) {
+                case Some(item) =>
+                    results.append(item)
+                    count += 1
+                case None => break
+            }
+        }
+
+        return results.toArray()
+    }
+
     /**
      * 获取性能统计信息
      */
