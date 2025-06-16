@@ -11,3 +11,4 @@ public import cactor.core.message.*
 public import cactor.core.system.*
 public import cactor.core.supervision.*
 public import cactor.core.context.*
+public import cactor.core.guardian.*

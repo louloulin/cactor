@@ -166,4 +166,8 @@ output-type = "executable"
 [package.package-configuration."cactor.api.api2_comprehensive_test"]
 output-type = "executable"
 
+# === Plan9 Phase1 Guardian Actor系统测试 ===
+[package.package-configuration."cactor.integration.testing.plan9_phase1_guardian_test"]
+output-type = "executable"
+
 
