@@ -47,10 +47,10 @@ public struct CActor {
      */
     public static func props<T>(creator: () -> T, config: ActorConfig): Props<T> where T <: Actor {
         // 基于现有PropsFactory创建Props，然后应用配置
-        let props = PropsFactory.create(creator)
-        // 注意：这里需要根据实际的Props API来应用配置
-        // 暂时返回基础Props，后续需要实现配置应用逻辑
-        props
+        PropsFactory.create(creator)
+            .withMailbox(config.mailbox.getMailboxType())
+            .withDispatcher(config.dispatcher.getDispatcherType())
+            .withSupervisionStrategy(config.supervision.getStrategyType())
     }
 
 }

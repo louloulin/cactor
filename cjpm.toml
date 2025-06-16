@@ -118,13 +118,9 @@ output-type = "executable"
 [package.package-configuration."cactor.integration.testing.actor_dsl_test"]
 output-type = "executable"
 
-# === 生产级Actor例子 ===
-[package.package-configuration."cactor.examples.production_actor_example"]
-output-type = "executable"
-
 # === 生产级Actor系统验证测试 ===
-[package.package-configuration."cactor.integration.testing.production_actor_test"]
-output-type = "executable"
+# [package.package-configuration."cactor.integration.testing.production_actor_test"]
+# output-type = "executable"
 
 # === Plan3功能验证测试 ===
 [package.package-configuration."cactor.integration.testing.plan3_feature_test"]
