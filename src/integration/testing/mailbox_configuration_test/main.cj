@@ -20,21 +20,21 @@ import cactor.runtime.mailbox.*
 public class MailboxTestMessage <: Message {
     private let id: Int64
     private let content: String
-    private let timestamp: Int64
+    private let messageTimestamp: Int64
 
     public init(id: Int64, content: String) {
         this.id = id
         this.content = content
-        this.timestamp = DateTime.now().toUnixTimeStamp().toNanoseconds()
+        this.messageTimestamp = DateTime.now().toUnixTimeStamp().toNanoseconds()
     }
 
     public func getId(): Int64 { id }
     public func getContent(): String { content }
-    public func getTimestamp(): Int64 { timestamp }
-    
+    public func getTimestamp(): Int64 { messageTimestamp }
+
     public func messageType(): String { "MailboxTestMessage" }
     public func priority(): Int32 { 0 }
-    public func timestamp(): Int64 { timestamp }
+    public func timestamp(): Int64 { messageTimestamp }
 }
 
 /**

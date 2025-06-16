@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import std.collection.*
 import cactor.core.message.*
-import cactor.foundation.memory.object_pool.*
+import cactor.foundation.memory.*
 
 // 前向声明避免循环依赖 - 使用不同的名称
 public interface ContextActorRef {
@@ -227,6 +227,26 @@ public class PooledActorContextPool <: ObjectPool<PooledActorContext> {
     public func warmup(): Unit {
         // 所有对象在初始化时已创建
         println("PooledActorContextPool 预热完成，容量: ${capacity}")
+    }
+
+    /**
+     * 清空池
+     */
+    public func clear(): Unit {
+        // 重置计数器
+        head.store(0)
+        tail.store(0)
+        available.store(Int64(capacity))
+        acquiredCount.store(0)
+        releasedCount.store(0)
+        createdCount.store(Int64(capacity))
+    }
+
+    /**
+     * 获取池大小
+     */
+    public func size(): Int64 {
+        capacity
     }
 }
 

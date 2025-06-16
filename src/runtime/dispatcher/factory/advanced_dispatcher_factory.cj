@@ -149,7 +149,7 @@ public class DefaultAdvancedDispatcherFactory <: AdvancedDispatcherFactory {
                 if (config.executorConfig.corePoolSize <= 0) {
                     return false
                 }
-            case _ => // 其他类型暂时不验证
+            case _ => () // 其他类型暂时不验证
         }
         
         // 验证超时配置

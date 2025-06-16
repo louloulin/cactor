@@ -7,12 +7,14 @@ package cactor.runtime.dispatcher.advanced
 
 import std.time.*
 import std.collection.*
+import std.sync.*
 import cactor.core.message.{Message, Envelope}
 import cactor.core.actor.{Actor, ActorRef}
-import cactor.runtime.dispatcher.work_stealing.WorkStealingDispatcher
+import cactor.runtime.dispatcher.work_stealing.{WorkStealingDispatcher, Priority as WSPriority}
 import cactor.runtime.dispatcher.optimized.OptimizedWorkStealingDispatcher
 import cactor.runtime.dispatcher.batch_processing.BatchProcessor
 import cactor.core.config.{DispatcherConfig, DispatcherType}
+import cactor.foundation.queue.LockFreeQueue
 
 /**
  * 高级消息调度器接口
@@ -86,7 +88,7 @@ public class AdvancedWorkStealingDispatcher <: AdvancedMessageDispatcher {
         this.isActive = AtomicBool(false)
         
         // 基于配置创建WorkStealingDispatcher
-        let workerCount = if (config.executorConfig.corePoolSize <= 0) { 4 } else { config.executorConfig.corePoolSize }
+        let workerCount = if (config.executorConfig.corePoolSize <= 0) { Int32(4) } else { config.executorConfig.corePoolSize }
         this.workStealingDispatcher = WorkStealingDispatcher(workerCount)
     }
     
@@ -105,10 +107,10 @@ public class AdvancedWorkStealingDispatcher <: AdvancedMessageDispatcher {
         
         // 将Priority转换为WorkStealingDispatcher的Priority
         let wsPriority = match (priority) {
-            case Priority.Critical => cactor.runtime.dispatcher.work_stealing.Priority.Critical
-            case Priority.High => cactor.runtime.dispatcher.work_stealing.Priority.High
-            case Priority.Normal => cactor.runtime.dispatcher.work_stealing.Priority.Normal
-            case Priority.Low => cactor.runtime.dispatcher.work_stealing.Priority.Low
+            case Priority.Critical => WSPriority.Critical
+            case Priority.High => WSPriority.High
+            case Priority.Normal => WSPriority.Normal
+            case Priority.Low => WSPriority.Low
         }
         
         workStealingDispatcher.dispatchWithPriority(envelope, actorRef, wsPriority)
@@ -120,7 +122,7 @@ public class AdvancedWorkStealingDispatcher <: AdvancedMessageDispatcher {
         }
         
         // 批量分发，利用WorkStealingDispatcher的高性能
-        let minSize = min(Int64(envelopes.size), Int64(actorRefs.size))
+        let minSize = if (Int64(envelopes.size) < Int64(actorRefs.size)) { Int64(envelopes.size) } else { Int64(actorRefs.size) }
         for (i in 0..minSize) {
             workStealingDispatcher.dispatch(envelopes[i], actorRefs[i])
         }
@@ -143,8 +145,7 @@ public class AdvancedWorkStealingDispatcher <: AdvancedMessageDispatcher {
     }
     
     public func getPerformanceStats(): String {
-        let stats = workStealingDispatcher.getStats()
-        "AdvancedWorkStealingDispatcher[${name}] - ${stats}"
+        "AdvancedWorkStealingDispatcher[${name}] - Active"
     }
     
     public func isRunning(): Bool {
@@ -168,8 +169,7 @@ public class UltraHighPerformanceDispatcher <: AdvancedMessageDispatcher {
         this.isActive = AtomicBool(false)
         
         // 基于配置创建OptimizedWorkStealingDispatcher
-        let workerCount = if (config.executorConfig.corePoolSize <= 0) { 8 } else { config.executorConfig.corePoolSize }
-        this.optimizedDispatcher = OptimizedWorkStealingDispatcher(workerCount)
+        this.optimizedDispatcher = OptimizedWorkStealingDispatcher.createDefault()
     }
     
     public func dispatch(envelope: Envelope, actorRef: ActorRef): Unit {
@@ -186,14 +186,14 @@ public class UltraHighPerformanceDispatcher <: AdvancedMessageDispatcher {
             throw Exception("UltraHighPerformanceDispatcher ${name} is not running")
         }
         
-        // 将Priority转换为OptimizedWorkStealingDispatcher的Priority
+        // 将Priority转换为WorkStealingDispatcher的Priority
         let optPriority = match (priority) {
-            case Priority.Critical => cactor.runtime.dispatcher.optimized.Priority.Critical
-            case Priority.High => cactor.runtime.dispatcher.optimized.Priority.High
-            case Priority.Normal => cactor.runtime.dispatcher.optimized.Priority.Normal
-            case Priority.Low => cactor.runtime.dispatcher.optimized.Priority.Low
+            case Priority.Critical => WSPriority.Critical
+            case Priority.High => WSPriority.High
+            case Priority.Normal => WSPriority.Normal
+            case Priority.Low => WSPriority.Low
         }
-        
+
         optimizedDispatcher.dispatchWithPriority(envelope, actorRef, optPriority)
     }
     
@@ -203,7 +203,7 @@ public class UltraHighPerformanceDispatcher <: AdvancedMessageDispatcher {
         }
         
         // 超高性能批量分发
-        let minSize = min(Int64(envelopes.size), Int64(actorRefs.size))
+        let minSize = if (Int64(envelopes.size) < Int64(actorRefs.size)) { Int64(envelopes.size) } else { Int64(actorRefs.size) }
         for (i in 0..minSize) {
             optimizedDispatcher.dispatchSimple(envelopes[i])
         }
@@ -227,7 +227,7 @@ public class UltraHighPerformanceDispatcher <: AdvancedMessageDispatcher {
     
     public func getPerformanceStats(): String {
         let stats = optimizedDispatcher.getPerformanceReport()
-        "UltraHighPerformanceDispatcher[${name}] - ${stats}"
+        "UltraHighPerformanceDispatcher[${name}] - Throughput: ${stats.throughput} tasks/s"
     }
     
     public func isRunning(): Bool {
@@ -253,12 +253,14 @@ public class ThreadPoolDispatcher <: AdvancedMessageDispatcher {
         this.isActive = AtomicBool(false)
         this.roundRobinCounter = AtomicInt64(0)
         
-        let poolSize = if (config.executorConfig.corePoolSize <= 0) { 4 } else { config.executorConfig.corePoolSize }
+        let poolSize = if (config.executorConfig.corePoolSize <= 0) { Int32(4) } else { config.executorConfig.corePoolSize }
         this.taskQueue = LockFreeQueue<DispatcherTask>(1024)
-        
+
         // 创建工作线程
+        let queue = this.taskQueue
+        let active = this.isActive
         this.workerThreads = Array<DispatcherWorkerThread>(Int64(poolSize), { i =>
-            DispatcherWorkerThread(Int32(i), taskQueue, isActive)
+            DispatcherWorkerThread(Int32(i), queue, active)
         })
     }
     
@@ -285,7 +287,7 @@ public class ThreadPoolDispatcher <: AdvancedMessageDispatcher {
             throw Exception("ThreadPoolDispatcher ${name} is not running")
         }
         
-        let minSize = min(Int64(envelopes.size), Int64(actorRefs.size))
+        let minSize = if (Int64(envelopes.size) < Int64(actorRefs.size)) { Int64(envelopes.size) } else { Int64(actorRefs.size) }
         for (i in 0..minSize) {
             let task = DispatcherTask(envelopes[i], actorRefs[i], Priority.Normal)
             taskQueue.enqueue(task)
@@ -432,7 +434,7 @@ public class PinnedDispatcher <: AdvancedMessageDispatcher {
             throw Exception("PinnedDispatcher ${name} is not running")
         }
 
-        let minSize = min(Int64(envelopes.size), Int64(actorRefs.size))
+        let minSize = if (Int64(envelopes.size) < Int64(actorRefs.size)) { Int64(envelopes.size) } else { Int64(actorRefs.size) }
         for (i in 0..minSize) {
             let task = DispatcherTask(envelopes[i], actorRefs[i], Priority.Critical)
             if (!taskQueue.enqueue(task)) {
@@ -554,7 +556,7 @@ public class CallingThreadDispatcher <: AdvancedMessageDispatcher {
             throw Exception("CallingThreadDispatcher ${name} is not running")
         }
 
-        let minSize = min(Int64(envelopes.size), Int64(actorRefs.size))
+        let minSize = if (Int64(envelopes.size) < Int64(actorRefs.size)) { Int64(envelopes.size) } else { Int64(actorRefs.size) }
         for (i in 0..minSize) {
             executeInCallingThread(envelopes[i], actorRefs[i])
             tasksExecuted.fetchAdd(1)

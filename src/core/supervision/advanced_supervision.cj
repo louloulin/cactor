@@ -3,21 +3,11 @@
  * CActor - 高级监督策略系统
  * 基于plan3.md Phase 5设计，增强现有的监督策略功能
  */
-package cactor.core.supervision.advanced
+package cactor.core.supervision
 
 import std.time.*
 import std.collection.*
 import std.sync.*
-import cactor.core.supervision.{
-    SupervisionStrategy, 
-    SupervisionDirective, 
-    ActorFailure, 
-    OneForOneStrategy, 
-    OneForAllStrategy,
-    DefaultSupervisionStrategy,
-    Supervisor,
-    BasicSupervisor
-}
 import cactor.core.actor.ActorRef
 
 /**
@@ -133,7 +123,7 @@ public class BackoffSupervisionStrategy <: SupervisionStrategy {
         // 获取当前重试次数
         let currentRetries = match (retryCounts.get(actorKey)) {
             case Some(count) => count
-            case None => 0
+            case None => Int32(0)
         }
         
         if (currentRetries >= maxRetries) {
@@ -150,10 +140,10 @@ public class BackoffSupervisionStrategy <: SupervisionStrategy {
         }
         
         // 指数退避：每次延迟翻倍
-        let nextDelay = Duration.nanosecond * min(
-            currentDelay.toNanoseconds() * 2,
-            maxDelay.toNanoseconds()
-        )
+        let delayNanos = currentDelay.toNanoseconds() * 2
+        let maxNanos = maxDelay.toNanoseconds()
+        let nextDelayNanos = if (delayNanos > maxNanos) { maxNanos } else { delayNanos }
+        let nextDelay = Duration.nanosecond * nextDelayNanos
         
         // 更新状态
         retryCounts.put(actorKey, currentRetries + 1)
@@ -217,7 +207,7 @@ public class CircuitBreakerSupervisionStrategy <: SupervisionStrategy {
         // 记录失败
         let currentFailures = match (failureCounts.get(actorKey)) {
             case Some(count) => count + 1
-            case None => 1
+            case None => Int32(1)
         }
         
         failureCounts.put(actorKey, currentFailures)
@@ -290,7 +280,7 @@ public class AdvancedSupervisor <: Supervisor {
     private let maxHistorySize: Int32
     private let supervisionMetrics: SupervisionMetrics
     
-    public init(strategy: SupervisionStrategy, maxHistorySize: Int32 = 1000) {
+    public init(strategy: SupervisionStrategy, maxHistorySize: Int32) {
         this.strategy = strategy
         this.children = HashMap<String, ActorRef>()
         this.failureHistory = ArrayList<ActorFailure>()
@@ -317,8 +307,8 @@ public class AdvancedSupervisor <: Supervisor {
         failureHistory.append(failure)
         
         // 限制历史记录大小
-        while (failureHistory.size > maxHistorySize) {
-            failureHistory.removeAt(0)
+        while (failureHistory.size > Int64(maxHistorySize)) {
+            failureHistory.remove(0)
         }
     }
     
@@ -429,7 +419,7 @@ public class SupervisionMetrics {
         let now = DateTime.now().toUnixTimeStamp().toMilliseconds()
         let elapsedSeconds = Float64(now - startTime) / 1000.0
         
-        if (elapsedSeconds > 0) {
+        if (elapsedSeconds > 0.0) {
             Float64(totalFailures.load()) / elapsedSeconds
         } else {
             0.0

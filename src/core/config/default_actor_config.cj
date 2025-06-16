@@ -220,7 +220,7 @@ public class ConfigurationManager {
         registerConfiguration("high-performance", ActorConfigurationFactory.createHighPerformance())
         registerConfiguration("batching", ActorConfigurationFactory.createBatching())
         registerConfiguration("critical", ActorConfigurationFactory.createCritical())
-        registerConfiguration("stashing", ActorConfigurationFactory.createStashing())
+        registerConfiguration("stashing", ActorConfigurationFactory.createStashing(500, 100))
     }
     
     /**
@@ -251,7 +251,10 @@ public class ConfigurationManager {
      * 检查配置是否存在
      */
     public func hasConfiguration(name: String): Bool {
-        configurations.containsKey(name)
+        match (configurations.get(name)) {
+            case Some(_) => true
+            case None => false
+        }
     }
     
     /**

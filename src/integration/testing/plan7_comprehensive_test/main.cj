@@ -83,8 +83,12 @@ public class Plan7ComprehensiveTest {
                 allPassed = false
             }
 
-            // 测试内存管理 - 简化版本
-            let memoryPool = SimpleObjectPool<String>(100, { => "默认字符串" })
+            // 测试内存管理 - 使用CangjieFriendlyObjectPool
+            let memoryPool = CangjieFriendlyObjectPool<String>(
+                { => "默认字符串" },
+                { _ => () },  // 重置函数
+                100
+            )
             let pooledString = memoryPool.acquire()
             memoryPool.release(pooledString)
             details.append("✅ 内存池功能正常\n")

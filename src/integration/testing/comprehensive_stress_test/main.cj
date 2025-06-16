@@ -12,7 +12,7 @@ import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
 // import cactor.mailbox.lockfree.*
-import cactor.foundation.memory.object_pool.*
+import cactor.foundation.memory.*
 // 移除不存在的依赖
 
 // 简化时间函数
