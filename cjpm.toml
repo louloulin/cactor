@@ -65,3 +65,7 @@ output-type = "executable"
 # === 优化队列性能基准测试 ===
 [package.package-configuration."cactor.integration.testing.optimized_queue_benchmark"]
 output-type = "executable"
+
+# === Plan7综合功能验证测试 ===
+[package.package-configuration."cactor.integration.testing.plan7_comprehensive_test"]
+output-type = "executable"

@@ -67,18 +67,38 @@ public class StringSerializer <: Serializer<String> {
     }
 
     private func stringToBytes(str: String): Array<UInt8> {
-        // 简化实现 - 将字符串转换为UTF-8字节
+        // 简化实现：将字符串转换为字节数组
         let bytes = ArrayList<UInt8>()
+        // 简化：假设都是ASCII字符，使用字符的实际ASCII值
         for (i in 0..str.size) {
-            // 简化：假设都是ASCII字符
-            bytes.append(UInt8(65 + (i % 26)))  // A-Z循环
+            let char = str[i]
+            // Rune类型转换为Int32，然后转为UInt8
+            let runeValue = Int32(char)
+            if (runeValue <= 127) {
+                bytes.append(UInt8(runeValue))
+            } else {
+                bytes.append(UInt8(63))  // '?' 字符作为替代
+            }
         }
         bytes.toArray()
     }
 
     private func bytesToString(data: Array<UInt8>): String {
-        // 简化实现 - 从字节恢复字符串
-        "decoded_string_${data.size}_bytes"
+        // 简化实现：将UTF-8字节数组转换为字符串
+        let chars = ArrayList<Rune>()
+        var i = 0
+        while (i < data.size) {
+            let byte = data[i]
+            if (byte <= 127) {
+                // ASCII字符
+                chars.append(Rune(Int32(byte)))
+                i += 1
+            } else {
+                // 非ASCII字符，跳过
+                i += 1
+            }
+        }
+        String(chars.toArray())
     }
 }
 

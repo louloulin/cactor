@@ -84,10 +84,13 @@ public class MessageSerializer <: Serializer<Message> {
             throw DeserializationException("消息类型数据不完整")
         }
         
-        let typeBytes = data.slice(Int64(offset), Int64(offset) + Int64(typeLength))
-        let messageType = serializationManager.deserializeString(typeBytes)
+        let typeBytes = data.slice(Int64(offset), Int64(typeLength))
+        let rawMessageType = serializationManager.deserializeString(typeBytes)
+
+        let messageType = trimString(rawMessageType)  // 去除首尾空格和控制字符
+
         offset += Int64(typeLength)
-        
+
         // 根据消息类型反序列化具体内容
         match (messageType) {
             case "StringMessage" =>
@@ -96,12 +99,14 @@ public class MessageSerializer <: Serializer<Message> {
                 }
                 let contentLength = readInt32(data, offset)
                 offset += 4
-                
+
+
+
                 if (data.size < offset + Int64(contentLength)) {
-                    throw DeserializationException("StringMessage内容数据不完整")
+                    throw DeserializationException("StringMessage内容数据不完整: 需要${offset + Int64(contentLength)}字节，但只有${data.size}字节")
                 }
-                
-                let contentBytes = data.slice(Int64(offset), Int64(offset) + Int64(contentLength))
+
+                let contentBytes = data.slice(Int64(offset), Int64(contentLength))
                 let content = serializationManager.deserializeString(contentBytes)
                 StringMessage(content)
                 
@@ -110,11 +115,11 @@ public class MessageSerializer <: Serializer<Message> {
                     throw DeserializationException("PingMessage数据不完整")
                 }
                 
-                let idBytes = data.slice(Int64(offset), Int64(offset) + 8)
+                let idBytes = data.slice(Int64(offset), 8)
                 let id = serializationManager.deserializeInt(idBytes)
                 offset += 8
-                
-                let timestampBytes = data.slice(Int64(offset), Int64(offset) + 8)
+
+                let timestampBytes = data.slice(Int64(offset), 8)
                 let timestamp = serializationManager.deserializeInt(timestampBytes)
                 
                 // 创建PingMessage，但需要设置时间戳
@@ -126,7 +131,7 @@ public class MessageSerializer <: Serializer<Message> {
                     throw DeserializationException("PongMessage数据不完整")
                 }
                 
-                let idBytes = data.slice(Int64(offset), Int64(offset) + 8)
+                let idBytes = data.slice(Int64(offset), 8)
                 let originalId = serializationManager.deserializeInt(idBytes)
                 PongMessage(originalId)
                 
@@ -141,7 +146,7 @@ public class MessageSerializer <: Serializer<Message> {
                     throw DeserializationException("StopMessage原因数据不完整")
                 }
                 
-                let reasonBytes = data.slice(Int64(offset), Int64(offset) + Int64(reasonLength))
+                let reasonBytes = data.slice(Int64(offset), Int64(reasonLength))
                 let reason = serializationManager.deserializeString(reasonBytes)
                 StopMessage(reason)
                 
@@ -166,6 +171,47 @@ public class MessageSerializer <: Serializer<Message> {
         (Int32(data[offset + 1]) << 16) |
         (Int32(data[offset + 2]) << 8) |
         Int32(data[offset + 3])
+    }
+
+    /**
+     * 去除字符串首尾空格
+     */
+    private func trimString(str: String): String {
+        if (str.size == 0) {
+            return str
+        }
+
+        var start = 0
+        var end = Int64(str.size) - 1
+
+        // 找到第一个非空格字符
+        while (start <= end && isSpace(str[start])) {
+            start += 1
+        }
+
+        // 找到最后一个非空格字符
+        while (end >= start && isSpace(str[end])) {
+            end -= 1
+        }
+
+        if (start > end) {
+            return ""
+        }
+
+        // 提取子字符串
+        let chars = ArrayList<Rune>()
+        for (i in start..end + 1) {
+            chars.append(Rune(Int32(str[i])))
+        }
+        String(chars.toArray())
+    }
+
+    /**
+     * 检查字符是否为空格或控制字符
+     */
+    private func isSpace(byte: UInt8): Bool {
+        // 空格、制表符、换行符、回车符，以及其他控制字符(0-31)
+        byte <= UInt8(32) || byte == UInt8(127)
     }
 }
 
