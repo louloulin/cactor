@@ -40,15 +40,6 @@
 
 ### 🎯 **目标1: 架构重构与优化**
 
-#### 任务1.1: 解决命名冲突 ⚠️ **紧急**
-**问题**: `CActor` 类在多个包中重复定义
-**解决方案**:
-```cangjie
-// 重命名策略
-src/api/cactor.cj -> CActorAPI (统一API入口)
-src/api/cactor_api.cj -> CActorImpl (具体实现)
-src/core/actor/actor.cj -> Actor接口保持不变
-```
 
 #### 任务1.2: 类型系统增强 🔥 **高优先级**
 **目标**: 充分利用Cangjie类型安全特性
