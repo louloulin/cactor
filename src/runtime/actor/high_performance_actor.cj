@@ -12,7 +12,7 @@ import cactor.core.actor.{Actor}
 import cactor.core.message.*
 import cactor.core.context.*
 import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
-import cactor.runtime.context.{PooledActorContext}
+// import cactor.runtime.context.pooled_actor_context.{PooledActorContext, PooledActorContextPool}
 import cactor.foundation.memory.*
 
 /**
@@ -224,6 +224,100 @@ public class HighPerformanceActor <: Actor {
     }
 
     /**
+     * 启动Actor
+     */
+    public func start(): Unit {
+        stateValue.store(1)  // 1表示运行状态
+        behavior.preProcess(StartMessage())
+    }
+
+    /**
+     * 停止Actor
+     */
+    public func stop(): Unit {
+        stateValue.store(0)  // 0表示停止状态
+        behavior.postProcess(StopMessage(), MessageResult.Stop)
+    }
+
+    /**
+     * 高性能消息发送
+     * 直接使用无锁邮箱
+     */
+    public func tell(message: Message): Unit {
+        let envelope = Envelope(message, None)
+        if (!mailbox.enqueue(envelope)) {
+            // 邮箱满，记录错误
+            incrementErrorCount()
+        }
+    }
+
+    /**
+     * 批量消息处理 - 提升吞吐量
+     */
+    public func processBatch(batchSize: Int32): Int32 {
+        let messages = Array<Message>(Int64(batchSize), { i => StringMessage("") })
+        var processedCount: Int32 = 0
+
+        // 批量出队
+        for (i in 0..Int64(batchSize)) {
+            match (mailbox.dequeue()) {
+                case Some(envelope) =>
+                    messages[i] = envelope.getMessage()
+                    processedCount += 1
+                case None =>
+                    break
+            }
+        }
+
+        if (processedCount > 0) {
+            // 获取池化上下文
+            let pooledContext = contextPool.acquire()
+
+            // 批量处理
+            let batchMessages = messages.slice(0, Int64(processedCount))
+            let results = behavior.receiveBatch(batchMessages, pooledContext)
+
+            // 批量更新统计
+            for (result in results) {
+                updateStats(result)
+            }
+
+            // 释放池化上下文
+            contextPool.release(pooledContext)
+
+            // 更新最后活跃时间
+            lastActiveTime.store(getCurrentTimeNanos())
+        }
+
+        return processedCount
+    }
+
+    /**
+     * 获取Actor状态值
+     */
+    public func getStateValue(): Int64 {
+        stateValue.load()
+    }
+
+    /**
+     * 获取性能统计
+     */
+    public func getStats(): ActorStats {
+        let statsValue = stats.load()
+        let processedMessages = UInt32((statsValue >> 32) & 0xFFFFFFFF)
+        let errorCount = UInt16((statsValue >> 16) & 0xFFFF)
+        let otherStats = UInt16(statsValue & 0xFFFF)
+
+        ActorStats(
+            processedMessages,
+            errorCount,
+            createdAt,
+            lastActiveTime.load(),
+            mailbox.size()
+        )
+    }
+
+    /**
      * 更新统计信息
      */
     private func updateStats(result: MessageResult): Unit {
@@ -295,5 +389,16 @@ public struct StartMessage <: SystemMessage {
 
     public func messageType(): String {
         "StartMessage"
+    }
+}
+
+/**
+ * 停止消息
+ */
+public struct StopMessage <: SystemMessage {
+    public init() {}
+
+    public func messageType(): String {
+        "StopMessage"
     }
 }

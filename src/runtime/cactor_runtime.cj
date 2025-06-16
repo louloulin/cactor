@@ -12,7 +12,7 @@ import cactor.core.actor.{Actor, ActorRef, Props}
 import cactor.core.system.{ActorSystem}
 import cactor.core.guardian.{GuardianType}
 import cactor.runtime.guardian.{RuntimeSystemGuardian, RuntimeUserGuardian}
-import cactor.runtime.system.{HighPerformanceActorSystem, HighPerformanceActorSystemConfig}
+import cactor.runtime.system.{HighPerformanceActorSystem, HighPerformanceActorSystemConfig, SystemStats}
 import cactor.runtime.mailbox.factory.{AdvancedMailboxFactory, DefaultAdvancedMailboxFactory}
 import cactor.runtime.dispatcher.factory.{AdvancedDispatcherFactory, DefaultAdvancedDispatcherFactory}
 import cactor.runtime.system.{SimpleActorSystem}
