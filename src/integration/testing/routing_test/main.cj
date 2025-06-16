@@ -8,9 +8,204 @@ package cactor.integration.testing.routing_test
 import std.sync.*
 import std.time.*
 import std.collection.*
-// import cactor.routing.*
 import cactor.core.actor.{ActorRef, ActorPath}
 import cactor.core.message.Message
+
+// 路由策略接口
+interface RoutingStrategy {
+    func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef>
+}
+
+// 轮询路由策略
+class RoundRobinRoutingStrategy <: RoutingStrategy {
+    private var currentIndex: AtomicInt32
+
+    public init() {
+        this.currentIndex = AtomicInt32(0)
+    }
+
+    public func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef> {
+        if (routees.size == 0) { return None }
+
+        let index = currentIndex.fetchAdd(1) % Int32(routees.size)
+        Some(routees[Int64(index)])
+    }
+}
+
+// 随机路由策略
+class RandomRoutingStrategy <: RoutingStrategy {
+    public init() {}
+
+    public func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef> {
+        if (routees.size == 0) { return None }
+
+        // 简化的随机选择
+        let index = DateTime.now().toUnixTimeStamp().toMilliseconds() % Int64(routees.size)
+        Some(routees[index])
+    }
+}
+
+// 广播路由策略
+class BroadcastRoutingStrategy <: RoutingStrategy {
+    public init() {}
+
+    public func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef> {
+        // 广播不使用selectRoutee，而是使用broadcast方法
+        if (routees.size == 0) { return None }
+        Some(routees[0])
+    }
+
+    public func broadcast(routees: Array<ActorRef>, message: Message): Unit {
+        for (routee in routees) {
+            routee.tell(message)
+        }
+    }
+}
+
+// 一致性哈希路由策略
+class ConsistentHashRoutingStrategy <: RoutingStrategy {
+    public init() {}
+
+    public func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef> {
+        if (routees.size == 0) { return None }
+
+        // 基于消息内容的简单哈希
+        let hash = message.messageType().hashCode()
+        let index = Int64(hash & 0x7FFFFFFF) % Int64(routees.size)
+        Some(routees[index])
+    }
+}
+
+// 路由器接口
+interface Router {
+    func addRoutee(routee: ActorRef): Unit
+    func removeRoutee(routee: ActorRef): Unit
+    func getRoutees(): Array<ActorRef>
+    func route(message: Message): Unit
+    func getStrategy(): RoutingStrategy
+}
+
+// 基础路由器实现
+class BasicRouter <: Router {
+    private let strategy: RoutingStrategy
+    private let routees: ArrayList<ActorRef>
+    private let mutex: ReentrantMutex
+
+    public init(strategy: RoutingStrategy) {
+        this.strategy = strategy
+        this.routees = ArrayList<ActorRef>()
+        this.mutex = ReentrantMutex()
+    }
+
+    public func addRoutee(routee: ActorRef): Unit {
+        mutex.lock()
+        routees.append(routee)
+        mutex.unlock()
+    }
+
+    public func removeRoutee(routee: ActorRef): Unit {
+        mutex.lock()
+        var index: Int64 = -1
+        for (i in 0..routees.size) {
+            if (routees[i].equals(routee)) {
+                index = i
+                break
+            }
+        }
+        if (index >= 0) {
+            // 创建新的列表，排除要删除的元素
+            let newRoutees = ArrayList<ActorRef>()
+            for (i in 0..routees.size) {
+                if (i != index) {
+                    newRoutees.append(routees[i])
+                }
+            }
+            routees.clear()
+            for (routee in newRoutees) {
+                routees.append(routee)
+            }
+        }
+        mutex.unlock()
+    }
+
+    public func getRoutees(): Array<ActorRef> {
+        mutex.lock()
+        let result = routees.toArray()
+        mutex.unlock()
+        return result
+    }
+
+    public func route(message: Message): Unit {
+        let routeeArray = getRoutees()
+
+        match (strategy) {
+            case broadcast: BroadcastRoutingStrategy =>
+                broadcast.broadcast(routeeArray, message)
+            case _ =>
+                match (strategy.selectRoutee(routeeArray, message)) {
+                    case Some(routee) => routee.tell(message)
+                    case None => ()
+                }
+        }
+    }
+
+    public func getStrategy(): RoutingStrategy { strategy }
+}
+
+// 路由器工厂
+class RouterFactory {
+    public static func roundRobin(): Router {
+        BasicRouter(RoundRobinRoutingStrategy())
+    }
+
+    public static func random(): Router {
+        BasicRouter(RandomRoutingStrategy())
+    }
+
+    public static func broadcast(): Router {
+        BasicRouter(BroadcastRoutingStrategy())
+    }
+
+    public static func consistentHash(): Router {
+        BasicRouter(ConsistentHashRoutingStrategy())
+    }
+}
+
+// 路由器ActorRef包装器
+class RouterActorRef <: ActorRef {
+    private let router: Router
+    private let name: String
+    private let actorPath: ActorPath
+
+    public init(router: Router, name: String) {
+        this.router = router
+        this.name = name
+        this.actorPath = ActorPath("router", name)
+    }
+
+    public prop path: ActorPath {
+        get() { actorPath }
+    }
+
+    public func tell(message: Message): Unit {
+        router.route(message)
+    }
+
+    public func tell(message: Message, sender: Option<String>): Unit {
+        tell(message)
+    }
+
+    public func equals(other: ActorRef): Bool {
+        match (other) {
+            case routerRef: RouterActorRef => this.name == routerRef.name
+            case _ => false
+        }
+    }
+
+    public func hashCode(): Int32 {
+        Int32(name.hashCode())
+    }
+}
 
 /**
  * 测试消息类

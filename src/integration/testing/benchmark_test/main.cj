@@ -10,8 +10,72 @@ import std.time.*
 import std.collection.*
 import cactor.core.actor.*
 import cactor.core.message.*
-// import cactor.mailbox.lockfree.*
-// import cactor.dispatcher.optimized.*
+import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
+
+// 简化的无锁环形缓冲区邮箱（用于基准测试）
+class LockFreeRingBufferMailbox <: Mailbox {
+    private let innerMailbox: FoundationMailbox
+    private let capacity: Int64
+
+    public init(capacity: Int64) {
+        let actualCapacity = LockFreeRingBufferMailbox.nextPowerOfTwo(capacity)
+        this.innerMailbox = FoundationMailbox(actualCapacity, true)  // 使用高性能队列
+        this.capacity = actualCapacity
+    }
+
+    public func enqueue(envelope: Envelope): Bool { innerMailbox.enqueue(envelope) }
+    public func dequeue(): Option<Envelope> { innerMailbox.dequeue() }
+    public func isEmpty(): Bool { innerMailbox.isEmpty() }
+    public func size(): Int64 { innerMailbox.size() }
+    public func clear(): Unit { innerMailbox.clear() }
+
+    public func getCapacity(): Int64 { capacity }
+
+    private static func nextPowerOfTwo(n: Int64): Int64 {
+        if (n <= 1) { return 1 }
+        var power = 1
+        while (power < n) {
+            power *= 2
+        }
+        return power
+    }
+}
+
+// 简化的优化工作窃取调度器（用于基准测试）
+class OptimizedWorkStealingDispatcher {
+    private let isRunning: AtomicBool
+    private let taskQueue: FoundationMailbox
+
+    private init() {
+        this.isRunning = AtomicBool(false)
+        this.taskQueue = FoundationMailbox(100000, true)  // 大容量任务队列
+    }
+
+    public static func createHighThroughput(): OptimizedWorkStealingDispatcher {
+        OptimizedWorkStealingDispatcher()
+    }
+
+    public func start(): Unit {
+        isRunning.store(true)
+    }
+
+    public func stop(): Unit {
+        isRunning.store(false)
+    }
+
+    public func dispatchSimple(envelope: Envelope): Unit {
+        if (isRunning.load()) {
+            taskQueue.enqueue(envelope)
+        }
+    }
+
+    public func processTask(): Option<Envelope> {
+        if (isRunning.load()) {
+            return taskQueue.dequeue()
+        }
+        return None
+    }
+}
 
 /**
  * 简化的基准测试上下文

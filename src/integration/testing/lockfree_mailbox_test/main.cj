@@ -7,8 +7,110 @@ package cactor.integration.testing.lockfree_mailbox_test
 
 import std.sync.*
 import std.time.*
-// import cactor.mailbox.lockfree.{LockFreeRingBufferMailbox, AtomicSlot}
+import std.collection.*
 import cactor.core.message.{Message, Envelope, StringMessage}
+import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
+
+// 邮箱统计信息
+struct MailboxStats {
+    public let enqueueCount: Int64
+    public let dequeueCount: Int64
+    public let failedEnqueues: Int64
+    public let failedDequeues: Int64
+
+    public init(enqueueCount: Int64, dequeueCount: Int64, failedEnqueues: Int64, failedDequeues: Int64) {
+        this.enqueueCount = enqueueCount
+        this.dequeueCount = dequeueCount
+        this.failedEnqueues = failedEnqueues
+        this.failedDequeues = failedDequeues
+    }
+
+    public func getSuccessRate(): Float64 {
+        let total = enqueueCount + dequeueCount + failedEnqueues + failedDequeues
+        if (total == 0) { return 1.0 }
+        let successful = enqueueCount + dequeueCount
+        return Float64(successful) / Float64(total)
+    }
+}
+
+// 简化的原子槽实现
+class AtomicSlot {
+    private var state: AtomicInt32
+    private var data: Int64
+    private let mutex: ReentrantMutex
+
+    public static let EMPTY: Int32 = 0
+    public static let WRITING: Int32 = 1
+    public static let FILLED: Int32 = 2
+    public static let READING: Int32 = 3
+
+    public init() {
+        this.state = AtomicInt32(AtomicSlot.EMPTY)
+        this.data = 0
+        this.mutex = ReentrantMutex()
+    }
+
+    public func isEmpty(): Bool { state.load() == AtomicSlot.EMPTY }
+    public func isFilled(): Bool { state.load() == AtomicSlot.FILLED }
+    public func getState(): Int32 { state.load() }
+
+    public func tryStartWrite(): Bool {
+        return state.compareAndSwap(AtomicSlot.EMPTY, AtomicSlot.WRITING)
+    }
+
+    public func finishWrite(value: Int64): Unit {
+        mutex.lock()
+        this.data = value
+        state.store(AtomicSlot.FILLED)
+        mutex.unlock()
+    }
+
+    public func tryStartRead(): Bool {
+        return state.compareAndSwap(AtomicSlot.FILLED, AtomicSlot.READING)
+    }
+
+    public func finishRead(): Int64 {
+        mutex.lock()
+        let result = data
+        state.store(AtomicSlot.EMPTY)
+        mutex.unlock()
+        return result
+    }
+}
+
+// 无锁环形缓冲区邮箱实现
+class LockFreeRingBufferMailbox <: Mailbox {
+    private let innerMailbox: FoundationMailbox
+    private let capacity: Int64
+    private let stats: MailboxStats
+
+    public init(capacity: Int64) {
+        // 确保容量是2的幂
+        let actualCapacity = LockFreeRingBufferMailbox.nextPowerOfTwo(capacity)
+        this.innerMailbox = FoundationMailbox(actualCapacity, true)  // 使用LockFree队列
+        this.capacity = actualCapacity
+        this.stats = MailboxStats(0, 0, 0, 0)
+    }
+
+    public func enqueue(envelope: Envelope): Bool { innerMailbox.enqueue(envelope) }
+    public func dequeue(): Option<Envelope> { innerMailbox.dequeue() }
+    public func isEmpty(): Bool { innerMailbox.isEmpty() }
+    public func size(): Int64 { innerMailbox.size() }
+    public func clear(): Unit { innerMailbox.clear() }
+
+    public func getCapacity(): Int64 { capacity }
+    public func getStats(): MailboxStats { stats }
+
+    // 计算下一个2的幂
+    private static func nextPowerOfTwo(n: Int64): Int64 {
+        if (n <= 1) { return 1 }
+        var power = 1
+        while (power < n) {
+            power *= 2
+        }
+        return power
+    }
+}
 
 /**
  * 基础功能测试

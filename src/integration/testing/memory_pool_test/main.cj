@@ -10,6 +10,42 @@ import std.time.*
 import cactor.foundation.memory.*
 import cactor.core.message.{Envelope, PingMessage}
 
+// 基于Foundation层内存池的信封池实现
+class EnvelopePool {
+    private let innerPool: CangjieFriendlyObjectPool<Envelope>
+
+    public init(capacity: Int32) {
+        this.innerPool = CangjieFriendlyObjectPool<Envelope>(
+            { =>
+                // 创建空的信封对象
+                let dummyMessage = PingMessage(0)
+                Envelope(dummyMessage, None)
+            },
+            { envelope =>
+                // 重置信封对象（清理状态）
+                // 这里可以添加清理逻辑
+            },
+            Int64(capacity)
+        )
+    }
+
+    public func acquire(): Envelope {
+        innerPool.acquire()
+    }
+
+    public func release(envelope: Envelope): Unit {
+        innerPool.release(envelope)
+    }
+
+    public func size(): Int32 {
+        Int32(innerPool.size())
+    }
+
+    public func getStatistics(): PoolStatistics {
+        innerPool.getStatistics()
+    }
+}
+
 /**
  * 测试对象池基础功能
  */

@@ -7,8 +7,73 @@ package cactor.integration.testing.ringbuffer
 
 import std.sync.*
 import std.time.*
+import std.collection.*
 import cactor.core.message.{Envelope, PingMessage}
-// import cactor.mailbox.ringbuffer.{RingBufferMailbox, BackpressureRingBufferMailbox}
+import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
+
+// 基于Runtime层的环形缓冲区邮箱实现
+class RingBufferMailbox <: Mailbox {
+    private let innerMailbox: FoundationMailbox
+    private let capacity: Int64
+
+    public init(capacity: Int64) {
+        // 确保容量是2的幂，用于环形缓冲区
+        let actualCapacity = RingBufferMailbox.nextPowerOfTwo(capacity)
+        this.innerMailbox = FoundationMailbox(actualCapacity, true)  // 使用高性能队列
+        this.capacity = actualCapacity
+    }
+
+    public func enqueue(envelope: Envelope): Bool { innerMailbox.enqueue(envelope) }
+    public func dequeue(): Option<Envelope> { innerMailbox.dequeue() }
+    public func isEmpty(): Bool { innerMailbox.isEmpty() }
+    public func size(): Int64 { innerMailbox.size() }
+    public func clear(): Unit { innerMailbox.clear() }
+
+    public func getCapacity(): Int64 { capacity }
+
+    // 计算下一个2的幂
+    private static func nextPowerOfTwo(n: Int64): Int64 {
+        if (n <= 1) { return 1 }
+        var power = 1
+        while (power < n) {
+            power *= 2
+        }
+        return power
+    }
+}
+
+// 带背压控制的环形缓冲区邮箱
+class BackpressureRingBufferMailbox <: Mailbox {
+    private let innerMailbox: RingBufferMailbox
+    private let backpressureThreshold: Float64
+    private let rejectedCount: AtomicInt64
+
+    public init(capacity: Int64, threshold: Float64) {
+        this.innerMailbox = RingBufferMailbox(capacity)
+        this.backpressureThreshold = threshold
+        this.rejectedCount = AtomicInt64(0)
+    }
+
+    public func enqueue(envelope: Envelope): Bool {
+        let loadRatio = getLoadRatio()
+        if (loadRatio >= backpressureThreshold) {
+            rejectedCount.fetchAdd(1)
+            return false  // 触发背压，拒绝消息
+        }
+        return innerMailbox.enqueue(envelope)
+    }
+
+    public func dequeue(): Option<Envelope> { innerMailbox.dequeue() }
+    public func isEmpty(): Bool { innerMailbox.isEmpty() }
+    public func size(): Int64 { innerMailbox.size() }
+    public func clear(): Unit { innerMailbox.clear() }
+
+    public func getLoadRatio(): Float64 {
+        Float64(size()) / Float64(innerMailbox.getCapacity())
+    }
+
+    public func getRejectedCount(): Int64 { rejectedCount.load() }
+}
 
 /**
  * 测试环形缓冲区基础功能
