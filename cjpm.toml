@@ -45,3 +45,7 @@ output-type = "executable"
 # === 简单架构测试 ===
 [package.package-configuration."cactor.test_architecture"]
 output-type = "executable"
+
+# === 性能优化测试 ===
+[package.package-configuration."cactor.integration.testing.performance_optimization_test"]
+output-type = "executable"

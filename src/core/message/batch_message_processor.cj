@@ -47,7 +47,7 @@ public class BatchMessageProcessor {
         this.totalBatches = AtomicInt64(0)
         this.avgBatchSize = AtomicInt64(0)
         this.maxLatency = AtomicInt64(0)
-        this.minLatency = AtomicInt64(Int64.MAX_VALUE)
+        this.minLatency = AtomicInt64(9223372036854775807)  // Int64最大值
     }
 
     /**
@@ -132,7 +132,7 @@ public class BatchMessageProcessor {
         let avgSize = avgBatchSize.load()
         
         // 自适应批量大小
-        let adaptiveBatchSize = if (currentSize > avgSize) {
+        let adaptiveBatchSize = if (Int64(currentSize) > avgSize) {
             min(currentSize, batchSize)
         } else {
             max(currentSize / 2, 1)
@@ -200,7 +200,7 @@ public class BatchMessageProcessor {
             }
             
             // 短暂休眠，避免忙等待
-            sleep(Duration.microseconds(10))
+            busyWait(10)
         }
         
         // 超时，处理当前缓冲区中的消息
@@ -283,10 +283,9 @@ public class BatchMessageProcessor {
         if (a > b) { a } else { b }
     }
 
-    private func sleep(duration: Duration): Unit {
-        // 简化的sleep实现
+    private func busyWait(micros: Int64): Unit {
         let startTime = getCurrentTimeMicros()
-        let endTime = startTime + duration.toMicroseconds()
+        let endTime = startTime + micros
         while (getCurrentTimeMicros() < endTime) {
             // 忙等待
         }
