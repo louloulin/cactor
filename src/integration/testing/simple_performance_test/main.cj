@@ -152,8 +152,8 @@ public class SimplePerformanceTestSuite {
         let actorCount: Int32 = 100
         let messagesPerActor: Int64 = 1000
 
-        let actors = Array<SimplePerformanceActor>(Int64(actorCount), { i => SimplePerformanceActor() })
-        let actorRefs = Array<Option<ActorRef>>(Int64(actorCount), { i => None })
+        let actors = Array<SimplePerformanceActor>(Int64(actorCount), { _ => SimplePerformanceActor() })
+        let actorRefs = Array<Option<ActorRef>>(Int64(actorCount), { _ => None })
 
         // 创建Actor
         for (i in 0..Int64(actorCount)) {

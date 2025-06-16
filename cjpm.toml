@@ -81,3 +81,7 @@ output-type = "executable"
 # === 极限性能测试 ===
 [package.package-configuration."cactor.integration.testing.extreme_performance_test"]
 output-type = "executable"
+
+# === Plan7性能目标验证测试 ===
+[package.package-configuration."cactor.integration.testing.performance_target_verification"]
+output-type = "executable"

@@ -62,7 +62,7 @@ public class CangjieFriendlyObjectPool<T> <: ObjectPool<T> {
 
     private func warmupPool(): Unit {
         let warmupSize = maxPoolSize / 4  // 预热25%的容量
-        for (i in 0..warmupSize) {
+        for (_ in 0..warmupSize) {
             let obj = factory()
             if (pool.enqueue(obj)) {
                 currentSize.fetchAdd(1)
@@ -172,7 +172,7 @@ public class StringPool <: ObjectPool<String> {
         ""
     }
 
-    private static func resetString(str: String): Unit {
+    private static func resetString(_: String): Unit {
         // 字符串是不可变的，无需重置
     }
 
@@ -214,10 +214,10 @@ public class ByteArrayPool <: ObjectPool<Array<UInt8>> {
 
     private static func createByteArray(): Array<UInt8> {
         // 创建一个空的字节数组
-        Array<UInt8>(0, { i => UInt8(0) })
+        Array<UInt8>(0, { _ => UInt8(0) })
     }
 
-    private static func resetByteArray(arr: Array<UInt8>): Unit {
+    private static func resetByteArray(_: Array<UInt8>): Unit {
         // 字节数组重置（清零）
         // 注意：这里简化实现，实际可能需要更复杂的重置逻辑
     }

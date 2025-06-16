@@ -21,7 +21,7 @@ public class SharedMemoryBuffer {
 
     public init(size: UInt64) {
         this.size = size
-        this.data = Array<UInt8>(Int64(size), { i => UInt8(0) })
+        this.data = Array<UInt8>(Int64(size), { _ => UInt8(0) })
         this.refCount = AtomicInt64(1)
         this.isValidFlag = AtomicBool(true)
         this.mutex = ReentrantMutex()
@@ -164,7 +164,7 @@ public class SharedMemoryBuffer {
      */
     public func slice(offset: UInt64, length: UInt64): Array<UInt8> {
         if (!isValidFlag.load()) {
-            return Array<UInt8>(0, { i => UInt8(0) })
+            return Array<UInt8>(0, { _ => UInt8(0) })
         }
 
         let endPos = if (offset + length > size) {
@@ -175,10 +175,10 @@ public class SharedMemoryBuffer {
 
         let sliceSize = Int64(endPos - offset)
         if (sliceSize <= 0) {
-            return Array<UInt8>(0, { i => UInt8(0) })
+            return Array<UInt8>(0, { _ => UInt8(0) })
         }
 
-        let result = Array<UInt8>(sliceSize, { i => UInt8(0) })
+        let result = Array<UInt8>(sliceSize, { _ => UInt8(0) })
         mutex.lock()
         try {
             for (i in 0..sliceSize) {
