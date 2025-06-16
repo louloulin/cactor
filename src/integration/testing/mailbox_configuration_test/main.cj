@@ -106,7 +106,7 @@ public class MailboxConfigurationTestSuite {
 
         let system = SimpleActorSystem("mailbox-config-test")
         let actor = MailboxTestActor()
-        let props = PropsFactory.create({ => actor })
+        let props: Props<Actor> = PropsFactory.create<Actor>({ => actor })
         
         // 创建Actor - 应该自动配置mailbox
         let actorRef = system.actorOf(props, "mailbox-test-actor")
@@ -139,7 +139,7 @@ public class MailboxConfigurationTestSuite {
 
         let system = SimpleActorSystem("async-message-test")
         let actor = MailboxTestActor()
-        let props = PropsFactory.create({ => actor })
+        let props: Props<Actor> = PropsFactory.create<Actor>({ => actor })
         let actorRef = system.actorOf(props, "async-test-actor")
 
         let messageCount: Int64 = 10
@@ -189,7 +189,7 @@ public class MailboxConfigurationTestSuite {
 
         let system = SimpleActorSystem("capacity-test")
         let actor = MailboxTestActor()
-        let props = PropsFactory.create({ => actor })
+        let props: Props<Actor> = PropsFactory.create<Actor>({ => actor })
         let actorRef = system.actorOf(props, "capacity-test-actor")
 
         let messageCount: Int64 = 100
@@ -253,7 +253,7 @@ public class MailboxConfigurationTestSuite {
         // 创建多个Actor
         for (i in 0..Int64(actorCount)) {
             let actor = actors[i]
-            let props = PropsFactory.create({ => actor })
+            let props: Props<Actor> = PropsFactory.create<Actor>({ => actor })
             let actorRef = system.actorOf(props, "multi-actor-${i}")
             actorRefs[i] = Some(actorRef)
         }

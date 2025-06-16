@@ -10,10 +10,12 @@ import std.collection.*
 import cactor.core.message.{Message, Envelope}
 import cactor.runtime.mailbox.Mailbox
 import cactor.runtime.mailbox.advanced.{
-    FoundationUnboundedMailbox, 
-    FoundationBoundedMailbox, 
-    SPSCMailbox, 
-    MPSCMailbox
+    FoundationUnboundedMailbox,
+    FoundationBoundedMailbox,
+    SPSCMailbox,
+    MPSCMailbox,
+    FoundationPriorityMailbox,
+    FoundationStashingMailbox
 }
 import cactor.core.config.{MailboxConfig, MailboxType}
 
@@ -138,7 +140,7 @@ public class DefaultAdvancedMailboxFactory <: AdvancedMailboxFactory {
                 if (config.capacity <= 0 || config.stashCapacity < 0) {
                     return false
                 }
-            case _ => // 其他类型暂时不验证
+            case _ => () // 其他类型暂时不验证
         }
         
         // 验证超时配置

@@ -62,15 +62,15 @@ public class FoundationUnboundedMailbox <: Mailbox {
      */
     public func dequeueBatch(maxBatchSize: Int32): Array<Envelope> {
         let batch = ArrayList<Envelope>()
-        let batchSize = if (maxBatchSize <= 0) { 100 } else { maxBatchSize }
-        
-        for (i in 0..batchSize) {
+        let batchSize = if (maxBatchSize <= 0) { Int32(100) } else { maxBatchSize }
+
+        for (i in 0..Int64(batchSize)) {
             match (queue.dequeue()) {
                 case Some(envelope) => batch.append(envelope)
                 case None => break
             }
         }
-        
+
         Array<Envelope>(Int64(batch.size), { i => batch[i] })
     }
     
@@ -89,6 +89,12 @@ public class FoundationUnboundedMailbox <: Mailbox {
         "FoundationUnboundedMailbox[${name}] - Size: ${stats.currentSize}, " +
         "Enqueued: ${stats.enqueueCount}, Dequeued: ${stats.dequeueCount}, " +
         "Failed: ${stats.failedEnqueues}, Success Rate: ${stats.getSuccessRate()}"
+    }
+
+    public func clear(): Unit {
+        while (!queue.isEmpty()) {
+            queue.dequeue()
+        }
     }
 }
 
@@ -184,6 +190,12 @@ public class FoundationBoundedMailbox <: Mailbox {
     public func getUtilization(): Float64 {
         Float64(queue.size()) / Float64(capacity)
     }
+
+    public func clear(): Unit {
+        while (!queue.isEmpty()) {
+            queue.dequeue()
+        }
+    }
 }
 
 /**
@@ -196,7 +208,7 @@ public class SPSCMailbox <: Mailbox {
     private let name: String
     
     public init(config: MailboxConfig) {
-        let capacity = if (config.capacity <= 0) { 1024 } else { config.capacity }
+        let capacity = if (config.capacity <= 0) { Int32(1024) } else { Int32(config.capacity) }
         this.queue = SPSCQueue<Envelope>(capacity)
         this.config = config
         this.name = config.name
@@ -248,10 +260,16 @@ public class SPSCMailbox <: Mailbox {
      * 获取性能统计
      */
     public func getPerformanceStats(): String {
-        let stats = queue.getStats()
+        let stats = queue.getPerformanceStats()
         "SPSCMailbox[${name}] - Size: ${stats.currentSize}/${stats.capacity}, " +
-        "Enqueued: ${stats.enqueueCount}, Dequeued: ${stats.dequeueCount}, " +
+        "Enqueued: ${stats.totalEnqueues}, Dequeued: ${stats.totalDequeues}, " +
         "Utilization: ${stats.getUtilization()}"
+    }
+
+    public func clear(): Unit {
+        while (!queue.isEmpty()) {
+            queue.poll()
+        }
     }
 }
 
@@ -265,7 +283,7 @@ public class MPSCMailbox <: Mailbox {
     private let name: String
     
     public init(config: MailboxConfig) {
-        let capacity = if (config.capacity <= 0) { 1024 } else { config.capacity }
+        let capacity = if (config.capacity <= 0) { Int32(1024) } else { Int32(config.capacity) }
         this.queue = MPSCQueue<Envelope>(capacity)
         this.config = config
         this.name = config.name
@@ -303,23 +321,30 @@ public class MPSCMailbox <: Mailbox {
      * 高性能入队，利用MPSC的优化
      */
     public func fastEnqueue(envelope: Envelope): Bool {
-        queue.fastOffer(envelope)
+        queue.offer(envelope)
     }
-    
+
     /**
      * 批量出队
      */
     public func dequeueBatch(maxBatchSize: Int32): Array<Envelope> {
         queue.pollBatch(maxBatchSize)
     }
-    
+
     /**
      * 获取竞争统计信息
      */
     public func getContentionStats(): String {
-        let stats = queue.getContentionStats()
-        "MPSCMailbox[${name}] - Producers: ${stats.activeProducers}, " +
-        "Retries: ${stats.totalRetries}, Success Rate: ${stats.getSuccessRate()}"
+        let stats = queue.getPerformanceStats()
+        "MPSCMailbox[${name}] - Capacity: ${stats.currentCapacity}, " +
+        "Enqueued: ${stats.totalEnqueues}, Dequeued: ${stats.totalDequeues}, " +
+        "Expansions: ${stats.expansionCount}"
+    }
+
+    public func clear(): Unit {
+        while (!queue.isEmpty()) {
+            queue.poll()
+        }
     }
 }
 
@@ -335,9 +360,9 @@ public class FoundationPriorityMailbox <: Mailbox {
     private let name: String
 
     public init(config: MailboxConfig, comparator: (Message, Message) -> Int32) {
-        let capacity = if (config.capacity <= 0) { 1024 } else { config.capacity }
-        this.normalQueue = LockFreeQueue<Envelope>(capacity / 2)
-        this.priorityQueue = LockFreeQueue<PriorityEnvelope>(capacity / 2)
+        let capacity = if (config.capacity <= 0) { Int32(1024) } else { Int32(config.capacity) }
+        this.normalQueue = LockFreeQueue<Envelope>(Int64(capacity / 2))
+        this.priorityQueue = LockFreeQueue<PriorityEnvelope>(Int64(capacity / 2))
         this.comparator = comparator
         this.config = config
         this.name = config.name
@@ -389,10 +414,10 @@ public class FoundationPriorityMailbox <: Mailbox {
      */
     public func dequeueBatch(maxBatchSize: Int32): Array<Envelope> {
         let batch = ArrayList<Envelope>()
-        let batchSize = if (maxBatchSize <= 0) { 100 } else { maxBatchSize }
+        let batchSize = if (maxBatchSize <= 0) { Int32(100) } else { maxBatchSize }
 
         // 先处理优先级消息
-        var processed = 0
+        var processed = Int32(0)
         while (processed < batchSize) {
             match (priorityQueue.dequeue()) {
                 case Some(priorityEnvelope) =>
@@ -413,6 +438,15 @@ public class FoundationPriorityMailbox <: Mailbox {
         }
 
         Array<Envelope>(Int64(batch.size), { i => batch[i] })
+    }
+
+    public func clear(): Unit {
+        while (!normalQueue.isEmpty()) {
+            normalQueue.dequeue()
+        }
+        while (!priorityQueue.isEmpty()) {
+            priorityQueue.dequeue()
+        }
     }
 }
 
@@ -442,7 +476,7 @@ public class FoundationStashingMailbox <: Mailbox {
     private let name: String
 
     public init(config: MailboxConfig) {
-        this.capacity = if (config.capacity <= 0) { 1024 } else { config.capacity }
+        this.capacity = if (config.capacity <= 0) { Int64(1024) } else { config.capacity }
         this.stashCapacity = config.stashCapacity
         this.normalQueue = LockFreeQueue<Envelope>(capacity)
         this.stashQueue = LockFreeQueue<Envelope>(stashCapacity)
@@ -495,7 +529,7 @@ public class FoundationStashingMailbox <: Mailbox {
      * 恢复所有暂存的消息到正常队列
      */
     public func unstashAll(): Int32 {
-        var count = 0
+        var count = Int32(0)
         while (!stashQueue.isEmpty() && normalQueue.size() < capacity) {
             match (stashQueue.dequeue()) {
                 case Some(envelope) =>
@@ -516,7 +550,7 @@ public class FoundationStashingMailbox <: Mailbox {
      * 恢复指定数量的暂存消息
      */
     public func unstash(count: Int32): Int32 {
-        var unstashed = 0
+        var unstashed = Int32(0)
         for (i in 0..count) {
             if (stashQueue.isEmpty() || normalQueue.size() >= capacity) {
                 break
@@ -557,5 +591,12 @@ public class FoundationStashingMailbox <: Mailbox {
         while (!stashQueue.isEmpty()) {
             stashQueue.dequeue()
         }
+    }
+
+    public func clear(): Unit {
+        while (!normalQueue.isEmpty()) {
+            normalQueue.dequeue()
+        }
+        clearStash()
     }
 }

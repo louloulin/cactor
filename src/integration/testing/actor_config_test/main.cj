@@ -205,9 +205,9 @@ public class ActorConfigTestSuite {
         
         // 测试注册自定义配置
         let customConfig = ActorConfigurationFactory.createCustom(
-            MailboxConfig.createBounded(512, "custom-mailbox"),
-            DispatcherConfig.createThreadPool("custom-dispatcher"),
-            SupervisionConfig.createDefault("custom-supervision"),
+            MailboxConfig.createBoundedWithName(512, "custom-mailbox"),
+            DispatcherConfig.createThreadPoolWithName("custom-dispatcher"),
+            SupervisionConfig.createDefaultWithName("custom-supervision"),
             None<RoutingConfig>,
             "custom-config",
             "自定义测试配置"
@@ -257,9 +257,9 @@ public class ActorConfigTestSuite {
         let builtConfig = builder
             .withName("builder-test-config")
             .withDescription("通过构建器创建的配置")
-            .withMailbox(MailboxConfig.createBounded(1024, "builder-mailbox"))
-            .withDispatcher(DispatcherConfig.createWorkStealing(8, "builder-dispatcher"))
-            .withSupervision(SupervisionConfig.createDefault("builder-supervision"))
+            .withMailbox(MailboxConfig.createBoundedWithName(1024, "builder-mailbox"))
+            .withDispatcher(DispatcherConfig.createWorkStealingWithName("builder-dispatcher"))
+            .withSupervision(SupervisionConfig.createDefaultWithName("builder-supervision"))
             .build()
         
         println("  构建器配置名称: ${builtConfig.getName()}")
