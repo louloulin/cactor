@@ -7,7 +7,7 @@ package cactor.core.guardian
 
 import std.sync.*
 import std.collection.*
-import cactor.core.actor.{Actor, ActorRef, Props, ActorPath}
+import cactor.core.actor.{Actor, ActorRef, Props, ActorPath, SimpleActorFactory}
 import cactor.core.message.{Message, MessageResult}
 import cactor.core.context.{ActorContext}
 import cactor.core.supervision.{SupervisionStrategy, DefaultSupervisionStrategy}
@@ -38,7 +38,8 @@ public class SystemGuardian <: BaseGuardianActor {
         match (userGuardian) {
             case Some(guardian) => guardian
             case None =>
-                let userGuardianProps = Props<Actor>(UserGuardianFactory(actorSystem))
+                let userGuardianFactory = SimpleActorFactory<Actor>({ => UserGuardian(actorSystem) })
+                let userGuardianProps = Props<Actor>(userGuardianFactory)
                 let guardian = doCreateChild(userGuardianProps, "user")
                 // 这里需要更新userGuardian，但由于是let，我们需要重新设计
                 // 暂时返回创建的guardian
@@ -185,20 +186,7 @@ public class CreateSystemActorMessage <: Message {
     public func messageType(): String { "CreateSystemActor" }
 }
 
-/**
- * UserGuardian工厂
- */
-public class UserGuardianFactory <: ActorFactory<Actor> {
-    private let system: ActorSystem
 
-    public init(system: ActorSystem) {
-        this.system = system
-    }
-
-    public func create(): Actor {
-        UserGuardian(system) as Actor
-    }
-}
 
 /**
  * 简化的系统ActorRef实现

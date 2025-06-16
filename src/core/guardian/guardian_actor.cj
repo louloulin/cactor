@@ -21,6 +21,14 @@ public enum GuardianType {
     | System      // 系统Guardian
     | User        // 用户Guardian
     | Custom(String)  // 自定义Guardian类型
+
+    public func toString(): String {
+        match (this) {
+            case System => "System"
+            case User => "User"
+            case Custom(name) => "Custom(${name})"
+        }
+    }
 }
 
 /**

@@ -82,27 +82,107 @@ ActorSystem {
 }
 ```
 
+## 🚨 **关键架构问题分析**
+
+### **❌ 当前设计的严重问题**
+
+#### **1. 分层架构违反 (紧急修复)**
+```
+Foundation层依赖Core层 - 违反零依赖原则：
+├── foundation.concurrency.mailbox.cj → import cactor.core.message.{Message, Envelope}
+├── foundation.serialization.serializer.cj → import cactor.core.message.{Message}
+└── foundation.network.transport.cj → import cactor.core.message.{Message, Envelope}
+
+正确架构应该是：
+Foundation (零依赖) ← Core ← Runtime ← Patterns ← Distribution ← Integration
+```
+
+#### **2. Runtime层职责混乱 (架构重构)**
+```
+问题：Runtime层缺乏统一的运行时管理
+- SimpleActorSystem 功能不完整
+- Guardian Actor系统放在Core层，应该在Runtime层实现
+- 调度器、邮箱、Actor生命周期管理分散
+- 缺乏统一的运行时入口
+
+应该改为：
+Runtime层 = 完整的Actor运行时系统 (包含Guardian、调度、生命周期管理)
+Core层 = 纯抽象接口和数据结构
+```
+
+#### **3. Guardian Actor设计不完整 (功能缺陷)**
+```
+问题：Guardian Actor缺乏实际运行能力
+- SystemGuardian.doCreateChild() 实现不完整
+- 缺乏与调度器、邮箱的集成
+- 没有真正的Actor生命周期管理
+- 监督策略无法实际执行
+
+需要：完整的Guardian Actor运行时实现
+```
+
 ## 🚀 **CActor 9.0 架构改造计划**
 
-### **Phase 1: ActorSystem核心重构 (Week 1-2)**
+### **Phase 1: 架构修复和Runtime层重构 (Week 1-2)**
 
-#### **1.1 Guardian Actor系统**
+#### **1.1 Foundation层依赖修复 (紧急)**
 ```cangjie
-// 实现Akka风格的Guardian Actor层次结构
-public interface GuardianActor <: Actor {
-    func createChild(props: Props<Actor>, name: String): ActorRef
-    func supervise(child: ActorRef, strategy: SupervisionStrategy): Unit
-    func getChildren(): Array<ActorRef>
+// 步骤1: 移除Foundation层对Core层的依赖
+// 删除有问题的文件：
+rm src/foundation/concurrency/mailbox.cj
+rm src/foundation/concurrency/lockfree_mailbox.cj
+
+// 步骤2: Foundation层只保留纯基础设施
+// foundation.queue - 纯队列数据结构，无业务概念
+// foundation.memory - 纯内存管理，无Actor概念
+// foundation.serialization - 纯字节序列化，无Message概念
+// foundation.network - 纯网络传输，无Envelope概念
+```
+
+#### **1.2 Runtime层统一运行时系统**
+```cangjie
+// 将Guardian Actor系统移到Runtime层，作为完整运行时的一部分
+package cactor.runtime.system
+
+public class CActorRuntime {
+    // 统一的Actor运行时系统
+    private let systemGuardian: RuntimeSystemGuardian
+    private let userGuardian: RuntimeUserGuardian
+    private let dispatcherPool: DispatcherPool
+    private let mailboxFactory: MailboxFactory
+    private let actorRegistry: ActorRegistry
+    private let lifecycleManager: ActorLifecycleManager
+
+    public func createActor(props: Props<Actor>, name: String): ActorRef
+    public func stopActor(actorRef: ActorRef): Unit
+    public func superviseActor(child: ActorRef, strategy: SupervisionStrategy): Unit
 }
 
-public class SystemGuardian <: GuardianActor {
-    // 系统级Guardian，管理所有用户Actor
-    private let children: ConcurrentHashMap<String, ActorRef>
-    private let supervisionStrategy: SupervisionStrategy
-}
+// Guardian Actor的Runtime实现
+public class RuntimeSystemGuardian <: GuardianActor {
+    private let runtime: CActorRuntime
+    private let dispatcherPool: DispatcherPool
+    private let mailboxFactory: MailboxFactory
 
-public class UserGuardian <: GuardianActor {
-    // 用户级Guardian，管理用户创建的Actor
+    // 完整的Actor创建实现
+    protected func doCreateChild(props: Props<Actor>, name: String): ActorRef {
+        // 1. 创建Actor实例
+        let actor = props.create()
+
+        // 2. 分配调度器
+        let dispatcher = dispatcherPool.selectDispatcher(actor)
+
+        // 3. 创建邮箱
+        let mailbox = mailboxFactory.createMailbox(actor)
+
+        // 4. 创建ActorRef并启动
+        let actorRef = runtime.createActorRef(actor, name, mailbox, dispatcher)
+
+        // 5. 注册到运行时
+        runtime.registerActor(actorRef)
+
+        return actorRef
+    }
 }
 ```
 
@@ -127,36 +207,59 @@ public interface CActorSystem <: ActorSystem {
 }
 ```
 
-#### **1.3 配置驱动架构**
+#### **1.3 Core层纯抽象化**
 ```cangjie
-// 参考Akka的HOCON配置
+// Core层只保留抽象接口和数据结构，无具体实现
+package cactor.core
+
+// 纯抽象接口
+public interface Actor {
+    func receive(message: Message, context: ActorContext): MessageResult
+    prop name: String
+    prop description: String
+}
+
+public interface ActorSystem {
+    func actorOf(props: Props<Actor>, name: String): ActorRef
+    func actorSelection(path: String): ActorSelection
+    func terminate(): SimpleFuture<Unit>
+}
+
+public interface GuardianActor <: Actor {
+    func createChild(props: Props<Actor>, name: String): ActorRef
+    func supervise(child: ActorRef, strategy: SupervisionStrategy): Unit
+    func getChildren(): Array<ActorRef>
+}
+
+// 纯数据结构
+public struct ActorPath { ... }
+public struct Props<T> { ... }
+public interface Message { ... }
+```
+
+#### **1.4 Runtime层完整实现**
+```cangjie
+// Runtime层提供所有具体实现
+package cactor.runtime.system
+
+public class CActorSystem <: ActorSystem {
+    private let runtime: CActorRuntime
+
+    public init(name: String, config: ActorSystemConfig) {
+        this.runtime = CActorRuntime(name, config)
+    }
+
+    public func actorOf(props: Props<Actor>, name: String): ActorRef {
+        return runtime.systemGuardian.createChild(props, name)
+    }
+}
+
+// 配置驱动的运行时
 public struct ActorSystemConfig {
     public let dispatchers: DispatcherConfig
     public let mailboxes: MailboxConfig
     public let supervision: SupervisionConfig
     public let monitoring: MonitoringConfig
-    public let clustering: ClusterConfig
-}
-
-// 配置文件示例 (cactor.conf)
-cactor {
-  actor {
-    default-dispatcher {
-      type = "work-stealing"
-      parallelism = 8
-      throughput = 100
-    }
-    
-    mailboxes {
-      default {
-        type = "unbounded"
-      }
-      bounded {
-        type = "bounded"
-        capacity = 10000
-      }
-    }
-  }
 }
 ```
 
@@ -356,11 +459,12 @@ public class ExtensionRegistry {
 
 ## 📋 **实施计划**
 
-### **Week 1-2: ActorSystem核心重构**
-- [ ] 实现Guardian Actor系统
-- [ ] 重构ActorSystem接口
-- [ ] 实现配置驱动架构
-- [ ] 添加扩展系统基础
+### **Week 1-2: 架构修复和Runtime层重构**
+- [ ] **紧急修复**: 移除Foundation层对Core层的依赖
+- [ ] **架构重构**: 将Guardian Actor系统移到Runtime层
+- [ ] **统一运行时**: 实现CActorRuntime统一管理系统
+- [ ] **Core层纯化**: Core层只保留抽象接口和数据结构
+- [ ] **Runtime完整实现**: Runtime层提供所有具体实现
 
 ### **Week 3-4: 调度器性能优化**
 - [ ] 实现多种调度器类型
