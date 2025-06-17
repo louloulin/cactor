@@ -128,6 +128,7 @@ public class ActorRegistry {
                 unregisterByPath(actorPath)
             case None =>
                 // Actor未注册，忽略
+                ()
         }
     }
     
@@ -155,6 +156,7 @@ public class ActorRegistry {
                             }
                         case None =>
                             // 索引不一致，忽略
+                            ()
                     }
                     
                     // 移除父子关系
@@ -169,9 +171,11 @@ public class ActorRegistry {
                                     }
                                 case None =>
                                     // 索引不一致，忽略
+                                    ()
                             }
                         case None =>
                             // 根级Actor，无父Actor
+                            ()
                     }
                     
                     // 递归注销所有子Actor
