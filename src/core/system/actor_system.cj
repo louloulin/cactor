@@ -9,8 +9,15 @@ import std.time.*
 import std.sync.*
 import cactor.core.actor.{Actor, ActorRef, Props}
 import cactor.core.message.{Message}
-import cactor.pattern.ask.{AskFuture}
+// import cactor.pattern.ask.{AskFuture}
 
+/**
+ * 简化的Future接口 (临时实现，避免循环依赖)
+ */
+public interface SimpleFuture<T> {
+    func get(): T
+    func isCompleted(): Bool
+}
 
 /**
  * 简化的Actor系统接口
@@ -58,9 +65,9 @@ public interface ActorSystem {
 public interface ActorSelection {
     /**
      * 解析为单个ActorRef
-     * @return AskFuture包装的ActorRef
+     * @return SimpleFuture包装的ActorRef
      */
-    func resolveOne(): AskFuture<ActorRef>
+    func resolveOne(): SimpleFuture<ActorRef>
 
     /**
      * 向选中的Actor发送消息
@@ -71,9 +78,9 @@ public interface ActorSelection {
     /**
      * Ask模式发送消息
      * @param message 要发送的消息
-     * @return AskFuture包装的响应
+     * @return SimpleFuture包装的响应
      */
-    func ask(message: Message): AskFuture<Message>
+    func ask(message: Message): SimpleFuture<Message>
 }
 
 /**

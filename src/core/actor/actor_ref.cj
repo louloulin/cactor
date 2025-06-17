@@ -8,6 +8,8 @@ package cactor.core.actor
 import std.time.*
 import cactor.core.message.{Message, Envelope}
 
+
+
 /**
  * Actor引用接口
  * 提供与Actor交互的统一接口
@@ -120,10 +122,10 @@ public interface ActorSelection {
 }
 
 /**
- * 简化的Future接口
+ * CActor Future接口
  * 表示异步计算的结果
  */
-public interface Future<T> {
+public interface CActorFuture<T> {
     /**
      * 检查是否已完成
      * @return 是否已完成
@@ -149,7 +151,7 @@ public enum Result<T> {
 /**
  * 简化的Future实现
  */
-public class SimpleFuture<T> <: Future<T> {
+public class SimpleFuture<T> {
     private let result: Option<Result<T>>
     private let completed: Bool
 
@@ -169,5 +171,13 @@ public class SimpleFuture<T> <: Future<T> {
 
     public func value(): Option<Result<T>> {
         result
+    }
+
+    public func get(): T {
+        match (result) {
+            case Some(Result.Success(value)) => value
+            case Some(Result.Failure(error)) => throw error
+            case None => throw Exception("Future not completed")
+        }
     }
 }

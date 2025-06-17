@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2024. All rights reserved.
- * CActor - 示例包导出
+ * CActor 示例包配置
  */
+
 package cactor.examples
+
+// 示例包 - 目前只包含 api_demo

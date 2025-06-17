@@ -18,6 +18,8 @@ target/
 *.cjir
 *.ll
 *.bc
+*.cjo
+*.bchir*
 
 # 临时文件
 *.tmp
@@ -103,7 +105,25 @@ bin/
 # 缓存目录
 .cache/
 tmp/
-CangjieMagic
+
 # 特定于项目的忽略
 # 如果有其他需要忽略的文件，可以在这里添加
 **/*.macrocall
+
+# CActor项目编译生成的二进制文件
+actor_dsl_test
+test_advanced_dispatcher
+test_supervision_system
+test_advanced_mailbox
+verify_actor_config
+macro_test
+actor_config_test
+
+# 通用测试二进制文件模式
+test_*
+verify_*
+benchmark_*
+
+# 临时编译输出文件
+*.cj.out
+*.cj.exe

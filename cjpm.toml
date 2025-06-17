@@ -1,172 +1,95 @@
 [package]
 name = "cactor"
-version = "0.2.0"
-description = "High-performance Actor system for Cangjie - CActor"
+version = "7.0.0"
+description = "High-performance Actor system for Cangjie - CActor 7.0 with 6-layer architecture"
 cjc-version = "0.53.18"
 output-type = "dynamic"
 
-[package.package-configuration."cactor.tests.atomic"]
-output-type = "executable"
+# === Foundation Layer ===
+[package.package-configuration."cactor.foundation.memory"]
+output-type = "static"
 
-[package.package-configuration."cactor.tests.simple"]
-output-type = "executable"
+[package.package-configuration."cactor.foundation.queue"]
+output-type = "static"
 
-[package.package-configuration."cactor.examples.ping_pong"]
-output-type = "executable"
+[package.package-configuration."cactor.foundation.serialization"]
+output-type = "static"
 
-[package.package-configuration."cactor.tests.ringbuffer"]
-output-type = "executable"
+[package.package-configuration."cactor.foundation.network"]
+output-type = "static"
 
-[package.package-configuration."cactor.tests.queue"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.work_stealing_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.batching_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.ask_pattern_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.memory_pool_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.supervision_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.routing_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.circuit_breaker_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.monitoring_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.integration_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.remote_simple"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.remote_demo"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.advanced_features"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.logging_debug"]
-output-type = "executable"
-
-[package.package-configuration."cactor.examples.basic_demo"]
-output-type = "executable"
-
-[package.package-configuration."cactor.examples.ping_pong_demo"]
-output-type = "executable"
-
-[package.package-configuration."cactor.examples.stream_demo"]
-output-type = "executable"
-
-[package.package-configuration."cactor.examples.persistent_demo"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.persistence_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.virtual_actor_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.zerocopy_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.simple_macro_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.cjpm_macro_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.tests.plan3_macro_test"]
-output-type = "executable"
-
-# 核心包配置
+# === Core Layer ===
 [package.package-configuration."cactor.core.actor"]
 output-type = "static"
 
 [package.package-configuration."cactor.core.message"]
 output-type = "static"
 
+[package.package-configuration."cactor.core.system"]
+output-type = "static"
+
+[package.package-configuration."cactor.core.supervision"]
+output-type = "static"
+
 [package.package-configuration."cactor.core.context"]
 output-type = "static"
 
-[package.package-configuration."cactor.core.memory"]
+[package.package-configuration."cactor.core.config"]
 output-type = "static"
 
-[package.package-configuration."cactor.core.zerocopy"]
+# === Runtime Layer ===
+[package.package-configuration."cactor.runtime.mailbox"]
+output-type = "dynamic"
+
+[package.package-configuration."cactor.runtime.dispatcher"]
+output-type = "dynamic"
+
+[package.package-configuration."cactor.runtime.scheduler"]
+output-type = "dynamic"
+
+[package.package-configuration."cactor.runtime.execution"]
+output-type = "dynamic"
+
+[package.package-configuration."cactor.runtime.system"]
+output-type = "dynamic"
+
+# === API Layer ===
+[package.package-configuration."cactor.api"]
 output-type = "static"
 
-[package.package-configuration."cactor.core.monitoring"]
+[package.package-configuration."cactor.api.config"]
 output-type = "static"
 
-[package.package-configuration."cactor.macros"]
+[package.package-configuration."cactor.api.public"]
 output-type = "static"
 
-# Phase 2 零拷贝系统测试 - 暂时禁用，有链接问题
-# [package.package-configuration."cactor.tests.phase2_zerocopy_test"]
-# output-type = "executable"
+[package.package-configuration."cactor.api.extensions"]
+output-type = "static"
 
-# 简单零拷贝测试 - 暂时禁用，有链接问题
-# [package.package-configuration."cactor.tests.simple_zerocopy_test"]
-# output-type = "executable"
-
-# 高性能调度器系统测试
-[package.package-configuration."cactor.tests.scheduler_test"]
+# === Integration Tests ===
+[package.package-configuration."cactor.integration.testing.plan10_comprehensive_test"]
 output-type = "executable"
 
-# Phase 5 监控系统测试
-[package.package-configuration."cactor.tests.phase5_monitoring_test"]
+[package.package-configuration."cactor.integration.testing.simple_plan10_test"]
 output-type = "executable"
 
-# 压力测试和性能分析
-[package.package-configuration."cactor.tests.stress_test"]
+[package.package-configuration."cactor.integration.testing.plan10_cactor_runtime_test"]
 output-type = "executable"
 
-# Phase 1 无锁邮箱系统测试
-[package.package-configuration."cactor.tests.lockfree_mailbox_test"]
+[package.package-configuration."cactor.integration.testing.plan10_api_test"]
 output-type = "executable"
 
-# 高性能Actor测试 - 基于tu.md优化
-[package.package-configuration."cactor.tests.high_performance_actor_test"]
+[package.package-configuration."cactor.examples.advanced_mailbox_examples"]
 output-type = "executable"
 
-# 综合压力测试 - 验证tu.md所有功能
-[package.package-configuration."cactor.tests.comprehensive_stress_test"]
+[package.package-configuration."cactor.examples.advanced_dispatcher_examples"]
 output-type = "executable"
 
-# 高吞吐量测试 - 暂时禁用，有编译问题
-# [package.package-configuration."cactor.tests.high_throughput_test"]
-# output-type = "executable"
-
-# 基准测试 - 暂时禁用，有编译问题
-# [package.package-configuration."cactor.tests.benchmark_test"]
-# output-type = "executable"
-
-# 轻量级Actor测试 - 暂时禁用，有编译问题
-# [package.package-configuration."cactor.tests.lightweight_actor_test"]
-# output-type = "executable"
-
-# 优化调度器测试 - 暂时禁用，有编译问题
-# [package.package-configuration."cactor.tests.optimized_scheduler_test"]
-# output-type = "executable"
-
-# pb1.md API优化测试
-[package.package-configuration."cactor.tests.pb1_simple_test"]
+[package.package-configuration."cactor.examples.configuration_usage_test"]
 output-type = "executable"
 
-# pb1.md API验证测试
-[package.package-configuration."cactor.tests.pb1_api_verification"]
+[package.package-configuration."cactor.integration.testing.simple_benchmark_test"]
 output-type = "executable"
 
-# pb1.md API演示
-[package.package-configuration."cactor.examples.pb1_api_demo"]
+[package.package-configuration."cactor.examples.benchmark_demo"]
 output-type = "executable"
