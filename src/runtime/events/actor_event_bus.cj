@@ -295,7 +295,7 @@ public class ActorEventBus {
         try {
             var i: Int64 = 0
             while (i < subscribers.size()) {
-                if (subscribers[i].listener === listener) {
+                if (subscribers[i].listener == listener) {
                     subscribers.removeAt(i)
                     subscriberCount.fetchAdd(-1)
                     break

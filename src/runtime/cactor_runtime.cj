@@ -22,7 +22,7 @@ import cactor.runtime.lifecycle.{ActorLifecycleManager}
 import cactor.runtime.registry.{SimpleActorRegistry}
 import cactor.runtime.supervision.{SupervisionManager, SupervisionConfig}
 import cactor.runtime.monitoring.{ActorSystemMetrics}
-import cactor.runtime.events.{ActorEventBus}
+import cactor.runtime.events.{SimpleActorEventBus}
 import cactor.core.supervision.{SupervisionStrategy}
 import cactor.runtime.supervision.{SimpleSupervisionStrategy}
 
@@ -52,7 +52,7 @@ public class CActorRuntime {
     private let actorRegistry: SimpleActorRegistry
     private let supervisionManager: SupervisionManager
     private let systemMetrics: ActorSystemMetrics
-    private let eventBus: ActorEventBus
+    private let eventBus: SimpleActorEventBus
 
     // 运行时状态
     private let isRunning: AtomicBool
@@ -70,7 +70,7 @@ public class CActorRuntime {
         this.actorSystem = SimpleActorSystem(systemName)
 
         // 创建企业级组件 (plan10.md)
-        this.eventBus = ActorEventBus()
+        this.eventBus = SimpleActorEventBus()
         this.systemMetrics = ActorSystemMetrics()
         this.actorRegistry = SimpleActorRegistry()
         this.supervisionManager = SupervisionManager(SupervisionConfig.createDefault())
@@ -336,7 +336,7 @@ public class CActorRuntime {
     /**
      * 获取事件总线
      */
-    public func getEventBus(): ActorEventBus {
+    public func getEventBus(): SimpleActorEventBus {
         eventBus
     }
 }

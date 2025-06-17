@@ -15,7 +15,7 @@ import cactor.runtime.lifecycle.{ActorLifecycleManager, ActorLifecycleState}
 import cactor.runtime.registry.{SimpleActorRegistry}
 import cactor.runtime.supervision.{SupervisionManager}
 import cactor.runtime.monitoring.{ActorSystemMetrics}
-import cactor.runtime.events.{ActorEventBus}
+import cactor.runtime.events.{SimpleActorEventBus}
 
 /**
  * 测试用的简单Actor
