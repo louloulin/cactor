@@ -117,7 +117,7 @@ public class LockFreeQueueBenchmark {
         let batchEnqueueStartTime = getCurrentTimeMillis()
 
         var totalEnqueued: Int64 = 0
-        for (batchId in 0..batchCount) {
+        for (_ in 0..batchCount) {
             let enqueuedCount = queue.enqueueBatch(batchData)
             totalEnqueued += Int64(enqueuedCount)
             if (enqueuedCount < batchSize) {
@@ -256,7 +256,7 @@ public class LockFreeQueueBenchmark {
                 }
             }
 
-            let midTime = getCurrentTimeMillis()
+            let _midTime = getCurrentTimeMillis()
 
             var successfulDequeues: Int64 = 0
             while (!queue.isEmpty()) {

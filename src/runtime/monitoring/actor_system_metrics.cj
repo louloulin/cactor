@@ -113,7 +113,7 @@ public class ActorSystemMetrics {
         this.restartCount = AtomicInt64(0)
         
         this.maxLatencySamples = 10000
-        this.messageLatencies = Array<Int64>(Int64(maxLatencySamples), { i => 0 })
+        this.messageLatencies = Array<Int64>(Int64(maxLatencySamples), { _ => 0 })
         this.latencyIndex = AtomicInt32(0)
         
         this.lastSecondMessages = AtomicInt64(0)

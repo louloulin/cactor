@@ -173,14 +173,14 @@ public class MultiThreadBenchmark {
 
         for (round in 0..rounds) {
             // 每轮内部的激烈竞争
-            for (burst in 0..5) {  // 每轮5次爆发
-                for (threadId in 0..threadCount) {
+            for (_ in 0..5) {  // 每轮5次爆发
+                for (_ in 0..threadCount) {
                     let batchSize = opsPerRound / (Int64(threadCount) * 5)
                     var localSuccess: Int64 = 0
                     var localFailure: Int64 = 0
 
                     // 高强度批量操作
-                    for (i in 0..batchSize) {
+                    for (_ in 0..batchSize) {
                         let value = operationCounter.fetchAdd(1)
 
                         // 交替使用不同的入队方式增加竞争
