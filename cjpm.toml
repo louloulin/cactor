@@ -142,16 +142,8 @@ output-type = "executable"
 # [package.package-configuration."cactor.integration.testing.production_actor_test"]
 # output-type = "executable"
 
-# === Plan3功能验证测试 ===
-[package.package-configuration."cactor.integration.testing.plan3_feature_test"]
-output-type = "executable"
-
 # === 监督系统验证测试 ===
 [package.package-configuration."cactor.integration.testing.supervision_system_test"]
-output-type = "executable"
-
-# === XF性能优化验证测试 ===
-[package.package-configuration."cactor.integration.testing.xf_performance_optimization_test"]
 output-type = "executable"
 
 # === XF API设计验证测试 ===
@@ -174,31 +166,7 @@ output-type = "executable"
 [package.package-configuration."cactor.integration.testing.simple_guardian_test"]
 output-type = "executable"
 
-# === Plan10企业级功能验证测试 ===
-[package.package-configuration."cactor.integration.testing.plan10_verification"]
-output-type = "executable"
 
-# === Plan10简化功能验证测试 ===
-[package.package-configuration."cactor.integration.testing.plan10_simple_verification"]
-output-type = "executable"
-
-# === Plan10快速功能验证测试 ===
-[package.package-configuration."cactor.integration.testing.plan10_quick_verification"]
-output-type = "executable"
-
-# === pb1 API优化验证测试 ===
-[package.package-configuration."cactor.integration.testing.pb1_simple_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.pb1_api_verification"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.pb1_api_test"]
-output-type = "executable"
-
-# === Plan10功能验证测试 ===
-[package.package-configuration."cactor.integration.testing.plan10_verification_test"]
-output-type = "executable"
 
 # === Plan10简化功能验证测试 ===
 [package.package-configuration."cactor.integration.testing.plan10_simple_test"]

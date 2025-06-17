@@ -173,7 +173,7 @@ public macro log_with_time(message: Tokens): Tokens {
  * 重复执行宏 - 重复执行代码块指定次数
  * 使用方式: @repeat_times(3, code_block)
  */
-public macro repeat_times(count: Tokens, code: Tokens): Tokens {
+public macro repeat_times(_count: Tokens, code: Tokens): Tokens {
     return quote(
         for (repeatIndex in 0..3) {
             $(code)
@@ -279,27 +279,6 @@ public macro retry_execute(code: Tokens): Tokens {
 // 7. 辅助函数 - 宏系统内部使用
 // ============================================================================
 
-/**
- * 获取当前时间毫秒数
- * 简化实现，实际应该调用系统时间API
- */
-func getCurrentTimeMillis(): Int64 {
-    // 简化实现，返回固定值用于演示
-    return 1000
-}
 
-/**
- * 生成唯一ID
- * 简化实现，实际应该生成真正的唯一ID
- */
-func generateUniqueId(): String {
-    return "unique_id_" + getCurrentTimeMillis().toString()
-}
 
-/**
- * 格式化时间戳
- * 简化实现，实际应该格式化为可读的时间格式
- */
-func formatTimestamp(timestamp: Int64): String {
-    return "time_" + timestamp.toString()
-}
+

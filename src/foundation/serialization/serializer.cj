@@ -166,10 +166,7 @@ public class JsonSerializer <: Serializer<String> {
         str.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
     }
 
-    private func unescapeJson(str: String): String {
-        // 简化的JSON反转义
-        str.replace("\\\"", "\"").replace("\\n", "\n").replace("\\r", "\r")
-    }
+
 
     private func stringToBytes(str: String): Array<UInt8> {
         // 简化实现：将字符串转换为字节数组
