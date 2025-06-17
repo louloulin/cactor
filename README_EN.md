@@ -152,6 +152,8 @@ CActor adopts a 6-layer modular architecture:
 
 ## 📚 Documentation
 
+> 📖 **[Complete Documentation Center](docs/index.md)** - View navigation and index for all documentation
+
 ### Chinese Documentation
 - [架构设计](docs/zh/architecture.md) - Detailed architecture documentation
 - [API参考](docs/zh/api-reference.md) - Complete API documentation
