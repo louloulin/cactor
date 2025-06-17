@@ -9,4 +9,4 @@ package cactor.integration
 public import cactor.integration.configuration.*
 public import cactor.integration.monitoring.*
 public import cactor.integration.logging.*
-public import cactor.integration.testing.*
+// public import cactor.integration.testing.*
