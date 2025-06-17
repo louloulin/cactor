@@ -19,7 +19,7 @@ import cactor.runtime.system.{SimpleActorSystem}
 import cactor.core.guardian.{GuardianStats}
 import cactor.core.config.{MailboxConfig, DispatcherConfig}
 import cactor.runtime.lifecycle.{ActorLifecycleManager}
-import cactor.runtime.registry.{ActorRegistry}
+import cactor.runtime.registry.{SimpleActorRegistry}
 import cactor.runtime.supervision.{SupervisionManager, SupervisionConfig}
 import cactor.runtime.monitoring.{ActorSystemMetrics}
 import cactor.runtime.events.{ActorEventBus}
@@ -49,7 +49,7 @@ public class CActorRuntime {
 
     // plan10.md新增的企业级组件
     private let lifecycleManager: ActorLifecycleManager
-    private let actorRegistry: ActorRegistry
+    private let actorRegistry: SimpleActorRegistry
     private let supervisionManager: SupervisionManager
     private let systemMetrics: ActorSystemMetrics
     private let eventBus: ActorEventBus
@@ -72,7 +72,7 @@ public class CActorRuntime {
         // 创建企业级组件 (plan10.md)
         this.eventBus = ActorEventBus()
         this.systemMetrics = ActorSystemMetrics()
-        this.actorRegistry = ActorRegistry()
+        this.actorRegistry = SimpleActorRegistry()
         this.supervisionManager = SupervisionManager(SupervisionConfig.createDefault())
         this.lifecycleManager = ActorLifecycleManager()
 
@@ -315,7 +315,7 @@ public class CActorRuntime {
     /**
      * 获取Actor注册表
      */
-    public func getActorRegistry(): ActorRegistry {
+    public func getActorRegistry(): SimpleActorRegistry {
         actorRegistry
     }
 

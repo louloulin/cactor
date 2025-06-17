@@ -9,7 +9,6 @@ import std.sync.*
 import std.collection.*
 import std.time.*
 import cactor.core.actor.{Actor, ActorRef, ActorPath}
-import cactor.core.system.{ActorSelection}
 
 /**
  * Actor注册信息
@@ -39,91 +38,84 @@ public struct ActorRegistryEntry {
  */
 public class ActorRegistry {
     // 主要存储：路径 -> ActorRef
-    private let pathToActor: ConcurrentHashMap<String, ActorRegistryEntry>
-    
+    private let pathToActor: HashMap<String, ActorRegistryEntry>
+
     // 反向索引：ActorRef -> 路径
-    private let actorToPath: ConcurrentHashMap<ActorRef, String>
-    
+    private let actorToPath: HashMap<ActorRef, String>
+
     // 名称索引：名称 -> 路径集合（支持同名Actor）
-    private let nameToPath: ConcurrentHashMap<String, HashSet<String>>
-    
+    private let nameToPath: HashMap<String, HashSet<String>>
+
     // 父子关系索引
-    private let parentToChildren: ConcurrentHashMap<String, HashSet<String>>
-    private let childToParent: ConcurrentHashMap<String, String>
-    
+    private let parentToChildren: HashMap<String, HashSet<String>>
+    private let childToParent: HashMap<String, String>
+
     // 统计信息
     private let totalActors: AtomicInt64
     private let registrationCount: AtomicInt64
     
-    // 读写锁，支持高并发读取
-    private let registryLock: RwLock
-    
     public init() {
-        this.pathToActor = ConcurrentHashMap<String, ActorRegistryEntry>()
-        this.actorToPath = ConcurrentHashMap<ActorRef, String>()
-        this.nameToPath = ConcurrentHashMap<String, HashSet<String>>()
-        this.parentToChildren = ConcurrentHashMap<String, HashSet<String>>()
-        this.childToParent = ConcurrentHashMap<String, String>()
+        this.pathToActor = HashMap<String, ActorRegistryEntry>()
+        this.actorToPath = HashMap<ActorRef, String>()
+        this.nameToPath = HashMap<String, HashSet<String>>()
+        this.parentToChildren = HashMap<String, HashSet<String>>()
+        this.childToParent = HashMap<String, String>()
         this.totalActors = AtomicInt64(0)
         this.registrationCount = AtomicInt64(0)
-        this.registryLock = RwLock()
     }
     
     /**
      * 注册Actor
      */
-    public func register(actorRef: ActorRef, parentPath: Option<String> = None<String>): Unit {
+    public func register(actorRef: ActorRef, parentPath: Option<String>): Unit {
         let path = actorRef.path.toString()
-        let name = actorRef.path.name
+        let name = extractActorName(path)
         let currentTime = getCurrentTimeNanos()
-        
-        registryLock.lockWrite()
-        try {
-            // 检查是否已经注册
-            if (pathToActor.containsKey(path)) {
+
+        // 检查是否已经注册
+        match (pathToActor.get(path)) {
+            case Some(existing) =>
                 return  // 已经注册，忽略
-            }
-            
-            // 创建注册条目
-            let entry = ActorRegistryEntry(actorRef, currentTime, parentPath)
-            
-            // 主要存储
-            pathToActor.put(path, entry)
-            actorToPath.put(actorRef, path)
-            
-            // 名称索引
-            match (nameToPath.get(name)) {
-                case Some(paths) =>
-                    paths.put(path)
-                case None =>
-                    let newPaths = HashSet<String>()
-                    newPaths.put(path)
-                    nameToPath.put(name, newPaths)
-            }
-            
-            // 父子关系
-            match (parentPath) {
-                case Some(parent) =>
-                    childToParent.put(path, parent)
-                    match (parentToChildren.get(parent)) {
-                        case Some(children) =>
-                            children.put(path)
-                        case None =>
-                            let newChildren = HashSet<String>()
-                            newChildren.put(path)
-                            parentToChildren.put(parent, newChildren)
-                    }
-                case None =>
-                    // 根级Actor，无父Actor
-            }
-            
-            // 更新统计
-            totalActors.fetchAdd(1)
-            registrationCount.fetchAdd(1)
-            
-        } finally {
-            registryLock.unlockWrite()
+            case None =>
+                ()  // 继续注册
         }
+
+        // 创建注册条目
+        let entry = ActorRegistryEntry(actorRef, currentTime, parentPath)
+
+        // 主要存储
+        pathToActor.put(path, entry)
+        actorToPath.put(actorRef, path)
+
+        // 名称索引
+        match (nameToPath.get(name)) {
+            case Some(paths) =>
+                paths.put(path)
+            case None =>
+                let newPaths = HashSet<String>()
+                newPaths.put(path)
+                nameToPath.put(name, newPaths)
+        }
+
+        // 父子关系
+        match (parentPath) {
+            case Some(parent) =>
+                childToParent.put(path, parent)
+                match (parentToChildren.get(parent)) {
+                    case Some(children) =>
+                        children.put(path)
+                    case None =>
+                        let newChildren = HashSet<String>()
+                        newChildren.put(path)
+                        parentToChildren.put(parent, newChildren)
+                }
+            case None =>
+                ()  // 根级Actor，无父Actor
+        }
+
+        // 更新统计
+        totalActors.fetchAdd(1)
+        registrationCount.fetchAdd(1)
     }
     
     /**
@@ -405,5 +397,22 @@ public class ActorRegistry {
     
     private func getCurrentTimeNanos(): Int64 {
         DateTime.now().toUnixTimeStamp().toMilliseconds() * 1000000
+    }
+
+    /**
+     * 从路径中提取Actor名称
+     */
+    private func extractActorName(path: String): String {
+        // 简化实现：使用路径的最后部分作为名称
+        if (path.contains("/")) {
+            let lastSlash = path.lastIndexOf("/")
+            if (lastSlash >= 0 && lastSlash < path.size() - 1) {
+                path.substring(lastSlash + 1)
+            } else {
+                "unknown"
+            }
+        } else {
+            path
+        }
     }
 }

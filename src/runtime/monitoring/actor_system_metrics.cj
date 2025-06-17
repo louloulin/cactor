@@ -120,13 +120,12 @@ public class ActorSystemMetrics {
         this.lastMinuteMessages = AtomicInt64(0)
         this.lastHourMessages = AtomicInt64(0)
         
-        this.systemStartTime = getCurrentTimeNanos()
+        this.systemStartTime = DateTime.now().toUnixTimeStamp().toMilliseconds() * 1000000
         this.lastHealthCheck = AtomicInt64(0)
         this.healthStatus = AtomicInt32(0)  // Healthy
-        
-        this.customMetrics = ConcurrentHashMap<String, AtomicInt64>()
-        this.customGauges = ConcurrentHashMap<String, AtomicFloat64>()
-        this.metricsLock = RwLock()
+
+        this.customMetrics = HashMap<String, AtomicInt64>()
+        this.customGauges = HashMap<String, Float64>()
     }
     
     /**
@@ -190,7 +189,7 @@ public class ActorSystemMetrics {
     /**
      * 增加自定义计数器
      */
-    public func incrementCustomCounter(name: String, delta: Int64 = 1): Unit {
+    public func incrementCustomCounter(name: String, delta: Int64): Unit {
         match (customMetrics.get(name)) {
             case Some(counter) =>
                 counter.fetchAdd(delta)
@@ -204,41 +203,30 @@ public class ActorSystemMetrics {
      * 设置自定义仪表
      */
     public func setCustomGauge(name: String, value: Float64): Unit {
-        match (customGauges.get(name)) {
-            case Some(gauge) =>
-                gauge.store(value)
-            case None =>
-                let newGauge = AtomicFloat64(value)
-                customGauges.put(name, newGauge)
-        }
+        customGauges.put(name, value)
     }
     
     /**
      * 获取性能指标
      */
     public func getPerformanceMetrics(): PerformanceMetrics {
-        metricsLock.lockRead()
-        try {
-            let throughput = calculateThroughput()
-            let avgLatency = calculateAverageLatency()
-            let p95Latency = calculatePercentileLatency(0.95)
-            let p99Latency = calculatePercentileLatency(0.99)
-            let errorRate = calculateErrorRate()
-            let memoryUsage = estimateMemoryUsage()
-            let cpuUsage = estimateCpuUsage()
-            
-            PerformanceMetrics(
-                throughput,
-                avgLatency,
-                p95Latency,
-                p99Latency,
-                errorRate,
-                memoryUsage,
-                cpuUsage
-            )
-        } finally {
-            metricsLock.unlockRead()
-        }
+        let throughput = calculateThroughput()
+        let avgLatency = calculateAverageLatency()
+        let p95Latency = calculatePercentileLatency(0.95)
+        let p99Latency = calculatePercentileLatency(0.99)
+        let errorRate = calculateErrorRate()
+        let memoryUsage = estimateMemoryUsage()
+        let cpuUsage = estimateCpuUsage()
+
+        PerformanceMetrics(
+            throughput,
+            avgLatency,
+            p95Latency,
+            p99Latency,
+            errorRate,
+            memoryUsage,
+            cpuUsage
+        )
     }
     
     /**
@@ -309,37 +297,28 @@ public class ActorSystemMetrics {
      * 获取自定义仪表
      */
     public func getCustomGauges(): HashMap<String, Float64> {
-        let result = HashMap<String, Float64>()
-        for ((name, gauge) in customGauges) {
-            result.put(name, gauge.load())
-        }
-        result
+        customGauges
     }
     
     /**
      * 重置所有指标
      */
     public func reset(): Unit {
-        metricsLock.lockWrite()
-        try {
-            totalActors.store(0)
-            activeActors.store(0)
-            totalMessages.store(0)
-            processedMessages.store(0)
-            failedMessages.store(0)
-            restartCount.store(0)
-            latencyIndex.store(0)
-            
-            // 清空延迟样本
-            for (i in 0..messageLatencies.size()) {
-                messageLatencies[i] = 0
-            }
-            
-            customMetrics.clear()
-            customGauges.clear()
-        } finally {
-            metricsLock.unlockWrite()
+        totalActors.store(0)
+        activeActors.store(0)
+        totalMessages.store(0)
+        processedMessages.store(0)
+        failedMessages.store(0)
+        restartCount.store(0)
+        latencyIndex.store(0)
+
+        // 清空延迟样本
+        for (i in 0..Int64(maxLatencySamples)) {
+            messageLatencies[i] = 0
         }
+
+        customMetrics.clear()
+        customGauges.clear()
     }
     
     /**
@@ -350,7 +329,7 @@ public class ActorSystemMetrics {
         let health = getSystemHealth()
         
         println("=== ActorSystem性能指标报告 ===")
-        println("系统健康状态: ${health.status}")
+        println("系统健康状态: ${getStatusString(health.status)}")
         println("消息吞吐量: ${metrics.messagesThroughput} msg/s")
         println("平均延迟: ${metrics.averageLatency} μs")
         println("P95延迟: ${metrics.p95Latency} μs")
@@ -374,7 +353,8 @@ public class ActorSystemMetrics {
     }
     
     private func calculateAverageLatency(): Float64 {
-        let sampleCount = Int32.min(latencyIndex.load(), maxLatencySamples)
+        let currentIndex = latencyIndex.load()
+        let sampleCount = if (currentIndex < maxLatencySamples) { currentIndex } else { maxLatencySamples }
         if (sampleCount == 0) {
             return 0.0
         }
@@ -388,7 +368,8 @@ public class ActorSystemMetrics {
     }
     
     private func calculatePercentileLatency(percentile: Float64): Float64 {
-        let sampleCount = Int32.min(latencyIndex.load(), maxLatencySamples)
+        let currentIndex = latencyIndex.load()
+        let sampleCount = if (currentIndex < maxLatencySamples) { currentIndex } else { maxLatencySamples }
         if (sampleCount == 0) {
             return 0.0
         }
@@ -439,5 +420,14 @@ public class ActorSystemMetrics {
     
     private func getCurrentTimeNanos(): Int64 {
         DateTime.now().toUnixTimeStamp().toMilliseconds() * 1000000
+    }
+
+    private func getStatusString(status: SystemHealthStatus): String {
+        match (status) {
+            case SystemHealthStatus.Healthy => "健康"
+            case SystemHealthStatus.Warning => "警告"
+            case SystemHealthStatus.Critical => "严重"
+            case SystemHealthStatus.Down => "宕机"
+        }
     }
 }
