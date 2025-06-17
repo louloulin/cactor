@@ -72,3 +72,9 @@ output-type = "executable"
 
 [package.package-configuration."cactor.integration.testing.simple_plan10_test"]
 output-type = "executable"
+
+[package.package-configuration."cactor.integration.testing.plan10_cactor_runtime_test"]
+output-type = "executable"
+
+[package.package-configuration."cactor.integration.testing.plan10_api_test"]
+output-type = "executable"

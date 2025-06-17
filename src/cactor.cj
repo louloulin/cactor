@@ -14,14 +14,11 @@
  */
 package cactor
 
-// === 核心API (用户最常用) ===
-public import cactor.core.actor.{Actor, ActorRef, Props}
-public import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-public import cactor.core.system.{ActorSystem}
-public import cactor.core.context.{ActorContext}
-
-// === 系统工厂 (隐藏具体实现) ===
+// === 统一API层 (不导出core层) ===
+// 按照plan10.md要求，只使用API层接口，不直接导出core层
+public import cactor.api.{CActor, CActorSystem, CActorSystemFactory, ActorProps}
 public import cactor.api.public.{CActorFactory, CActorSystemBuilder}
+public import cactor.api.config.{MailboxConfig, DispatcherConfig, SupervisionConfig}
 
 // === 高级功能 (按需导入) ===
 // 用户需要时显式导入：
