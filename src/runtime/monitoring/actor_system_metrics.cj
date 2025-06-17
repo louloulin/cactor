@@ -172,6 +172,41 @@ public class ActorSystemMetrics {
     public func incrementRestartCount(): Unit {
         restartCount.fetchAdd(1)
     }
+
+    /**
+     * 增加Actor创建计数 - Plan10.md要求的别名
+     */
+    public func incrementActorCreated(): Unit {
+        incrementActorCount()
+    }
+
+    /**
+     * 增加Actor停止计数 - Plan10.md要求的别名
+     */
+    public func incrementActorStopped(): Unit {
+        decrementActorCount()
+    }
+
+    /**
+     * 增加Actor重启计数 - Plan10.md要求的别名
+     */
+    public func incrementActorRestarted(): Unit {
+        incrementRestartCount()
+    }
+
+    /**
+     * 启动指标收集 - Plan10.md要求
+     */
+    public func start(): Unit {
+        println("📊 ActorSystemMetrics启动")
+    }
+
+    /**
+     * 停止指标收集 - Plan10.md要求
+     */
+    public func shutdown(): Unit {
+        println("📊 ActorSystemMetrics停止")
+    }
     
     /**
      * 设置自定义计数器

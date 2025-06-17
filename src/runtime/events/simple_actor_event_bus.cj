@@ -139,6 +139,37 @@ public class SimpleActorEventBus {
     public func isActive(): Bool {
         isRunning.load()
     }
+
+    /**
+     * 发布Actor创建事件 - Plan10.md要求
+     */
+    public func publishActorCreated(actorRef: ActorRef): Unit {
+        let event = SimpleActorLifecycleEvent(actorRef, "CREATED", "Actor已创建")
+        publish(event)
+    }
+
+    /**
+     * 发布Actor停止事件 - Plan10.md要求
+     */
+    public func publishActorStopped(actorRef: ActorRef): Unit {
+        let event = SimpleActorLifecycleEvent(actorRef, "STOPPED", "Actor已停止")
+        publish(event)
+    }
+
+    /**
+     * 发布Actor重启事件 - Plan10.md要求
+     */
+    public func publishActorRestarted(actorRef: ActorRef, reason: Exception): Unit {
+        let event = SimpleActorLifecycleEvent(actorRef, "RESTARTED", "Actor已重启: ${reason.message}")
+        publish(event)
+    }
+
+    /**
+     * 关闭事件总线 - Plan10.md要求
+     */
+    public func shutdown(): Unit {
+        stop()
+    }
     
     /**
      * 清空所有监听器

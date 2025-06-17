@@ -339,6 +339,16 @@ public class ActorRegistry {
     public func isRegistered(actorRef: ActorRef): Bool {
         actorToPath.containsKey(actorRef)
     }
+
+    /**
+     * 检查名称是否已被占用 - Plan10.md要求
+     */
+    public func isNameTaken(name: String): Bool {
+        match (nameToPath.get(name)) {
+            case Some(_) => true
+            case None => false
+        }
+    }
     
     /**
      * 获取注册的Actor总数
