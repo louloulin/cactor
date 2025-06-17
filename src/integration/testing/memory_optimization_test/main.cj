@@ -78,7 +78,7 @@ public class MemoryOptimizationTest {
         // 模拟内存池：预分配对象
         let poolSize = 1000
         var pool = ArrayList<Array<UInt8>>()
-        for (i in 0..poolSize) {
+        for (_ in 0..poolSize) {
             let data = Array<UInt8>(512, { j => UInt8(j % 256) })
             pool.append(data)
         }
@@ -220,7 +220,7 @@ public class MemoryOptimizationTest {
         let poolCapacity = 1000
 
         // 预分配消息对象
-        for (i in 0..poolCapacity) {
+        for (_ in 0..poolCapacity) {
             let message = Array<UInt8>(1024, { j => UInt8(j % 256) })
             messagePool.append(message)
         }

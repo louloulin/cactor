@@ -242,21 +242,7 @@ public class ConfigurationManager {
         setConfig("config.source", ConfigValue.StringValue("string"))
     }
     
-    private func parseConfigValue(valueStr: String): ConfigValue {
-        // 简化的值解析
-        if (valueStr == "true" || valueStr == "false") {
-            ConfigValue.BoolValue(valueStr == "true")
-        } else if (valueStr.size > 2) {
-            // 简化的字符串解析
-            ConfigValue.StringValue("parsed_string")
-        } else if (valueStr == "3.14") {
-            // 简化的浮点数解析
-            ConfigValue.FloatValue(3.14)
-        } else {
-            // 尝试解析为整数
-            ConfigValue.IntValue(42)  // 简化实现
-        }
-    }
+
     
     public func exportToString(): String {
         mutex.lock()
