@@ -65,3 +65,10 @@ output-type = "static"
 
 [package.package-configuration."cactor.api.extensions"]
 output-type = "static"
+
+# === Integration Tests ===
+[package.package-configuration."cactor.integration.testing.plan10_comprehensive_test"]
+output-type = "executable"
+
+[package.package-configuration."cactor.integration.testing.simple_plan10_test"]
+output-type = "executable"
