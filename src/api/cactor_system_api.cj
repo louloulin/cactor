@@ -7,6 +7,7 @@
 package cactor.api
 
 import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory}
+import cactor.core.config.{MailboxConfig as CoreMailboxConfig, DispatcherConfig as CoreDispatcherConfig, SupervisionConfig as CoreSupervisionConfig}
 import cactor.runtime.{CActorRuntime, CActorRuntimeConfig}
 
 /**
@@ -58,6 +59,51 @@ public class CActorSystem {
     public func actorOf(actorProps: ActorProps): ActorRef {
         let creator = actorProps.getCreator()
         actorOf(creator)
+    }
+
+    /**
+     * 使用Props创建Actor - 支持完整配置传递（类似Akka）
+     */
+    public func actorOf(props: Props<Actor>, name: String): ActorRef {
+        runtime.actorOf(props, name)
+    }
+
+    /**
+     * 使用Props创建Actor（自动命名）- 支持完整配置传递
+     */
+    public func actorOf(props: Props<Actor>): ActorRef {
+        runtime.actorOf(props)
+    }
+
+    /**
+     * 使用邮箱配置创建Actor - 类似Akka的withMailbox
+     */
+    public func actorOfWithMailbox(creator: () -> Actor, name: String, mailboxConfig: CoreMailboxConfig): ActorRef {
+        let props = PropsFactory.create(creator).withMailbox(mailboxConfig.name)
+        runtime.actorOf(props, name)
+    }
+
+    /**
+     * 使用调度器配置创建Actor - 类似Akka的withDispatcher
+     */
+    public func actorOfWithDispatcher(creator: () -> Actor, name: String, dispatcherConfig: CoreDispatcherConfig): ActorRef {
+        let props = PropsFactory.create(creator).withDispatcher(dispatcherConfig.name)
+        runtime.actorOf(props, name)
+    }
+
+    /**
+     * 使用完整配置创建Actor - 类似Akka的完整配置方式
+     */
+    public func actorOfConfigured(creator: () -> Actor,
+                                 name: String,
+                                 mailboxConfig: CoreMailboxConfig,
+                                 dispatcherConfig: CoreDispatcherConfig,
+                                 supervisionConfig: CoreSupervisionConfig): ActorRef {
+        let props = PropsFactory.create(creator)
+            .withMailbox(mailboxConfig.name)
+            .withDispatcher(dispatcherConfig.name)
+            .withSupervisionStrategy(supervisionConfig.name)
+        runtime.actorOf(props, name)
     }
 
     /**

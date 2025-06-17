@@ -78,3 +78,12 @@ output-type = "executable"
 
 [package.package-configuration."cactor.integration.testing.plan10_api_test"]
 output-type = "executable"
+
+[package.package-configuration."cactor.examples.advanced_mailbox_examples"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.advanced_dispatcher_examples"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.configuration_usage_test"]
+output-type = "executable"
