@@ -78,6 +78,54 @@ public struct HighPerformanceActorSystemConfig {
             true        // 启用性能监控
         )
     }
+
+    /**
+     * 内存优化配置
+     */
+    public static func createMemoryOptimized(): HighPerformanceActorSystemConfig {
+        HighPerformanceActorSystemConfig(
+            500000,     // 50万Actor
+            5000,       // 5千上下文池
+            4,          // 4个工作线程
+            512,        // 512邮箱容量
+            false,      // 禁用批处理（节省内存）
+            16,         // 16消息批处理
+            true,       // 启用内存优化
+            false       // 禁用性能监控（节省内存）
+        )
+    }
+
+    /**
+     * 低延迟配置
+     */
+    public static func createLowLatency(): HighPerformanceActorSystemConfig {
+        HighPerformanceActorSystemConfig(
+            1000000,    // 100万Actor
+            20000,      // 2万上下文池
+            8,          // 8个工作线程
+            1024,       // 1K邮箱容量
+            false,      // 禁用批处理（减少延迟）
+            8,          // 8消息批处理
+            true,       // 启用内存优化
+            true        // 启用性能监控
+        )
+    }
+
+    /**
+     * 高吞吐量配置
+     */
+    public static func createHighThroughput(): HighPerformanceActorSystemConfig {
+        HighPerformanceActorSystemConfig(
+            5000000,    // 500万Actor
+            30000,      // 3万上下文池
+            32,         // 32个工作线程
+            4096,       // 4K邮箱容量
+            true,       // 启用批处理
+            128,        // 128消息批处理
+            true,       // 启用内存优化
+            true        // 启用性能监控
+        )
+    }
 }
 
 /**

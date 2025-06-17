@@ -28,6 +28,7 @@ import cactor.runtime.events.{SimpleActorEventBus}
 import cactor.core.supervision.{SupervisionStrategy}
 import cactor.runtime.supervision.{SimpleSupervisionStrategy}
 
+
 /**
  * CActorRuntime - 统一运行时管理器
  * 
@@ -390,6 +391,83 @@ public struct CActorRuntimeConfig {
             HighPerformanceActorSystemConfig.createExtreme(),
             true,  // 启用监控
             true   // 启用持久化
+        )
+    }
+
+    /**
+     * 创建极限性能配置 - 基于plan2.md优化方案
+     * 目标：从4,982 msg/s提升到1M msg/s (200x提升)
+     */
+    public static func createExtreme(): CActorRuntimeConfig {
+        // 高性能邮箱配置
+        let mailboxConfig = MailboxConfig.createUnbounded()
+
+        // 工作窃取调度器配置
+        let dispatcherConfig = DispatcherConfig.createWorkStealing()
+
+        // 极限性能系统配置
+        let highPerfConfig = HighPerformanceActorSystemConfig.createExtreme()
+
+        return CActorRuntimeConfig(
+            mailboxConfig,
+            dispatcherConfig,
+            highPerfConfig,
+            true,  // 启用监控
+            false  // 禁用持久化（性能优先）
+        )
+    }
+
+    /**
+     * 创建内存优化配置
+     * 目标：<1KB/Actor内存使用
+     */
+    public static func createMemoryOptimized(): CActorRuntimeConfig {
+        let mailboxConfig = MailboxConfig.createBounded(1000)
+        let dispatcherConfig = DispatcherConfig.createThreadPool()
+        let highPerfConfig = HighPerformanceActorSystemConfig.createMemoryOptimized()
+
+        return CActorRuntimeConfig(
+            mailboxConfig,
+            dispatcherConfig,
+            highPerfConfig,
+            false, // 禁用监控（节省内存）
+            false  // 禁用持久化
+        )
+    }
+
+    /**
+     * 创建低延迟配置
+     * 目标：P99 < 100μs
+     */
+    public static func createLowLatency(): CActorRuntimeConfig {
+        let mailboxConfig = MailboxConfig.createUnbounded()
+        let dispatcherConfig = DispatcherConfig.createPinned()
+        let highPerfConfig = HighPerformanceActorSystemConfig.createLowLatency()
+
+        return CActorRuntimeConfig(
+            mailboxConfig,
+            dispatcherConfig,
+            highPerfConfig,
+            true,  // 启用监控（延迟统计）
+            false  // 禁用持久化
+        )
+    }
+
+    /**
+     * 创建高吞吐量配置
+     * 目标：50M msg/s
+     */
+    public static func createHighThroughput(): CActorRuntimeConfig {
+        let mailboxConfig = MailboxConfig.createUnbounded()
+        let dispatcherConfig = DispatcherConfig.createWorkStealing()
+        let highPerfConfig = HighPerformanceActorSystemConfig.createHighThroughput()
+
+        return CActorRuntimeConfig(
+            mailboxConfig,
+            dispatcherConfig,
+            highPerfConfig,
+            true,  // 启用监控（吞吐量统计）
+            false  // 禁用持久化
         )
     }
     

@@ -87,3 +87,9 @@ output-type = "executable"
 
 [package.package-configuration."cactor.examples.configuration_usage_test"]
 output-type = "executable"
+
+[package.package-configuration."cactor.integration.testing.simple_benchmark_test"]
+output-type = "executable"
+
+[package.package-configuration."cactor.examples.benchmark_demo"]
+output-type = "executable"
