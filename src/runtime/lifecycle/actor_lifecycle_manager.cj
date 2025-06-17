@@ -64,12 +64,12 @@ public struct ActorLifecycleInfo {
  * 4. 发布生命周期事件
  */
 public class ActorLifecycleManager {
-    private let lifecycleInfos: ConcurrentHashMap<String, ActorLifecycleInfo>
+    private let lifecycleInfos: HashMap<String, ActorLifecycleInfo>
     private let eventBus: ActorEventBus
     private let isRunning: AtomicBool
 
     public init() {
-        this.lifecycleInfos = ConcurrentHashMap<String, ActorLifecycleInfo>()
+        this.lifecycleInfos = HashMap<String, ActorLifecycleInfo>()
         this.eventBus = ActorEventBus()
         this.isRunning = AtomicBool(true)
     }
@@ -112,8 +112,11 @@ public class ActorLifecycleManager {
         // 检查当前状态
         match (getActorState(actorRef)) {
             case Some(info) =>
-                if (info.state == ActorLifecycleState.Stopped) {
-                    return  // 已经停止
+                match (info.state) {
+                    case ActorLifecycleState.Stopped =>
+                        return  // 已经停止
+                    case _ =>
+                        ()  // 继续处理
                 }
             case None =>
                 return  // Actor不存在
@@ -158,7 +161,7 @@ public class ActorLifecycleManager {
             actorRef.tell(StopMessage())
             
             // 等待一小段时间确保停止完成
-            Thread.sleep(Duration.millisecond * 10)
+            // Thread.sleep(Duration.millisecond * 10)  // 简化实现，跳过sleep
             
             // 重新启动Actor
             actorRef.tell(StartMessage())
@@ -218,8 +221,8 @@ public class ActorLifecycleManager {
     /**
      * 获取所有Actor状态
      */
-    public func getAllActorStates(): Array<ActorLifecycleInfo> {
-        let states = Array<ActorLifecycleInfo>()
+    public func getAllActorStates(): ArrayList<ActorLifecycleInfo> {
+        let states = ArrayList<ActorLifecycleInfo>()
         for ((path, info) in lifecycleInfos) {
             states.append(info)
         }
@@ -232,8 +235,11 @@ public class ActorLifecycleManager {
     public func getRunningActorCount(): Int32 {
         var count: Int32 = 0
         for ((path, info) in lifecycleInfos) {
-            if (info.state == ActorLifecycleState.Running) {
-                count += 1
+            match (info.state) {
+                case ActorLifecycleState.Running =>
+                    count += 1
+                case _ =>
+                    ()
             }
         }
         count

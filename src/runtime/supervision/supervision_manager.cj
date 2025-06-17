@@ -147,7 +147,7 @@ public struct SupervisionStats {
  */
 public class SupervisionManager {
     private let config: SupervisionConfig
-    private let supervisionInfos: ConcurrentHashMap<String, ActorSupervisionInfo>
+    private let supervisionInfos: HashMap<String, ActorSupervisionInfo>
     private let eventBus: ActorEventBus
     
     // 统计计数器
@@ -159,11 +159,11 @@ public class SupervisionManager {
     
     // 管理器状态
     private let isRunning: AtomicBool
-    private let managerLock: RwLock
+    private let managerLock: ReentrantReadWriteMutex
     
     public init(config: SupervisionConfig) {
         this.config = config
-        this.supervisionInfos = ConcurrentHashMap<String, ActorSupervisionInfo>()
+        this.supervisionInfos = HashMap<String, ActorSupervisionInfo>()
         this.eventBus = ActorEventBus()
         
         this.totalSupervised = AtomicInt64(0)
@@ -173,7 +173,7 @@ public class SupervisionManager {
         this.circuitBreakerTrips = AtomicInt64(0)
         
         this.isRunning = AtomicBool(true)
-        this.managerLock = RwLock()
+        this.managerLock = ReentrantReadWriteMutex()
     }
     
     /**
@@ -183,8 +183,8 @@ public class SupervisionManager {
         let path = actorRef.path.toString()
         let currentTime = getCurrentTimeNanos()
         
-        managerLock.lockWrite()
         try {
+            managerLock.writeMutex.lock()
             let info = ActorSupervisionInfo(
                 actorRef,
                 strategy,
@@ -195,12 +195,11 @@ public class SupervisionManager {
                 0,      // escalationCount
                 0       // circuitBreakerOpenTime
             )
-            
+
             supervisionInfos.put(path, info)
             totalSupervised.fetchAdd(1)
-            
         } finally {
-            managerLock.unlockWrite()
+            managerLock.writeMutex.unlock()
         }
     }
     
@@ -210,11 +209,11 @@ public class SupervisionManager {
     public func unsupervise(actorRef: ActorRef): Unit {
         let path = actorRef.path.toString()
         
-        managerLock.lockWrite()
         try {
+            managerLock.writeMutex.lock()
             supervisionInfos.remove(path)
         } finally {
-            managerLock.unlockWrite()
+            managerLock.writeMutex.unlock()
         }
     }
     
@@ -225,38 +224,41 @@ public class SupervisionManager {
         let path = actorRef.path.toString()
         let currentTime = getCurrentTimeNanos()
         
-        managerLock.lockRead()
         try {
+            managerLock.readMutex.lock()
             match (supervisionInfos.get(path)) {
                 case Some(info) =>
                     // 检查断路器状态
-                    if (info.state == SupervisionState.CircuitOpen) {
-                        if (shouldCloseCircuitBreaker(info, currentTime)) {
-                            // 关闭断路器，尝试恢复
-                            updateSupervisionState(actorRef, SupervisionState.Normal)
-                        } else {
-                            // 断路器仍然开启，直接停止
-                            return SupervisionDirective.Stop
-                        }
+                    match (info.state) {
+                        case SupervisionState.CircuitOpen =>
+                            if (shouldCloseCircuitBreaker(info, currentTime)) {
+                                // 关闭断路器，尝试恢复
+                                updateSupervisionState(actorRef, SupervisionState.Normal)
+                            } else {
+                                // 断路器仍然开启，直接停止
+                                return SupervisionDirective.Stop
+                            }
+                        case _ =>
+                            ()
                     }
-                    
+
                     // 更新失败统计
                     totalFailures.fetchAdd(1)
-                    
+
                     // 根据监督策略决定处理方式
                     let directive = info.strategy.decide(failure)
-                    
+
                     // 执行监督决策
                     executeSupervisionDirective(actorRef, directive, failure, currentTime)
-                    
+
                     return directive
-                    
+
                 case None =>
                     // Actor未被监督，使用默认策略
                     return SupervisionDirective.Stop
             }
         } finally {
-            managerLock.unlockRead()
+            managerLock.readMutex.unlock()
         }
     }
     
@@ -271,8 +273,8 @@ public class SupervisionManager {
     /**
      * 获取所有监督信息
      */
-    public func getAllSupervisionInfos(): Array<ActorSupervisionInfo> {
-        let result = Array<ActorSupervisionInfo>()
+    public func getAllSupervisionInfos(): ArrayList<ActorSupervisionInfo> {
+        let result = ArrayList<ActorSupervisionInfo>()
         for ((path, info) in supervisionInfos) {
             result.append(info)
         }
@@ -403,6 +405,7 @@ public class SupervisionManager {
                 supervisionInfos.put(path, newInfo)
             case None =>
                 // Actor不存在，忽略
+                ()
         }
     }
     
@@ -423,9 +426,10 @@ public class SupervisionManager {
                 supervisionInfos.put(path, newInfo)
             case None =>
                 // Actor不存在，忽略
+                ()
         }
     }
-    
+
     private func incrementEscalationCount(actorRef: ActorRef): Unit {
         let path = actorRef.path.toString()
         match (supervisionInfos.get(path)) {
@@ -443,9 +447,10 @@ public class SupervisionManager {
                 supervisionInfos.put(path, newInfo)
             case None =>
                 // Actor不存在，忽略
+                ()
         }
     }
-    
+
     private func updateSupervisionState(actorRef: ActorRef, newState: SupervisionState): Unit {
         let path = actorRef.path.toString()
         match (supervisionInfos.get(path)) {
@@ -463,9 +468,10 @@ public class SupervisionManager {
                 supervisionInfos.put(path, newInfo)
             case None =>
                 // Actor不存在，忽略
+                ()
         }
     }
-    
+
     private func checkCircuitBreaker(actorRef: ActorRef, currentTime: Int64): Unit {
         if (!config.enableCircuitBreaker) {
             return
@@ -491,6 +497,7 @@ public class SupervisionManager {
                 }
             case None =>
                 // Actor不存在，忽略
+                ()
         }
     }
     
