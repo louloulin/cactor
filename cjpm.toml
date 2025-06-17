@@ -196,4 +196,12 @@ output-type = "executable"
 [package.package-configuration."cactor.integration.testing.pb1_api_test"]
 output-type = "executable"
 
+# === Plan10功能验证测试 ===
+[package.package-configuration."cactor.integration.testing.plan10_verification_test"]
+output-type = "executable"
+
+# === Plan10简化功能验证测试 ===
+[package.package-configuration."cactor.integration.testing.plan10_simple_test"]
+output-type = "executable"
+
 

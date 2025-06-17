@@ -17,7 +17,7 @@ import cactor.core.supervision.{SupervisionStrategy, ActorFailure, SupervisionDi
 /**
  * Guardian类型枚举
  */
-public enum GuardianType {
+public enum GuardianType <: ToString {
     | System      // 系统Guardian
     | User        // 用户Guardian
     | Custom(String)  // 自定义Guardian类型
@@ -34,11 +34,20 @@ public enum GuardianType {
 /**
  * Guardian健康状态
  */
-public enum GuardianHealthStatus {
+public enum GuardianHealthStatus <: ToString {
     | Healthy           // 健康
     | Degraded          // 降级
     | Unhealthy         // 不健康
     | Critical          // 严重
+
+    public func toString(): String {
+        match (this) {
+            case Healthy => "Healthy"
+            case Degraded => "Degraded"
+            case Unhealthy => "Unhealthy"
+            case Critical => "Critical"
+        }
+    }
 }
 
 /**

@@ -14,9 +14,9 @@ import cactor.core.actor.{ActorRef}
  * Actor生命周期事件基类
  */
 public interface ActorLifecycleEvent {
-    prop actorRef: ActorRef
-    prop timestamp: Int64
-    prop eventType: String
+    func getActorRef(): ActorRef
+    func getTimestamp(): Int64
+    func getEventType(): String
 }
 
 /**
@@ -25,14 +25,22 @@ public interface ActorLifecycleEvent {
 public struct ActorCreatedEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
-    
+
     public init(actorRef: ActorRef, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
     }
-    
-    public prop eventType: String {
-        get() { "ActorCreated" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorCreated"
     }
 }
 
@@ -42,14 +50,22 @@ public struct ActorCreatedEvent <: ActorLifecycleEvent {
 public struct ActorStartedEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
-    
+
     public init(actorRef: ActorRef, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
     }
-    
-    public prop eventType: String {
-        get() { "ActorStarted" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorStarted"
     }
 }
 
@@ -59,14 +75,22 @@ public struct ActorStartedEvent <: ActorLifecycleEvent {
 public struct ActorStoppedEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
-    
+
     public init(actorRef: ActorRef, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
     }
-    
-    public prop eventType: String {
-        get() { "ActorStopped" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorStopped"
     }
 }
 
@@ -77,15 +101,23 @@ public struct ActorRestartedEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
     public let reason: Exception
-    
+
     public init(actorRef: ActorRef, reason: Exception, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
         this.reason = reason
     }
-    
-    public prop eventType: String {
-        get() { "ActorRestarted" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorRestarted"
     }
 }
 
@@ -95,14 +127,22 @@ public struct ActorRestartedEvent <: ActorLifecycleEvent {
 public struct ActorRegisteredEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
-    
+
     public init(actorRef: ActorRef, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
     }
-    
-    public prop eventType: String {
-        get() { "ActorRegistered" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorRegistered"
     }
 }
 
@@ -112,14 +152,22 @@ public struct ActorRegisteredEvent <: ActorLifecycleEvent {
 public struct ActorUnregisteredEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
-    
+
     public init(actorRef: ActorRef, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
     }
-    
-    public prop eventType: String {
-        get() { "ActorUnregistered" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorUnregistered"
     }
 }
 
@@ -130,15 +178,23 @@ public struct ActorStartFailedEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
     public let error: Exception
-    
+
     public init(actorRef: ActorRef, error: Exception, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
         this.error = error
     }
-    
-    public prop eventType: String {
-        get() { "ActorStartFailed" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorStartFailed"
     }
 }
 
@@ -149,15 +205,23 @@ public struct ActorStopFailedEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
     public let error: Exception
-    
+
     public init(actorRef: ActorRef, error: Exception, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
         this.error = error
     }
-    
-    public prop eventType: String {
-        get() { "ActorStopFailed" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorStopFailed"
     }
 }
 
@@ -168,15 +232,23 @@ public struct ActorRestartFailedEvent <: ActorLifecycleEvent {
     public let actorRef: ActorRef
     public let timestamp: Int64
     public let error: Exception
-    
+
     public init(actorRef: ActorRef, error: Exception, timestamp: Int64) {
         this.actorRef = actorRef
         this.timestamp = timestamp
         this.error = error
     }
-    
-    public prop eventType: String {
-        get() { "ActorRestartFailed" }
+
+    public func getActorRef(): ActorRef {
+        actorRef
+    }
+
+    public func getTimestamp(): Int64 {
+        timestamp
+    }
+
+    public func getEventType(): String {
+        "ActorRestartFailed"
     }
 }
 
@@ -198,15 +270,11 @@ public struct EventSubscription {
     public init(listener: ActorEventListener, eventTypes: HashSet<String>) {
         this.listener = listener
         this.eventTypes = eventTypes
-        this.subscribedAt = getCurrentTimeNanos()
+        this.subscribedAt = DateTime.now().toUnixTimeStamp().toMilliseconds() * 1000000
     }
-    
+
     public func matches(eventType: String): Bool {
         eventTypes.isEmpty() || eventTypes.contains(eventType)
-    }
-    
-    private func getCurrentTimeNanos(): Int64 {
-        DateTime.now().toUnixTimeStamp().toMilliseconds() * 1000000
     }
 }
 
@@ -220,18 +288,18 @@ public struct EventSubscription {
  * 4. 事件统计和监控
  */
 public class ActorEventBus {
-    private let subscribers: Array<EventSubscription>
+    private let subscribers: ArrayList<EventSubscription>
     private let eventCount: AtomicInt64
     private let subscriberCount: AtomicInt32
     private let isRunning: AtomicBool
-    private let busLock: RwLock
+    private let busLock: ReentrantMutex
     
     public init() {
-        this.subscribers = Array<EventSubscription>()
+        this.subscribers = ArrayList<EventSubscription>()
         this.eventCount = AtomicInt64(0)
         this.subscriberCount = AtomicInt32(0)
         this.isRunning = AtomicBool(true)
-        this.busLock = RwLock()
+        this.busLock = ReentrantMutex()
     }
     
     /**
@@ -241,12 +309,12 @@ public class ActorEventBus {
         if (!isRunning.load()) {
             return
         }
-        
-        busLock.lockRead()
+
+        busLock.lock()
         try {
             // 遍历所有订阅者
             for (subscription in subscribers) {
-                if (subscription.matches(event.eventType)) {
+                if (subscription.matches(event.getEventType())) {
                     try {
                         // 异步调用监听器
                         subscription.listener.onEvent(event)
@@ -256,12 +324,12 @@ public class ActorEventBus {
                     }
                 }
             }
-            
+
             // 更新事件计数
             eventCount.fetchAdd(1)
-            
+
         } finally {
-            busLock.unlockRead()
+            busLock.unlock()
         }
     }
     
@@ -277,21 +345,21 @@ public class ActorEventBus {
      * 订阅特定类型的事件
      */
     public func subscribe(listener: ActorEventListener, eventTypes: HashSet<String>): Unit {
-        busLock.lockWrite()
+        busLock.lock()
         try {
             let subscription = EventSubscription(listener, eventTypes)
             subscribers.append(subscription)
             subscriberCount.fetchAdd(1)
         } finally {
-            busLock.unlockWrite()
+            busLock.unlock()
         }
     }
-    
+
     /**
      * 取消订阅
      */
     public func unsubscribe(listener: ActorEventListener): Unit {
-        busLock.lockWrite()
+        busLock.lock()
         try {
             var i: Int64 = 0
             while (i < subscribers.size()) {
@@ -303,7 +371,7 @@ public class ActorEventBus {
                 i += 1
             }
         } finally {
-            busLock.unlockWrite()
+            busLock.unlock()
         }
     }
     
@@ -332,12 +400,12 @@ public class ActorEventBus {
      * 清空所有订阅者
      */
     public func clearSubscribers(): Unit {
-        busLock.lockWrite()
+        busLock.lock()
         try {
             subscribers.clear()
             subscriberCount.store(0)
         } finally {
-            busLock.unlockWrite()
+            busLock.unlock()
         }
     }
     

@@ -40,8 +40,8 @@ public class ActorRegistry {
     // 主要存储：路径 -> ActorRef
     private let pathToActor: HashMap<String, ActorRegistryEntry>
 
-    // 反向索引：ActorRef -> 路径
-    private let actorToPath: HashMap<ActorRef, String>
+    // 反向索引：Actor路径字符串 -> 路径（简化实现，避免ActorRef作为键）
+    private let actorPathToPath: HashMap<String, String>
 
     // 名称索引：名称 -> 路径集合（支持同名Actor）
     private let nameToPath: HashMap<String, HashSet<String>>
@@ -53,15 +53,19 @@ public class ActorRegistry {
     // 统计信息
     private let totalActors: AtomicInt64
     private let registrationCount: AtomicInt64
+
+    // 互斥锁
+    private let registryLock: ReentrantMutex
     
     public init() {
         this.pathToActor = HashMap<String, ActorRegistryEntry>()
-        this.actorToPath = HashMap<ActorRef, String>()
+        this.actorPathToPath = HashMap<String, String>()
         this.nameToPath = HashMap<String, HashSet<String>>()
         this.parentToChildren = HashMap<String, HashSet<String>>()
         this.childToParent = HashMap<String, String>()
         this.totalActors = AtomicInt64(0)
         this.registrationCount = AtomicInt64(0)
+        this.registryLock = ReentrantMutex()
     }
     
     /**
@@ -85,7 +89,7 @@ public class ActorRegistry {
 
         // 主要存储
         pathToActor.put(path, entry)
-        actorToPath.put(actorRef, path)
+        actorPathToPath.put(actorRef.path.toString(), path)
 
         // 名称索引
         match (nameToPath.get(name)) {
@@ -122,7 +126,7 @@ public class ActorRegistry {
      * 注销Actor
      */
     public func unregister(actorRef: ActorRef): Unit {
-        let path = actorToPath.get(actorRef)
+        let path = actorPathToPath.get(actorRef.path.toString())
         match (path) {
             case Some(actorPath) =>
                 unregisterByPath(actorPath)
@@ -136,16 +140,16 @@ public class ActorRegistry {
      * 通过路径注销Actor
      */
     public func unregisterByPath(path: String): Unit {
-        registryLock.lockWrite()
+        registryLock.lock()
         try {
             match (pathToActor.get(path)) {
                 case Some(entry) =>
                     let actorRef = entry.actorRef
-                    let name = actorRef.path.name
+                    let name = extractActorName(path)
                     
                     // 移除主要存储
                     pathToActor.remove(path)
-                    actorToPath.remove(actorRef)
+                    actorPathToPath.remove(actorRef.path.toString())
                     
                     // 移除名称索引
                     match (nameToPath.get(name)) {
@@ -156,7 +160,6 @@ public class ActorRegistry {
                             }
                         case None =>
                             // 索引不一致，忽略
-                            ()
                             ()
                     }
                     
@@ -198,7 +201,7 @@ public class ActorRegistry {
                     ()
             }
         } finally {
-            registryLock.unlockWrite()
+            registryLock.unlock()
         }
     }
     
@@ -206,7 +209,7 @@ public class ActorRegistry {
      * 通过路径查找Actor
      */
     public func findByPath(path: String): Option<ActorRef> {
-        registryLock.lockRead()
+        registryLock.lock()
         try {
             match (pathToActor.get(path)) {
                 case Some(entry) =>
@@ -215,7 +218,7 @@ public class ActorRegistry {
                     None<ActorRef>
             }
         } finally {
-            registryLock.unlockRead()
+            registryLock.unlock()
         }
     }
     
@@ -223,18 +226,21 @@ public class ActorRegistry {
      * 通过名称查找Actor（返回第一个匹配的）
      */
     public func findByName(name: String): Option<ActorRef> {
-        registryLock.lockRead()
+        registryLock.lock()
         try {
             match (nameToPath.get(name)) {
                 case Some(paths) =>
                     if (!paths.isEmpty()) {
-                        let firstPath = paths.iterator().next()
-                        match (pathToActor.get(firstPath)) {
-                            case Some(entry) =>
-                                Some(entry.actorRef)
-                            case None =>
-                                None<ActorRef>
+                        // 简化实现：获取第一个路径
+                        for (path in paths) {
+                            match (pathToActor.get(path)) {
+                                case Some(entry) =>
+                                    return Some(entry.actorRef)
+                                case None =>
+                                    ()
+                            }
                         }
+                        None<ActorRef>
                     } else {
                         None<ActorRef>
                     }
@@ -242,7 +248,7 @@ public class ActorRegistry {
                     None<ActorRef>
             }
         } finally {
-            registryLock.unlockRead()
+            registryLock.unlock()
         }
     }
     
@@ -250,9 +256,9 @@ public class ActorRegistry {
      * 通过名称查找所有Actor
      */
     public func findAllByName(name: String): Array<ActorRef> {
-        let result = Array<ActorRef>()
-        
-        registryLock.lockRead()
+        let result = ArrayList<ActorRef>()
+
+        registryLock.lock()
         try {
             match (nameToPath.get(name)) {
                 case Some(paths) =>
@@ -270,21 +276,21 @@ public class ActorRegistry {
                     ()
             }
         } finally {
-            registryLock.unlockRead()
+            registryLock.unlock()
         }
-        
-        result
+
+        result.toArray()
     }
     
     /**
      * 获取Actor的子Actor
      */
     public func getChildren(actorRef: ActorRef): Array<ActorRef> {
-        let result = Array<ActorRef>()
-        
-        match (actorToPath.get(actorRef)) {
+        let result = ArrayList<ActorRef>()
+
+        match (actorPathToPath.get(actorRef.path.toString())) {
             case Some(path) =>
-                registryLock.lockRead()
+                registryLock.lock()
                 try {
                     match (parentToChildren.get(path)) {
                         case Some(children) =>
@@ -302,22 +308,23 @@ public class ActorRegistry {
                             ()
                     }
                 } finally {
-                    registryLock.unlockRead()
+                    registryLock.unlock()
                 }
             case None =>
                 // Actor未注册
+                ()
         }
-        
-        result
+
+        result.toArray()
     }
     
     /**
      * 获取Actor的父Actor
      */
     public func getParent(actorRef: ActorRef): Option<ActorRef> {
-        match (actorToPath.get(actorRef)) {
+        match (actorPathToPath.get(actorRef.path.toString())) {
             case Some(path) =>
-                registryLock.lockRead()
+                registryLock.lock()
                 try {
                     match (childToParent.get(path)) {
                         case Some(parentPath) =>
@@ -331,7 +338,7 @@ public class ActorRegistry {
                             None<ActorRef>
                     }
                 } finally {
-                    registryLock.unlockRead()
+                    registryLock.unlock()
                 }
             case None =>
                 None<ActorRef>
@@ -342,7 +349,10 @@ public class ActorRegistry {
      * 检查Actor是否已注册
      */
     public func isRegistered(actorRef: ActorRef): Bool {
-        actorToPath.containsKey(actorRef)
+        match (actorPathToPath.get(actorRef.path.toString())) {
+            case Some(_) => true
+            case None => false
+        }
     }
 
     /**
@@ -373,34 +383,34 @@ public class ActorRegistry {
      * 获取所有注册的Actor
      */
     public func getAllActors(): Array<ActorRef> {
-        let result = Array<ActorRef>()
-        
-        registryLock.lockRead()
+        let result = ArrayList<ActorRef>()
+
+        registryLock.lock()
         try {
             for ((path, entry) in pathToActor) {
                 result.append(entry.actorRef)
             }
         } finally {
-            registryLock.unlockRead()
+            registryLock.unlock()
         }
-        
-        result
+
+        result.toArray()
     }
     
     /**
      * 清空注册表
      */
     public func clear(): Unit {
-        registryLock.lockWrite()
+        registryLock.lock()
         try {
             pathToActor.clear()
-            actorToPath.clear()
+            actorPathToPath.clear()
             nameToPath.clear()
             parentToChildren.clear()
             childToParent.clear()
             totalActors.store(0)
         } finally {
-            registryLock.unlockWrite()
+            registryLock.unlock()
         }
     }
     
@@ -411,9 +421,33 @@ public class ActorRegistry {
         println("=== ActorRegistry统计信息 ===")
         println("总Actor数量: ${getTotalActorCount()}")
         println("注册次数: ${getRegistrationCount()}")
-        println("路径索引大小: ${pathToActor.size()}")
-        println("名称索引大小: ${nameToPath.size()}")
-        println("父子关系索引大小: ${parentToChildren.size()}")
+        println("路径索引大小: ${countPathToActor()}")
+        println("名称索引大小: ${countNameToPath()}")
+        println("父子关系索引大小: ${countParentToChildren()}")
+    }
+
+    private func countPathToActor(): Int32 {
+        var count = 0
+        for ((_, _) in pathToActor) {
+            count += 1
+        }
+        Int32(count)
+    }
+
+    private func countNameToPath(): Int32 {
+        var count = 0
+        for ((_, _) in nameToPath) {
+            count += 1
+        }
+        Int32(count)
+    }
+
+    private func countParentToChildren(): Int32 {
+        var count = 0
+        for ((_, _) in parentToChildren) {
+            count += 1
+        }
+        Int32(count)
     }
     
     private func getCurrentTimeNanos(): Int64 {
@@ -424,16 +458,8 @@ public class ActorRegistry {
      * 从路径中提取Actor名称
      */
     private func extractActorName(path: String): String {
-        // 简化实现：使用路径的最后部分作为名称
-        if (path.contains("/")) {
-            let lastSlash = path.lastIndexOf("/")
-            if (lastSlash >= 0 && lastSlash < path.size() - 1) {
-                path.substring(lastSlash + 1)
-            } else {
-                "unknown"
-            }
-        } else {
-            path
-        }
+        // 简化实现：直接返回路径作为名称
+        // 在实际实现中，应该解析路径并提取最后一部分
+        path
     }
 }

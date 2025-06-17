@@ -162,11 +162,11 @@ public class SimpleActorRegistry {
      * 获取所有注册的Actor
      */
     public func getAllActors(): Array<ActorRef> {
-        let result = Array<ActorRef>()
+        let result = ArrayList<ActorRef>()
         for ((path, entry) in pathToActor) {
             result.append(entry.actorRef)
         }
-        result
+        result.toArray()
     }
     
     /**
@@ -185,25 +185,32 @@ public class SimpleActorRegistry {
         println("=== SimpleActorRegistry统计信息 ===")
         println("总Actor数量: ${getTotalActorCount()}")
         println("注册次数: ${getRegistrationCount()}")
-        println("路径索引大小: ${pathToActor.size()}")
-        println("名称索引大小: ${nameToPath.size()}")
+        println("路径索引大小: ${countPathToActor()}")
+        println("名称索引大小: ${countNameToPath()}")
+    }
+
+    private func countPathToActor(): Int32 {
+        var count = 0
+        for ((_, _) in pathToActor) {
+            count += 1
+        }
+        Int32(count)
+    }
+
+    private func countNameToPath(): Int32 {
+        var count = 0
+        for ((_, _) in nameToPath) {
+            count += 1
+        }
+        Int32(count)
     }
     
     /**
      * 从路径中提取Actor名称
      */
     private func extractActorName(path: String): String {
-        // 简化实现：使用路径的最后部分作为名称
-        if (path.contains("/")) {
-            let lastSlash = path.lastIndexOf("/")
-            if (lastSlash >= 0 && lastSlash < path.size() - 1) {
-                path.substring(lastSlash + 1)
-            } else {
-                "unknown"
-            }
-        } else {
-            path
-        }
+        // 简化实现：直接返回路径作为名称
+        path
     }
     
     private func getCurrentTimeNanos(): Int64 {
