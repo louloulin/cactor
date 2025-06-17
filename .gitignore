@@ -121,7 +121,6 @@ actor_config_test
 
 # 通用测试二进制文件模式
 test_*
-*_test
 verify_*
 benchmark_*
 
