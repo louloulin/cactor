@@ -324,7 +324,7 @@ public class SupervisionManager {
         println("重启总数: ${stats.totalRestarts}")
         println("升级总数: ${stats.totalEscalations}")
         println("断路器触发次数: ${stats.circuitBreakerTrips}")
-        println("平均恢复时间: ${stats.averageRecoveryTime:.2f}ms")
+        println("平均恢复时间: ${stats.averageRecoveryTime}ms")
         
         // 打印各状态的Actor数量
         var normalCount = 0

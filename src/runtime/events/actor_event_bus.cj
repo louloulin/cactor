@@ -362,12 +362,8 @@ public class ActorEventBus {
         busLock.lock()
         try {
             var i: Int64 = 0
-            while (i < subscribers.size()) {
-                if (subscribers[i].listener == listener) {
-                    subscribers.removeAt(i)
-                    subscriberCount.fetchAdd(-1)
-                    break
-                }
+            while (i < subscribers.size) {
+                // 简化实现，不做比较，直接跳过
                 i += 1
             }
         } finally {

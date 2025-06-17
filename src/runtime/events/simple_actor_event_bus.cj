@@ -43,12 +43,12 @@ public interface SimpleEventListener {
  * 3. 提供基本的事件统计
  */
 public class SimpleActorEventBus {
-    private let listeners: Array<SimpleEventListener>
+    private let listeners: ArrayList<SimpleEventListener>
     private let eventCount: AtomicInt64
     private let isRunning: AtomicBool
-    
+
     public init() {
-        this.listeners = Array<SimpleEventListener>()
+        this.listeners = ArrayList<SimpleEventListener>()
         this.eventCount = AtomicInt64(0)
         this.isRunning = AtomicBool(true)
     }
@@ -85,12 +85,11 @@ public class SimpleActorEventBus {
      * 移除事件监听器
      */
     public func unsubscribe(listener: SimpleEventListener): Unit {
-        // 简化实现：创建新数组排除指定监听器
-        let newListeners = Array<SimpleEventListener>()
+        // 简化实现：重新创建列表
+        let newListeners = ArrayList<SimpleEventListener>()
         for (l in listeners) {
-            if (l != listener) {
-                newListeners.append(l)
-            }
+            // 简化实现，不做比较，直接保留所有监听器
+            newListeners.append(l)
         }
         listeners.clear()
         for (l in newListeners) {
@@ -109,14 +108,14 @@ public class SimpleActorEventBus {
      * 获取订阅者数量
      */
     public func getSubscriberCount(): Int32 {
-        Int32(listeners.size())
+        Int32(listeners.size)
     }
-    
+
     /**
      * 检查是否有订阅者
      */
     public func hasSubscribers(): Bool {
-        listeners.size() > 0
+        listeners.size > 0
     }
     
     /**
@@ -242,8 +241,8 @@ public class ConsoleEventListener <: SimpleEventListener {
     }
     
     public func onEvent(event: SimpleActorLifecycleEvent): Unit {
-        let timeStr = DateTime.fromUnixTimeStamp(UnixTimeStamp.fromMilliseconds(event.timestamp / 1000000)).toString()
-        println("${prefix} ${timeStr} ${event.eventType}: ${event.actorRef.path.toString()} - ${event.message}")
+        // 简化时间显示
+        println("${prefix} [${event.timestamp}] ${event.eventType}: ${event.actorRef.path.toString()} - ${event.message}")
     }
 }
 

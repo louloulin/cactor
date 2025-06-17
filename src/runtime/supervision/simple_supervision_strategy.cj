@@ -19,7 +19,7 @@ public class SimpleSupervisionStrategy <: SupervisionStrategy {
     private let maxRetries: Int32
     private let timeWindow: Int64  // 时间窗口（纳秒）
     
-    public init(maxRetries: Int32 = 3, timeWindowSeconds: Int32 = 60) {
+    public init(maxRetries: Int32, timeWindowSeconds: Int32) {
         this.maxRetries = maxRetries
         this.timeWindow = Int64(timeWindowSeconds) * 1000000000  // 转换为纳秒
     }
@@ -29,8 +29,8 @@ public class SimpleSupervisionStrategy <: SupervisionStrategy {
      */
     public func decide(failure: ActorFailure): SupervisionDirective {
         // 检查失败类型
-        let exception = failure.exception
-        let exceptionType = exception.getType()
+        let exception = failure.cause
+        let exceptionType = exception.toString()
         
         // 根据异常类型决定处理方式
         match (exceptionType) {

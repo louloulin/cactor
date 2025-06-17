@@ -298,6 +298,7 @@ public class ActorLifecycleManager {
                 lifecycleInfos.put(path, newInfo)
             case None =>
                 // Actor不存在，忽略
+                ()
         }
     }
     
