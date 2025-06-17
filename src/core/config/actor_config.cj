@@ -8,7 +8,7 @@ package cactor.core.config
 import std.time.*
 import std.collection.*
 import cactor.core.message.Message
-import cactor.runtime.mailbox.Mailbox
+// 移除循环依赖 - 使用前向声明
 
 /**
  * Actor配置接口
@@ -379,4 +379,8 @@ public interface MessageDispatcher {
 
 public interface Router {
     // 前向声明，具体实现在其他文件中
+}
+
+public interface Mailbox {
+    // 前向声明，具体实现在runtime.mailbox中
 }
