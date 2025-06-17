@@ -7,8 +7,10 @@ package cactor.runtime.dispatcher
 
 import std.sync.*
 import std.collection.*
+import std.time.*
 import cactor.core.actor.{Actor, ActorRef, Props}
 import cactor.core.message.{Message, Envelope}
+import cactor.core.config.{DispatcherConfig, DispatcherType}
 import cactor.runtime.dispatcher.advanced.{AdvancedMessageDispatcher, ThreadPoolDispatcher, AdvancedWorkStealingDispatcher, PinnedDispatcher, CallingThreadDispatcher}
 import cactor.runtime.dispatcher.factory.{DefaultAdvancedDispatcherFactory}
 
@@ -113,7 +115,8 @@ public class DispatcherPool {
             for ((name, dispatcher) in dispatchers) {
                 dispatcher.start()
             }
-            println("🚀 DispatcherPool启动成功，包含${dispatchers.size()}个调度器")
+            let dispatcherCount = countDispatchers()
+            println("🚀 DispatcherPool启动成功，包含${dispatcherCount}个调度器")
         }
     }
     
@@ -141,14 +144,13 @@ public class DispatcherPool {
         totalSelections.fetchAdd(1)
         
         // 检查Props中是否指定了调度器
-        match (props.getDispatcherName()) {
-            case Some(dispatcherName) =>
-                match (dispatchers.get(dispatcherName)) {
-                    case Some(dispatcher) => return dispatcher
-                    case None => 
-                        println("警告：指定的调度器'${dispatcherName}'不存在，使用默认调度器")
-                }
-            case None => ()
+        let dispatcherName = props.getDispatcherName()
+        if (dispatcherName != "default") {
+            match (dispatchers.get(dispatcherName)) {
+                case Some(dispatcher) => return dispatcher
+                case None =>
+                    println("警告：指定的调度器'${dispatcherName}'不存在，使用默认调度器")
+            }
         }
         
         // 根据选择策略选择调度器
@@ -170,7 +172,7 @@ public class DispatcherPool {
      * 添加调度器
      */
     public func addDispatcher(name: String, dispatcher: AdvancedMessageDispatcher): Unit {
-        if (dispatchers.size() >= Int64(config.maxDispatchers)) {
+        if (countDispatchers() >= config.maxDispatchers) {
             throw Exception("已达到最大调度器数量限制: ${config.maxDispatchers}")
         }
         
@@ -205,7 +207,7 @@ public class DispatcherPool {
      * 获取统计信息
      */
     public func getStats(): DispatcherPoolStats {
-        let totalDispatchers = Int32(dispatchers.size())
+        let totalDispatchers = countDispatchers()
         let activeDispatchers = countActiveDispatchers()
         let totalSelections = this.totalSelections.load()
         let averageLoad = calculateAverageLoad()
@@ -218,22 +220,22 @@ public class DispatcherPool {
      */
     private func initializeDefaultDispatchers(): Unit {
         // 创建默认的工作窃取调度器
-        let defaultConfig = DispatcherConfig.createDefault("default-work-stealing", DispatcherType.WorkStealing)
+        let defaultConfig = DispatcherConfig.createWorkStealingWithName("default-work-stealing")
         let defaultDispatcher = dispatcherFactory.createDispatcher(defaultConfig)
         dispatchers.put("default", defaultDispatcher)
-        
+
         // 创建线程池调度器
-        let threadPoolConfig = DispatcherConfig.createDefault("thread-pool", DispatcherType.ThreadPool)
+        let threadPoolConfig = DispatcherConfig.createThreadPoolWithName("thread-pool")
         let threadPoolDispatcher = dispatcherFactory.createDispatcher(threadPoolConfig)
         dispatchers.put("thread-pool", threadPoolDispatcher)
-        
+
         // 创建固定线程调度器
-        let pinnedConfig = DispatcherConfig.createDefault("pinned", DispatcherType.PinnedDispatcher)
+        let pinnedConfig = DispatcherConfig.createPinnedWithName("pinned")
         let pinnedDispatcher = dispatcherFactory.createDispatcher(pinnedConfig)
         dispatchers.put("pinned", pinnedDispatcher)
-        
-        // 创建调用线程调度器
-        let callingThreadConfig = DispatcherConfig.createDefault("calling-thread", DispatcherType.CallingThread)
+
+        // 创建调用线程调度器 - 使用线程池配置作为替代
+        let callingThreadConfig = DispatcherConfig.createThreadPoolWithName("calling-thread")
         let callingThreadDispatcher = dispatcherFactory.createDispatcher(callingThreadConfig)
         dispatchers.put("calling-thread", callingThreadDispatcher)
     }
@@ -246,11 +248,9 @@ public class DispatcherPool {
             throw Exception("没有可用的调度器")
         }
         
-        let index = selectionCounter.fetchAdd(1) % Int64(dispatchers.size())
-        let dispatcherNames = Array<String>()
-        for ((name, _) in dispatchers) {
-            dispatcherNames.append(name)
-        }
+        let dispatcherCount = countDispatchers()
+        let index = selectionCounter.fetchAdd(1) % Int64(dispatcherCount)
+        let dispatcherNames = getDispatcherNames()
         
         let selectedName = dispatcherNames[index]
         match (dispatchers.get(selectedName)) {
@@ -293,12 +293,10 @@ public class DispatcherPool {
     private func selectRandom(): AdvancedMessageDispatcher {
         // 简化实现：使用时间戳作为随机种子
         let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
-        let index = timestamp % Int64(dispatchers.size())
-        
-        let dispatcherNames = Array<String>()
-        for ((name, _) in dispatchers) {
-            dispatcherNames.append(name)
-        }
+        let dispatcherCount = countDispatchers()
+        let index = timestamp % Int64(dispatcherCount)
+
+        let dispatcherNames = getDispatcherNames()
         
         let selectedName = dispatcherNames[index]
         match (dispatchers.get(selectedName)) {
@@ -313,12 +311,10 @@ public class DispatcherPool {
     private func selectConsistent(actor: Actor): AdvancedMessageDispatcher {
         // 简化实现：基于Actor名称的哈希值选择
         let hash = actor.name.hashCode()
-        let index = hash % Int64(dispatchers.size())
-        
-        let dispatcherNames = Array<String>()
-        for ((name, _) in dispatchers) {
-            dispatcherNames.append(name)
-        }
+        let dispatcherCount = countDispatchers()
+        let index = hash % Int64(dispatcherCount)
+
+        let dispatcherNames = getDispatcherNames()
         
         let selectedName = dispatcherNames[index]
         match (dispatchers.get(selectedName)) {
@@ -356,5 +352,27 @@ public class DispatcherPool {
         // 简化实现：返回固定值
         // 实际实现应该计算每个调度器的实际负载
         50.0
+    }
+
+    /**
+     * 统计调度器数量
+     */
+    private func countDispatchers(): Int32 {
+        var count = 0
+        for ((name, dispatcher) in dispatchers) {
+            count += 1
+        }
+        Int32(count)
+    }
+
+    /**
+     * 获取调度器名称列表
+     */
+    private func getDispatcherNames(): Array<String> {
+        let names = ArrayList<String>()
+        for ((name, _) in dispatchers) {
+            names.append(name)
+        }
+        names.toArray()
     }
 }

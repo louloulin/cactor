@@ -187,6 +187,7 @@ public class ActorRegistry {
                             }
                         case None =>
                             // 无子Actor
+                            ()
                     }
                     
                     // 更新统计
@@ -261,10 +262,12 @@ public class ActorRegistry {
                                 result.append(entry.actorRef)
                             case None =>
                                 // 索引不一致，忽略
+                                ()
                         }
                     }
                 case None =>
                     // 无匹配的Actor
+                    ()
             }
         } finally {
             registryLock.unlockRead()
@@ -291,10 +294,12 @@ public class ActorRegistry {
                                         result.append(entry.actorRef)
                                     case None =>
                                         // 索引不一致，忽略
+                                        ()
                                 }
                             }
                         case None =>
                             // 无子Actor
+                            ()
                     }
                 } finally {
                     registryLock.unlockRead()

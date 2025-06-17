@@ -244,6 +244,10 @@ public struct Props<T> where T <: Actor {
     public func getSupervisionStrategy(): String {
         supervisionStrategy
     }
+
+    public func getDispatcherName(): String {
+        dispatcher
+    }
 }
 
 /**

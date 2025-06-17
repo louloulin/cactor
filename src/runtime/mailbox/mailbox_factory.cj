@@ -9,8 +9,42 @@ import std.sync.*
 import std.collection.*
 import cactor.core.actor.{Actor, ActorRef, Props}
 import cactor.core.message.{Message, Envelope}
-import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
-import cactor.runtime.mailbox.advanced.{FoundationBasedMailbox}
+
+/**
+ * 邮箱接口
+ * 负责存储和管理Actor的消息队列
+ */
+public interface Mailbox {
+    /**
+     * 将消息入队
+     * @param envelope 要入队的消息信封
+     * @return 是否成功入队
+     */
+    func enqueue(envelope: Envelope): Bool
+
+    /**
+     * 从队列中取出消息
+     * @return 消息信封，如果队列为空则返回None
+     */
+    func dequeue(): Option<Envelope>
+
+    /**
+     * 检查邮箱是否为空
+     * @return 是否为空
+     */
+    func isEmpty(): Bool
+
+    /**
+     * 获取邮箱中消息的数量
+     * @return 消息数量
+     */
+    func size(): Int64
+
+    /**
+     * 清空邮箱
+     */
+    func clear(): Unit
+}
 
 /**
  * 邮箱类型枚举
@@ -23,6 +57,8 @@ public enum MailboxType {
     | ZeroCopy      // 零拷贝邮箱
     | Foundation    // Foundation邮箱
 }
+
+
 
 /**
  * 邮箱配置
@@ -85,9 +121,9 @@ public struct MailboxConfig {
 public struct MailboxFactoryStats {
     public let totalMailboxes: Int64
     public let activeMailboxes: Int64
-    public let mailboxesByType: HashMap<MailboxType, Int64>
-    
-    public init(totalMailboxes: Int64, activeMailboxes: Int64, mailboxesByType: HashMap<MailboxType, Int64>) {
+    public let mailboxesByType: HashMap<String, Int64>
+
+    public init(totalMailboxes: Int64, activeMailboxes: Int64, mailboxesByType: HashMap<String, Int64>) {
         this.totalMailboxes = totalMailboxes
         this.activeMailboxes = activeMailboxes
         this.mailboxesByType = mailboxesByType
@@ -107,16 +143,16 @@ public class MailboxFactory {
     private let defaultConfig: MailboxConfig
     private let createdMailboxes: AtomicInt64
     private let activeMailboxes: AtomicInt64
-    private let mailboxesByType: HashMap<MailboxType, AtomicInt64>
+    private let mailboxesByType: HashMap<String, AtomicInt64>
     private let isRunning: AtomicBool
     
     public init(defaultConfig: MailboxConfig) {
         this.defaultConfig = defaultConfig
         this.createdMailboxes = AtomicInt64(0)
         this.activeMailboxes = AtomicInt64(0)
-        this.mailboxesByType = HashMap<MailboxType, AtomicInt64>()
+        this.mailboxesByType = HashMap<String, AtomicInt64>()
         this.isRunning = AtomicBool(false)
-        
+
         // 初始化统计计数器
         initializeCounters()
     }
@@ -188,12 +224,12 @@ public class MailboxFactory {
     public func getStats(): MailboxFactoryStats {
         let totalMailboxes = createdMailboxes.load()
         let activeMailboxes = this.activeMailboxes.load()
-        let mailboxesByType = HashMap<MailboxType, Int64>()
-        
+        let mailboxesByType = HashMap<String, Int64>()
+
         for ((mailboxType, counter) in this.mailboxesByType) {
             mailboxesByType.put(mailboxType, counter.load())
         }
-        
+
         MailboxFactoryStats(totalMailboxes, activeMailboxes, mailboxesByType)
     }
     
@@ -201,13 +237,8 @@ public class MailboxFactory {
      * 获取邮箱配置
      */
     private func getMailboxConfig(actor: Actor, props: Props<Actor>): MailboxConfig {
-        // 检查Props中是否指定了邮箱配置
-        match (props.getMailboxConfig()) {
-            case Some(config) => config
-            case None => 
-                // 根据Actor类型选择默认配置
-                selectDefaultConfig(actor)
-        }
+        // 简化实现：直接使用默认配置
+        return selectDefaultConfig(actor)
     }
     
     /**
@@ -230,75 +261,161 @@ public class MailboxFactory {
      * 创建无界邮箱
      */
     private func createUnboundedMailbox(config: MailboxConfig): Mailbox {
-        // 使用Foundation邮箱作为无界邮箱的实现
-        FoundationMailbox(10000)  // 大容量作为"无界"
+        // 简化实现：创建一个简单的邮箱
+        SimpleMailbox(10000)  // 大容量作为"无界"
     }
-    
+
     /**
      * 创建有界邮箱
      */
     private func createBoundedMailbox(config: MailboxConfig): Mailbox {
-        let capacity = if (config.capacity > 0) { config.capacity } else { 1000 }
-        FoundationMailbox(capacity)
+        let capacity = if (config.capacity > 0) { Int64(config.capacity) } else { 1000 }
+        SimpleMailbox(capacity)
     }
-    
+
     /**
      * 创建优先级邮箱
      */
     private func createPriorityMailbox(config: MailboxConfig): Mailbox {
-        // 简化实现：使用Foundation邮箱
+        // 简化实现：使用简单邮箱
         // 实际实现应该支持消息优先级
-        FoundationMailbox(config.capacity)
+        SimpleMailbox(Int64(config.capacity))
     }
-    
+
     /**
      * 创建暂存邮箱
      */
     private func createStashingMailbox(config: MailboxConfig): Mailbox {
-        // 简化实现：使用Foundation邮箱
+        // 简化实现：使用简单邮箱
         // 实际实现应该支持消息暂存功能
-        FoundationMailbox(config.capacity)
+        SimpleMailbox(Int64(config.capacity))
     }
-    
+
     /**
      * 创建零拷贝邮箱
      */
     private func createZeroCopyMailbox(config: MailboxConfig): Mailbox {
-        // 简化实现：使用Foundation邮箱
+        // 简化实现：使用简单邮箱
         // 实际实现应该支持零拷贝优化
-        FoundationMailbox(config.capacity)
+        SimpleMailbox(Int64(config.capacity))
     }
-    
+
     /**
      * 创建Foundation邮箱
      */
     private func createFoundationMailbox(config: MailboxConfig): Mailbox {
-        let capacity = if (config.capacity > 0) { config.capacity } else { 10000 }
-        FoundationMailbox(capacity)
+        let capacity = if (config.capacity > 0) { Int64(config.capacity) } else { 10000 }
+        SimpleMailbox(capacity)
     }
     
     /**
      * 初始化统计计数器
      */
     private func initializeCounters(): Unit {
-        mailboxesByType.put(MailboxType.Unbounded, AtomicInt64(0))
-        mailboxesByType.put(MailboxType.Bounded, AtomicInt64(0))
-        mailboxesByType.put(MailboxType.Priority, AtomicInt64(0))
-        mailboxesByType.put(MailboxType.Stashing, AtomicInt64(0))
-        mailboxesByType.put(MailboxType.ZeroCopy, AtomicInt64(0))
-        mailboxesByType.put(MailboxType.Foundation, AtomicInt64(0))
+        mailboxesByType.put("Unbounded", AtomicInt64(0))
+        mailboxesByType.put("Bounded", AtomicInt64(0))
+        mailboxesByType.put("Priority", AtomicInt64(0))
+        mailboxesByType.put("Stashing", AtomicInt64(0))
+        mailboxesByType.put("ZeroCopy", AtomicInt64(0))
+        mailboxesByType.put("Foundation", AtomicInt64(0))
     }
-    
+
     /**
      * 增加类型计数器
      */
     private func incrementTypeCounter(mailboxType: MailboxType): Unit {
-        match (mailboxesByType.get(mailboxType)) {
+        let typeName = mailboxTypeToString(mailboxType)
+        match (mailboxesByType.get(typeName)) {
             case Some(counter) =>
                 counter.fetchAdd(1)
             case None =>
                 let newCounter = AtomicInt64(1)
-                mailboxesByType.put(mailboxType, newCounter)
+                mailboxesByType.put(typeName, newCounter)
         }
+    }
+
+    /**
+     * 将邮箱类型转换为字符串
+     */
+    private func mailboxTypeToString(mailboxType: MailboxType): String {
+        match (mailboxType) {
+            case MailboxType.Unbounded => "Unbounded"
+            case MailboxType.Bounded => "Bounded"
+            case MailboxType.Priority => "Priority"
+            case MailboxType.Stashing => "Stashing"
+            case MailboxType.ZeroCopy => "ZeroCopy"
+            case MailboxType.Foundation => "Foundation"
+        }
+    }
+}
+
+/**
+ * 简单的邮箱实现
+ */
+public class SimpleMailbox <: Mailbox {
+    private let messages: ArrayList<Envelope>
+    private let capacity: Int64
+    private let mutex: ReentrantMutex
+
+    public init(capacity: Int64) {
+        this.messages = ArrayList<Envelope>()
+        this.capacity = capacity
+        this.mutex = ReentrantMutex()
+    }
+
+    public func enqueue(envelope: Envelope): Bool {
+        mutex.lock()
+
+        if (capacity > 0 && messages.size >= capacity) {
+            mutex.unlock()
+            return false
+        }
+
+        messages.append(envelope)
+        mutex.unlock()
+        return true
+    }
+
+    public func dequeue(): Option<Envelope> {
+        mutex.lock()
+
+        if (messages.isEmpty()) {
+            mutex.unlock()
+            return None<Envelope>
+        }
+
+        let envelope = messages[0]
+        // 创建新的列表，移除第一个元素
+        let newMessages = ArrayList<Envelope>()
+        for (i in 1..messages.size) {
+            newMessages.append(messages[i])
+        }
+        messages.clear()
+        for (msg in newMessages) {
+            messages.append(msg)
+        }
+
+        mutex.unlock()
+        return Some(envelope)
+    }
+
+    public func isEmpty(): Bool {
+        mutex.lock()
+        let result = messages.isEmpty()
+        mutex.unlock()
+        return result
+    }
+
+    public func size(): Int64 {
+        mutex.lock()
+        let result = messages.size
+        mutex.unlock()
+        return result
+    }
+
+    public func clear(): Unit {
+        mutex.lock()
+        messages.clear()
+        mutex.unlock()
     }
 }

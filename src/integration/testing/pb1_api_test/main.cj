@@ -11,6 +11,7 @@ import cactor.core.actor.*
 import cactor.core.message.*
 import cactor.core.context.*
 import cactor.core.system.*
+import cactor.runtime.system.*
 
 /**
  * 测试Actor - 验证新的API

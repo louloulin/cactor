@@ -12,7 +12,7 @@ import cactor.core.actor.{Actor}
 import cactor.core.message.*
 import cactor.core.context.*
 import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
-// import cactor.runtime.context.pooled_actor_context.{PooledActorContext, PooledActorContextPool}
+import cactor.runtime.context.{PooledActorContext, PooledActorContextPool}
 import cactor.foundation.memory.*
 
 /**
@@ -195,32 +195,39 @@ public class HighPerformanceActor <: Actor {
         if (currentStateValue != 1) {  // 1表示运行状态
             return MessageResult.Unhandled
         }
-        
+
         // 获取池化上下文
         let pooledContext = contextPool.acquire()
-        
+
         // 预处理检查
         if (!behavior.preProcess(message)) {
             contextPool.release(pooledContext)
             return MessageResult.Unhandled
         }
-        
-        // 处理消息
-        let result = behavior.receive(message, pooledContext)
-        
+
+        // 处理消息 - 使用内部的高性能接口
+        let result = receiveWithPooledContext(message, pooledContext)
+
         // 后处理
         behavior.postProcess(message, result)
-        
+
         // 更新统计信息
         updateStats(result)
-        
+
         // 释放池化上下文
         contextPool.release(pooledContext)
-        
+
         // 更新最后活跃时间
         lastActiveTime.store(getCurrentTimeNanos())
-        
+
         return result
+    }
+
+    /**
+     * 使用池化上下文的内部消息处理方法
+     */
+    private func receiveWithPooledContext(message: Message, pooledContext: PooledActorContext): MessageResult {
+        return behavior.receive(message, pooledContext)
     }
 
     /**
