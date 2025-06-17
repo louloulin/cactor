@@ -157,6 +157,7 @@ public class ActorRegistry {
                         case None =>
                             // 索引不一致，忽略
                             ()
+                            ()
                     }
                     
                     // 移除父子关系
@@ -193,6 +194,7 @@ public class ActorRegistry {
                     
                 case None =>
                     // Actor未注册，忽略
+                    ()
             }
         } finally {
             registryLock.unlockWrite()

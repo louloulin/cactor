@@ -206,7 +206,7 @@ public func createActorFailedEvent(actorRef: ActorRef, error: String): SimpleAct
 public class ConsoleEventListener <: SimpleEventListener {
     private let prefix: String
     
-    public init(prefix: String = "[EVENT]") {
+    public init(prefix: String) {
         this.prefix = prefix
     }
     
