@@ -11,7 +11,8 @@ target/
 *.obj
 *.a
 *.lib
-
+cangjie-stdx
+cangjie0.60.5
 # 仓颉编译器生成的文件
 *.cjpkg
 *.cjmod
