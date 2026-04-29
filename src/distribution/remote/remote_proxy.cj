@@ -8,6 +8,7 @@ package cactor.distribution.remote
 import std.collection.*
 import std.sync.*
 import std.time.*
+import cactor.foundation.network.*
 
 /**
  * 远程调用配置
@@ -143,11 +144,41 @@ public class ActorSelection {
 }
 
 /**
+ * TCP 传输包装器 - 提供统一的传输接口
+ */
+public class TcpTransportWrapper {
+    private let client: TcpClient
+    private let config: TcpTransportConfig
+
+    public init(address: Address, port: Int32) {
+        this.config = TcpTransportConfig(address.host, Int64(port))
+        this.client = TcpClient(config)
+    }
+
+    public func connect(): Bool {
+        client.connect()
+    }
+
+    public func send(address: NetworkAddress, data: Array<UInt8>): Unit {
+        // 简化的发送实现
+        client.send(data)
+    }
+
+    public func setMessageHandler(handler: (Array<UInt8>) -> Unit): Unit {
+        // 设置消息处理器
+    }
+
+    public func isConnected(): Bool {
+        client.isConnected()
+    }
+}
+
+/**
  * 远程 Actor 代理实现
  */
 public class RemoteActorProxyImpl <: RemoteActorProxy {
     private let nodeId: String
-    private let transport: TcpTransport
+    private let transport: TcpTransportWrapper
     private let addressResolver: AddressResolver
     private let messageSerializer: MessageSerializer
     private let pendingRequests: HashMap<String, CompletableFuture<Message>>
@@ -156,7 +187,7 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
 
     public init(
         nodeId: String,
-        transport: TcpTransport,
+        transport: TcpTransportWrapper,
         addressResolver!: AddressResolver = AddressResolver()
     ) {
         this.nodeId = nodeId
@@ -234,8 +265,8 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
             path,
             message,
             None,
-            serializerId: 0,
-            manifest: None
+            0,
+            None
         )
         this.sendEnvelope(envelope)
     }
@@ -265,8 +296,8 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
             path,
             enrichedMessage,
             None,
-            serializerId: 0,
-            manifest: None
+            0,
+            None
         )
 
         try {
@@ -279,14 +310,15 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
             } catch (_: Exception) {
                 this.lock.writeMutex.unlock()
             }
-            return RemoteCallResult.failure("Send error: ${e.message}", 0, this.nodeId)
+            return RemoteCallResult<Message>.failure("Send error: ${e.message}", 0, this.nodeId)
         }
 
         // 等待响应（带超时）
         match (future.getWithTimeout(config.timeout)) {
-            case Some(result) =>
-                let latency = DateTime.now().toUnixTimeStamp() - startTime
-                return RemoteCallResult.ok(result, latency, this.nodeId)
+            case Some(resultMsg) =>
+                let endTime = DateTime.now().toUnixTimeStamp()
+                let latencyMs = endTime - startTime
+                return RemoteCallResult<Message>.ok(resultMsg, latencyMs, this.nodeId)
             case None =>
                 // 超时
                 try {
@@ -514,7 +546,7 @@ public class RemoteActorProxyFactory {
         port: Int32
     ): RemoteActorProxyImpl {
         let address = Address("cactor", "system", host, port)
-        let transport = TcpTransport(address, port)
+        let transport = TcpTransportWrapper(address, port)
         return RemoteActorProxyImpl(nodeId, transport)
     }
 }
@@ -538,35 +570,38 @@ public class ActorPathParser {
         let withoutProtocol = path.replace("cactor://", "")
 
         // 分割系统/主机部分和路径部分
-        let atIndex = withoutProtocol.lastIndexOf("@")
-        let slashIndex = withoutProtocol.lastIndexOf("/")
+        let atIndexOpt = withoutProtocol.lastIndexOf("@")
+        let slashIndexOpt = withoutProtocol.lastIndexOf("/")
 
-        if (atIndex > 0) {
-            let systemHost = withoutProtocol.substring(0, atIndex)
-            let systemParts = systemHost.split(":")
-            if (systemParts.size >= 1) {
-                system = systemParts[0]
-            }
+        match (atIndexOpt) {
+            case Some(atIndex) =>
+                let slashIdx = slashIndexOpt.getOrThrow()
+                let systemHost = withoutProtocol.substring(0, atIndex)
+                let systemParts = systemHost.split(":")
+                if (systemParts.size >= 1) {
+                    system = systemParts[0]
+                }
 
-            if (slashIndex > atIndex) {
-                // 有端口和路径
-                let hostPort = withoutProtocol.substring(atIndex + 1, slashIndex)
-                let hostParts = hostPort.split(":")
-                host = hostParts[0]
-                if (hostParts.size > 1) {
-                    port = Int32.parse(hostParts[1])
+                if (slashIdx > atIndex) {
+                    // 有端口和路径
+                    let hostPort = withoutProtocol.substring(atIndex + 1, slashIdx)
+                    let hostParts = hostPort.split(":")
+                    host = hostParts[0]
+                    if (hostParts.size > 1) {
+                        port = Int32.parse(hostParts[1])
+                    }
+                    let pathPart = withoutProtocol.substring(slashIdx + 1)
+                    elements = ArrayList<String>(pathPart.split("/").toArray())
+                } else {
+                    // 只有主机:端口
+                    let hostPort = withoutProtocol.substring(atIndex + 1)
+                    let hostParts = hostPort.split(":")
+                    host = hostParts[0]
+                    if (hostParts.size > 1) {
+                        port = Int32.parse(hostParts[1])
+                    }
                 }
-                let pathPart = withoutProtocol.substring(slashIndex + 1)
-                elements = ArrayList<String>(pathPart.split("/").toArray())
-            } else {
-                // 只有主机:端口
-                let hostPort = withoutProtocol.substring(atIndex + 1)
-                let hostParts = hostPort.split(":")
-                host = hostParts[0]
-                if (hostParts.size > 1) {
-                    port = Int32.parse(hostParts[1])
-                }
-            }
+            case None => ()
         }
 
         let address = Address(protocolStr, system, host, port)

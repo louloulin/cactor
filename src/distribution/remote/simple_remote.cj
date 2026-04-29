@@ -8,7 +8,7 @@ import std.collection.*
 import std.sync.*
 import std.time.*
 import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-import cactor.foundation.network.{NetworkTransport, NetworkAddress, TransportFactory, TransportProtocol}
+import cactor.foundation.network.{NetworkTransport, NetworkAddress, TransportFactory}
 import cactor.core.message.{NetworkMessage, NetworkMessageSerializer}
 import cactor.foundation.serialization.{SerializationManager, GlobalSerializationManager}
 
