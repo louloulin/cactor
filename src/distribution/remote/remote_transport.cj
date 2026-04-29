@@ -179,7 +179,7 @@ public class SimpleRemoteMessageStream <: RemoteMessageStream {
 
     public func next(): Option<RemoteEnvelope> {
         mutex.lock()
-        let result = if (headIndex < queue.size()) {
+        let result = if (headIndex < queue.size) {
             let item = queue[headIndex]
             headIndex += 1
             Some(item)
@@ -315,18 +315,6 @@ public class SimpleNetworkTransport <: NetworkTransport {
     public func isActive(): Bool {
         true
     }
-}
-
-/**
- * 网络传输接口
- */
-public interface NetworkTransport {
-    func start(): Unit
-    func stop(): Unit
-    func send(address: NetworkAddress, data: Array<UInt8>): Unit
-    func getLocalAddress(): NetworkAddress
-    func setDataHandler(handler: (Array<UInt8>) -> Unit): Unit
-    func isActive(): Bool
 }
 
 /**

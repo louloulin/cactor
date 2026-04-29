@@ -7,23 +7,19 @@ package cactor.distribution.remote
 import std.collection.*
 import std.sync.*
 import std.time.*
-import cactor.core.message.{Message, StringMessage, PingMessage, PongMessage}
-import cactor.foundation.network.{NetworkTransport, NetworkAddress, TransportFactory}
-import cactor.core.message.{NetworkMessage, NetworkMessageSerializer}
-import cactor.foundation.serialization.{SerializationManager, GlobalSerializationManager}
+import cactor.core.message.{Message, NetworkMessage, NetworkMessageSerializer}
+import cactor.foundation.network.{NetworkTransport, NetworkAddress, TransportFactory, TransportProtocol}
 
 /**
  * 简化的远程消息发送器
  */
 public class SimpleRemoteSender {
     private let transport: NetworkTransport
-    private let serializationManager: SerializationManager
     private let networkMessageSerializer: NetworkMessageSerializer
     private let isStarted: AtomicBool
 
     public init(localAddress: NetworkAddress, protocol: TransportProtocol) {
         this.transport = TransportFactory.createTransport(protocol, localAddress)
-        this.serializationManager = GlobalSerializationManager.getInstance()
         this.networkMessageSerializer = NetworkMessageSerializer()
         this.isStarted = AtomicBool(false)
     }
@@ -58,7 +54,6 @@ public class SimpleRemoteSender {
 
         try {
             let networkMessage = NetworkMessage(targetActor, message, None)
-            // 序列化NetworkMessage为字节数组
             let serializedData = networkMessageSerializer.serialize(networkMessage)
             transport.send(targetAddress, serializedData)
             println("消息发送成功到 ${targetAddress.toString()}")
@@ -88,7 +83,6 @@ public class SimpleRemoteSender {
  */
 public class SimpleRemoteReceiver {
     private let transport: NetworkTransport
-    private let serializationManager: SerializationManager
     private let networkMessageSerializer: NetworkMessageSerializer
     private let isStarted: AtomicBool
     private let messageHandlers: HashMap<String, (Message) -> Unit>
@@ -96,7 +90,6 @@ public class SimpleRemoteReceiver {
 
     public init(localAddress: NetworkAddress, protocol: TransportProtocol) {
         this.transport = TransportFactory.createTransport(protocol, localAddress)
-        this.serializationManager = GlobalSerializationManager.getInstance()
         this.networkMessageSerializer = NetworkMessageSerializer()
         this.isStarted = AtomicBool(false)
         this.messageHandlers = HashMap<String, (Message) -> Unit>()
@@ -275,7 +268,7 @@ public class RemoteFactory {
      * 创建默认的TCP远程通信管理器
      */
     public static func createDefaultManager(port: Int32): SimpleRemoteManager {
-        let address = NetworkAddress("localhost", port)
+        let address = NetworkAddress("localhost", Int64(port))
         SimpleRemoteManager(address, TransportProtocol.TCP)
     }
 }

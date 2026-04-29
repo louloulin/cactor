@@ -9,6 +9,9 @@ package cactor.core.actor
 import std.time.*
 import cactor.core.message.*
 
+// 前向声明 ActorSystem 接口
+public interface ActorSystem {}
+
 // 前向声明：ActorContext接口，避免循环依赖
 // 完整实现在 cactor.core.context 包中
 public interface ActorContext {
@@ -21,7 +24,7 @@ public interface ActorContext {
     func actorOf(props: Props<Actor>): ActorRef
     func watch(actorRef: ActorRef): Unit
     func unwatch(actorRef: ActorRef): Unit
-    func system(): cactor.core.system.ActorSystem
+    func system(): ActorSystem
     func setReceiveTimeout(timeout: Duration): Unit
     func receiveTimeout(): Duration
     func stop(): Unit

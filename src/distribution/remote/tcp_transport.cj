@@ -170,7 +170,7 @@ public class TcpConnection {
         this.state = TcpConnectionState.CONNECTING
         this.bytesSent = 0
         this.bytesReceived = 0
-        this.connectedAt = DateTime.now().toUnixTimeStamp()
+        this.connectedAt = DateTime.now().toUnixTimeStamp().toMilliseconds()
         this.lock = ReentrantReadWriteMutex()
         this.eventHandler = None
     }
@@ -232,7 +232,7 @@ public class TcpConnection {
             }
             return false
         } catch (e: Exception) {
-            notifyError(e.getMessage())
+            notifyError(e.message)
             return false
         }
     }
@@ -268,7 +268,7 @@ public class TcpConnection {
             }
             return None
         } catch (e: Exception) {
-            notifyError(e.getMessage())
+            notifyError(e.message)
             return None
         }
     }
@@ -417,7 +417,7 @@ public class TcpSocket {
      */
     public func read(bufferSize: Int64): Array<UInt8> {
         // 简化实现，返回空数组
-        return Array<UInt8>(0, item: 0)
+        return Array<UInt8>(Int64(0), item: UInt8(0))
     }
 
     /**
@@ -485,7 +485,7 @@ public class TcpServer {
             }
 
             // 绑定地址
-            let address = NetworkAddress(config.host, config.port)
+            let address = NetworkAddress(config.host, Int32(config.port))
             if (!serverSocket.bind(address)) {
                 return false
             }
@@ -687,7 +687,7 @@ public class TcpClient {
             
 
             let socket = TcpSocket()
-            let address = NetworkAddress(config.host, config.port)
+            let address = NetworkAddress(config.host, Int32(config.port))
 
             if (!socket.connect(address, config.connectTimeout)) {
                 return false
