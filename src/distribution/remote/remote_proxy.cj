@@ -8,6 +8,7 @@ package cactor.distribution.remote
 import std.collection.*
 import std.sync.*
 import std.time.*
+import std.convert.*
 import cactor.foundation.network.*
 
 /**
@@ -317,7 +318,7 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
         match (future.getWithTimeout(config.timeout)) {
             case Some(resultMsg) =>
                 let endTime = DateTime.now().toUnixTimeStamp()
-                let latencyMs = endTime - startTime
+                let latencyMs = Int64(endTime - startTime)
                 return RemoteCallResult<Message>.ok(resultMsg, latencyMs, this.nodeId)
             case None =>
                 // 超时
@@ -350,7 +351,8 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
         let address = this.addressResolver.resolve(envelope.recipient.address)
         match (address) {
             case Some(addr) =>
-                this.transport.send(addr, data)
+                let netAddr = NetworkAddress(addr.host, addr.port)
+                this.transport.send(netAddr, data)
             case None => ()
         }
     }
@@ -576,7 +578,7 @@ public class ActorPathParser {
         match (atIndexOpt) {
             case Some(atIndex) =>
                 let slashIdx = slashIndexOpt.getOrThrow()
-                let systemHost = withoutProtocol.substring(0, atIndex)
+                let systemHost = withoutProtocol.subString(0, atIndex)
                 let systemParts = systemHost.split(":")
                 if (systemParts.size >= 1) {
                     system = systemParts[0]
@@ -584,17 +586,17 @@ public class ActorPathParser {
 
                 if (slashIdx > atIndex) {
                     // 有端口和路径
-                    let hostPort = withoutProtocol.substring(atIndex + 1, slashIdx)
+                    let hostPort = withoutProtocol.subString(atIndex + 1, slashIdx)
                     let hostParts = hostPort.split(":")
                     host = hostParts[0]
                     if (hostParts.size > 1) {
                         port = Int32.parse(hostParts[1])
                     }
-                    let pathPart = withoutProtocol.substring(slashIdx + 1)
+                    let pathPart = withoutProtocol.subString(slashIdx + 1)
                     elements = ArrayList<String>(pathPart.split("/").toArray())
                 } else {
                     // 只有主机:端口
-                    let hostPort = withoutProtocol.substring(atIndex + 1)
+                    let hostPort = withoutProtocol.subString(atIndex + 1)
                     let hostParts = hostPort.split(":")
                     host = hostParts[0]
                     if (hostParts.size > 1) {
