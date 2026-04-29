@@ -58,7 +58,7 @@ public class RuntimeSystemGuardian <: BaseGuardianActor {
         }
         
         let systemActor = doCreateChild(props, name)
-        systemActors.put(name, systemActor)
+        systemActors.add(name, systemActor)
         
         // 应用系统级监督策略
         supervise(systemActor, createSystemSupervisionStrategy())

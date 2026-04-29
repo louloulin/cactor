@@ -208,7 +208,7 @@ public class HighPerformanceActorSystem {
 
         // 创建高性能Actor
         let actor = HighPerformanceActor(actorId, behavior, contextPool)
-        actors.put(actorId, actor)
+        actors.add(actorId, actor)
         actorCount.fetchAdd(1)
 
         // 启动Actor

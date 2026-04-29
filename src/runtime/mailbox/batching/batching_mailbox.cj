@@ -44,7 +44,7 @@ public class BatchingMailbox <: Mailbox {
 
         batchMutex.lock()
         try {
-            pendingBatch.append(envelope)
+            pendingBatch.add(envelope)
             totalEnqueued.fetchAdd(1)
             return true
         } finally {

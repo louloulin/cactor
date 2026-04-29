@@ -29,42 +29,55 @@ public open class SerializationManager {
      * 序列化字节数组
      */
     public func serializeBytes(data: Array<UInt8>): Array<UInt8> {
-        byteSerializer.serialize(data)
+        byteSerializer.toBinary(data)
     }
 
     /**
      * 反序列化字节数组
      */
     public func deserializeBytes(data: Array<UInt8>): Array<UInt8> {
-        byteSerializer.deserialize(data)
+        let result = byteSerializer.fromBinary(data, None)
+        match (result) {
+            case bytes: Array<UInt8> => bytes
+            case _ => Array<UInt8>(0, { _ => UInt8(0) })
+        }
     }
 
     /**
      * 序列化字符串
      */
     public func serializeString(str: String): Array<UInt8> {
-        stringSerializer.serialize(str)
+        stringSerializer.toBinary(str)
     }
 
     /**
      * 反序列化字符串
      */
     public func deserializeString(data: Array<UInt8>): String {
-        stringSerializer.deserialize(data)
+        let result = stringSerializer.fromBinary(data, None)
+        match (result) {
+            case s: String => s
+            case _ => ""
+        }
     }
 
     /**
      * 序列化整数
      */
     public func serializeInt(value: Int64): Array<UInt8> {
-        intSerializer.serialize(value)
+        intSerializer.toBinary(value)
     }
 
     /**
      * 反序列化整数
      */
     public func deserializeInt(data: Array<UInt8>): Int64 {
-        intSerializer.deserialize(data)
+        let result = intSerializer.fromBinary(data, None)
+        match (result) {
+            case i: Int64 => i
+            case i: Int32 => Int64(i)
+            case _ => 0
+        }
     }
 
     /**

@@ -64,7 +64,7 @@ public open class BaseGuardianActor <: GuardianActor {
         let childRef = doCreateChild(props, name)
         
         // 注册子Actor
-        children.put(name, childRef)
+        children.add(name, childRef)
         childCounter.fetchAdd(1)
         
         return childRef
@@ -72,13 +72,13 @@ public open class BaseGuardianActor <: GuardianActor {
     
     public func supervise(child: ActorRef, strategy: SupervisionStrategy): Unit {
         let childPath = child.path.toString()
-        supervisionStrategies.put(childPath, strategy)
+        supervisionStrategies.add(childPath, strategy)
     }
     
     public func getChildren(): Array<ActorRef> {
         let childList = ArrayList<ActorRef>()
         for ((_, childRef) in children) {
-            childList.append(childRef)
+            childList.add(childRef)
         }
         return childList.toArray()
     }

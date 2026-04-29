@@ -227,7 +227,7 @@ public class DefaultAdvancedRouterFactory <: AdvancedRouterFactory {
             if (i > 0) {
                 result.append(", ")
             }
-            result.append(stats[i])
+            result.add(stats[i])
         }
         result.toString()
     }
@@ -358,7 +358,7 @@ public class DefaultAdvancedRouterFactory <: AdvancedRouterFactory {
             case Some(count) => count
             case None => 0
         }
-        creationStats.put(typeName, currentCount + 1)
+        creationStats.add(typeName, currentCount + 1)
     }
 }
 
@@ -373,7 +373,7 @@ public class StringBuilder {
     }
     
     public func append(str: String): Unit {
-        parts.append(str)
+        parts.add(str)
     }
     
     public func toString(): String {
@@ -409,7 +409,7 @@ public class RouterFactoryRegistry {
      * 注册路由器工厂
      */
     public func registerFactory(name: String, factory: AdvancedRouterFactory): Unit {
-        factories.put(name, factory)
+        factories.add(name, factory)
     }
     
     /**
@@ -435,7 +435,7 @@ public class RouterFactoryRegistry {
     public func getFactoryNames(): Array<String> {
         let names = ArrayList<String>()
         for ((name, _) in factories) {
-            names.append(name)
+            names.add(name)
         }
         Array<String>(Int64(names.size), { i => names[i] })
     }

@@ -147,9 +147,9 @@ public struct DispatcherConfig {
     
     public static func default(): DispatcherConfig {
         let types = HashMap<String, String>()
-        types.put("default", "work-stealing")
-        types.put("blocking-io", "pinned")
-        types.put("high-throughput", "fork-join")
+        types.add("default", "work-stealing")
+        types.add("blocking-io", "pinned")
+        types.add("high-throughput", "fork-join")
         
         DispatcherConfig("default", 8, 100, types)
     }
@@ -171,13 +171,13 @@ public struct MailboxConfig {
     
     public static func default(): MailboxConfig {
         let types = HashMap<String, String>()
-        types.put("default", "unbounded")
-        types.put("bounded", "bounded")
-        types.put("priority", "priority")
+        types.add("default", "unbounded")
+        types.add("bounded", "bounded")
+        types.add("priority", "priority")
         
         let capacities = HashMap<String, Int64>()
-        capacities.put("bounded", 10000)
-        capacities.put("priority", 5000)
+        capacities.add("bounded", 10000)
+        capacities.add("priority", 5000)
         
         MailboxConfig("default", types, capacities)
     }

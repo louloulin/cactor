@@ -138,13 +138,11 @@ func compareOldVsNewAPI(): Unit {
 /**
  * 演示主函数
  */
-main(): Int64 {
+main(args: Array<String>): Unit {
     try {
         demonstrateNewAPI()
         compareOldVsNewAPI()
-        return 0
     } catch (e: Exception) {
         println("❌ 演示失败: ${e.message}")
-        return 1
     }
 }

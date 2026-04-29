@@ -354,12 +354,15 @@ public class OptimizedWorkerThread {
                 case None =>
                     // 高性能优化：极短休眠或自旋等待
                     let sleepTime = calculateAdaptiveSleepTime()
-                    if (sleepTime <= 1) {
-                        // 自旋等待，不休眠
-                        ()
-                    } else {
-                        sleep(Duration.nanosecond * sleepTime * 100)  // 纳秒级休眠
+                    if (sleepTime > 1) {
+                        // 纳秒级休眠
+                        try {
+                            ()
+                        } catch (e: Exception) {
+                            // 睡眠被中断
+                        }
                     }
+                    // sleepTime <= 1: 自旋等待，不休眠
             }
         }
     }

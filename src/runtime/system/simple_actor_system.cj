@@ -17,7 +17,7 @@ import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
 /**
  * 简单的已完成Future实现
  */
-class CompletedSimpleFuture<T> <: SimpleFuture<T> {
+public class CompletedSimpleFuture<T> <: SimpleFuture<T> {
     private let value: T
 
     public init(value: T) {
@@ -79,7 +79,7 @@ public class SimpleActorSystem <: ActorSystem {
         let actorRef = createActorRef(actor, name)
 
         // 注册Actor
-        actors.put(name, actorRef)
+        actors.add(name, actorRef)
 
         return actorRef
     }

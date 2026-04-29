@@ -197,7 +197,7 @@ public class ActorLifecycleManager {
             None<Exception>
         )
         
-        lifecycleInfos.put(path, info)
+        lifecycleInfos.add(path, info)
         eventBus.publish(ActorRegisteredEvent(actorRef, currentTime))
     }
     
@@ -224,7 +224,7 @@ public class ActorLifecycleManager {
     public func getAllActorStates(): ArrayList<ActorLifecycleInfo> {
         let states = ArrayList<ActorLifecycleInfo>()
         for ((path, info) in lifecycleInfos) {
-            states.append(info)
+            states.add(info)
         }
         states
     }
@@ -275,7 +275,7 @@ public class ActorLifecycleManager {
                     oldInfo.restartCount,
                     failureReason
                 )
-                lifecycleInfos.put(path, newInfo)
+                lifecycleInfos.add(path, newInfo)
             case None =>
                 let newInfo = ActorLifecycleInfo(
                     actorRef,
@@ -285,7 +285,7 @@ public class ActorLifecycleManager {
                     0,
                     failureReason
                 )
-                lifecycleInfos.put(path, newInfo)
+                lifecycleInfos.add(path, newInfo)
         }
     }
     
@@ -301,7 +301,7 @@ public class ActorLifecycleManager {
                     oldInfo.restartCount + 1,
                     oldInfo.failureReason
                 )
-                lifecycleInfos.put(path, newInfo)
+                lifecycleInfos.add(path, newInfo)
             case None =>
                 // Actor不存在，忽略
                 ()

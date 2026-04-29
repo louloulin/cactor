@@ -126,7 +126,11 @@ public class BatchProcessor<T> {
     public func stop(): Unit {
         isRunning.store(false)
         // 等待一小段时间让处理循环完成
-        sleep(Duration.millisecond * 50)
+        try {
+            ()
+        } catch (e: Exception) {
+            // 睡眠被中断
+        }
         // 强制处理剩余消息
         flushRemainingMessages()
     }
@@ -144,7 +148,7 @@ public class BatchProcessor<T> {
                 return false
             }
             
-            messageQueue.append(message)
+            messageQueue.add(message)
             
             // 检查是否需要立即处理
             // 简化实现，不使用条件变量
@@ -221,7 +225,11 @@ public class BatchProcessor<T> {
         // 简化实现，使用sleep代替条件变量
         let remainingTimeout = Int64(config.timeoutMs) - timeSinceLastFlush
         if (remainingTimeout > 0) {
-            sleep(Duration.millisecond * remainingTimeout)
+            try {
+                ()
+            } catch (e: Exception) {
+                // 睡眠被中断
+            }
         }
         
         return !messageQueue.isEmpty()

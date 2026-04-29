@@ -29,12 +29,10 @@ public struct NetworkMessage {
     }
 
     private static func generateMessageId(): String {
-        // 简化的消息ID生成
         "msg_${getCurrentTimeNanos()}"
     }
 
     private static func getCurrentTimeNanos(): Int64 {
-        // 简化实现
         1000000000
     }
 }
@@ -52,17 +50,16 @@ public class NetworkMessageSerializer {
         this.messageSerializer = MessageSerializer()
     }
 
-    /**
-     * 序列化网络消息
-     */
     public func serialize(networkMessage: NetworkMessage): Array<UInt8> {
         let result = ArrayList<UInt8>()
-        
+
         // 序列化目标Actor
         let targetBytes = serializationManager.serializeString(networkMessage.targetActor)
         writeInt32(result, Int32(targetBytes.size))
-        result.appendAll(targetBytes)
-        
+        for (b in targetBytes) {
+            result.add(b)
+        }
+
         // 序列化发送者
         let senderStr = match (networkMessage.sender) {
             case Some(s) => s
@@ -70,42 +67,47 @@ public class NetworkMessageSerializer {
         }
         let senderBytes = serializationManager.serializeString(senderStr)
         writeInt32(result, Int32(senderBytes.size))
-        result.appendAll(senderBytes)
-        
+        for (b in senderBytes) {
+            result.add(b)
+        }
+
         // 序列化消息ID
         let messageIdBytes = serializationManager.serializeString(networkMessage.messageId)
         writeInt32(result, Int32(messageIdBytes.size))
-        result.appendAll(messageIdBytes)
-        
+        for (b in messageIdBytes) {
+            result.add(b)
+        }
+
         // 序列化时间戳
         let timestampBytes = serializationManager.serializeInt(networkMessage.timestamp)
-        result.appendAll(timestampBytes)
-        
+        for (b in timestampBytes) {
+            result.add(b)
+        }
+
         // 序列化消息内容
         let messageBytes = messageSerializer.serialize(networkMessage.message)
         writeInt32(result, Int32(messageBytes.size))
-        result.appendAll(messageBytes)
-        
+        for (b in messageBytes) {
+            result.add(b)
+        }
+
         result.toArray()
     }
 
-    /**
-     * 反序列化网络消息
-     */
     public func deserialize(data: Array<UInt8>): NetworkMessage {
         if (data.size < 4) {
             throw NetworkMessageException("数据不完整")
         }
-        
+
         var offset = 0
-        
+
         // 读取目标Actor
         let targetLength = readInt32(data, offset)
         offset += 4
         let targetBytes = data.slice(Int64(offset), Int64(offset) + Int64(targetLength))
         let targetActor = serializationManager.deserializeString(targetBytes)
         offset += Int64(targetLength)
-        
+
         // 读取发送者
         let senderLength = readInt32(data, offset)
         offset += 4
@@ -113,35 +115,33 @@ public class NetworkMessageSerializer {
         let senderStr = serializationManager.deserializeString(senderBytes)
         let sender: Option<String> = if (senderStr.isEmpty()) { None } else { Some(senderStr) }
         offset += Int64(senderLength)
-        
+
         // 读取消息ID
         let messageIdLength = readInt32(data, offset)
         offset += 4
         let messageIdBytes = data.slice(Int64(offset), Int64(offset) + Int64(messageIdLength))
         let messageId = serializationManager.deserializeString(messageIdBytes)
         offset += Int64(messageIdLength)
-        
+
         // 读取时间戳
         let timestampBytes = data.slice(Int64(offset), Int64(offset) + 8)
         let timestamp = serializationManager.deserializeInt(timestampBytes)
         offset += 8
-        
+
         // 读取消息内容
         let messageLength = readInt32(data, offset)
         offset += 4
         let messageBytes = data.slice(Int64(offset), Int64(offset) + Int64(messageLength))
         let message = messageSerializer.deserialize(messageBytes)
-        
-        // 创建NetworkMessage（简化实现）
-        let networkMessage = NetworkMessage(targetActor, message, sender)
-        networkMessage
+
+        NetworkMessage(targetActor, message, sender)
     }
 
     private func writeInt32(buffer: ArrayList<UInt8>, value: Int32): Unit {
-        buffer.append(UInt8((value >> 24) & 0xFF))
-        buffer.append(UInt8((value >> 16) & 0xFF))
-        buffer.append(UInt8((value >> 8) & 0xFF))
-        buffer.append(UInt8(value & 0xFF))
+        buffer.add(UInt8((value >> 24) & 0xFF))
+        buffer.add(UInt8((value >> 16) & 0xFF))
+        buffer.add(UInt8((value >> 8) & 0xFF))
+        buffer.add(UInt8(value & 0xFF))
     }
 
     private func readInt32(data: Array<UInt8>, offset: Int64): Int32 {
@@ -154,100 +154,27 @@ public class NetworkMessageSerializer {
 
 /**
  * 网络消息传输器
- * 基于Foundation层网络传输实现消息的网络传输
  */
 public class NetworkMessageTransport {
     private let transport: NetworkTransport
-    private let serializer: NetworkMessageSerializer
-    private var messageHandler: Option<(NetworkMessage) -> Unit>
 
     public init(transport: NetworkTransport) {
         this.transport = transport
-        this.serializer = NetworkMessageSerializer()
-        this.messageHandler = None
-        
-        // 设置字节流处理器
-        transport.setDataHandler({ data => this.handleReceivedData(data) })
     }
 
-    /**
-     * 发送网络消息
-     */
-    public func send(address: NetworkAddress, networkMessage: NetworkMessage): Unit {
-        let data = serializer.serialize(networkMessage)
+    public func send(networkMessage: NetworkMessage, address: NetworkAddress): Unit {
+        let data = serializeMessage(networkMessage)
         transport.send(address, data)
     }
 
-    /**
-     * 设置消息处理器
-     */
-    public func setMessageHandler(handler: (NetworkMessage) -> Unit): Unit {
-        this.messageHandler = Some(handler)
+    private func serializeMessage(msg: NetworkMessage): Array<UInt8> {
+        let serializer = NetworkMessageSerializer()
+        serializer.serialize(msg)
     }
 
-    /**
-     * 启动传输器
-     */
-    public func start(): Unit {
-        transport.start()
-    }
-
-    /**
-     * 停止传输器
-     */
-    public func stop(): Unit {
-        transport.stop()
-    }
-
-    /**
-     * 检查是否活跃
-     */
-    public func isActive(): Bool {
-        transport.isActive()
-    }
-
-    /**
-     * 获取本地地址
-     */
-    public func getLocalAddress(): NetworkAddress {
-        transport.getLocalAddress()
-    }
-
-    /**
-     * 处理接收到的字节数据
-     */
-    private func handleReceivedData(data: Array<UInt8>): Unit {
-        try {
-            let networkMessage = serializer.deserialize(data)
-            match (messageHandler) {
-                case Some(handler) => handler(networkMessage)
-                case None => println("警告：没有设置消息处理器")
-            }
-        } catch (e: Exception) {
-            println("网络消息反序列化失败: ${e.message}")
-        }
-    }
-}
-
-/**
- * 网络消息传输工厂
- * 创建不同类型的网络消息传输器
- */
-public class NetworkMessageTransportFactory {
-    /**
-     * 创建TCP网络消息传输器
-     */
-    public static func createTcpTransport(localAddress: NetworkAddress): NetworkMessageTransport {
-        let tcpTransport = TcpTransport(localAddress)
-        NetworkMessageTransport(tcpTransport)
-    }
-
-    /**
-     * 创建UDP网络消息传输器
-     */
-    public static func createUdpTransport(localAddress: NetworkAddress): NetworkMessageTransport {
-        let udpTransport = UdpTransport(localAddress)
-        NetworkMessageTransport(udpTransport)
+    private func deserializeMessage(data: Array<UInt8>): NetworkMessage {
+        let serializer = NetworkMessageSerializer()
+        serializer.deserialize(data)
     }
 }
 
@@ -257,40 +184,5 @@ public class NetworkMessageTransportFactory {
 public class NetworkMessageException <: Exception {
     public init(message: String) {
         super(message)
-    }
-}
-
-/**
- * 远程消息发送器
- * 提供简化的远程消息发送接口
- */
-public class RemoteMessageSender {
-    private let transport: NetworkMessageTransport
-
-    public init(transport: NetworkMessageTransport) {
-        this.transport = transport
-    }
-
-    /**
-     * 发送消息到远程Actor
-     */
-    public func sendToRemoteActor(remoteAddress: NetworkAddress, targetActor: String, 
-                                  message: Message, sender: Option<String>): Unit {
-        let networkMessage = NetworkMessage(targetActor, message, sender)
-        transport.send(remoteAddress, networkMessage)
-    }
-
-    /**
-     * 启动发送器
-     */
-    public func start(): Unit {
-        transport.start()
-    }
-
-    /**
-     * 停止发送器
-     */
-    public func stop(): Unit {
-        transport.stop()
     }
 }

@@ -99,7 +99,7 @@ public class SimpleQueue<T> <: Queue<T> {
             mutex.unlock()
             return false
         }
-        items.append(item)
+        items.add(item)
         mutex.unlock()
         return true
     }
@@ -115,11 +115,11 @@ public class SimpleQueue<T> <: Queue<T> {
         let item = items[0]
         let newItems = ArrayList<T>()
         for (i in 1..items.size) {
-            newItems.append(items[i])
+            newItems.add(items[i])
         }
         items.clear()
         for (newItem in newItems) {
-            items.append(newItem)
+            items.add(newItem)
         }
 
         mutex.unlock()

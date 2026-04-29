@@ -227,7 +227,7 @@ public class ConfigurationManager {
      * 注册配置
      */
     public func registerConfiguration(name: String, config: ActorConfiguration): Unit {
-        configurations.put(name, config)
+        configurations.add(name, config)
     }
     
     /**
@@ -263,7 +263,7 @@ public class ConfigurationManager {
     public func getConfigurationNames(): Array<String> {
         let names = ArrayList<String>()
         for ((name, _) in configurations) {
-            names.append(name)
+            names.add(name)
         }
         Array<String>(Int64(names.size), { i => names[i] })
     }

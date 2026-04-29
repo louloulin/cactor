@@ -295,10 +295,10 @@ public class Plan10ComprehensiveTest {
 /**
  * 主函数 - 执行Plan10综合测试
  */
-main(): Unit {
+main(args: Array<String>): Unit {
     let test = Plan10ComprehensiveTest()
     let success = test.runAllTests()
-    
+
     if (success) {
         println("\n🚀 Plan10.md功能实现验证完成 - 所有测试通过!")
     } else {

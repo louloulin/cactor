@@ -124,7 +124,7 @@ public class Span {
     public func log(message: String): Unit {
         mutex.lock()
         let logEntry = SpanLog(DateTime.now().toUnixTimeStamp().toMilliseconds(), message)
-        logs.append(logEntry)
+        logs.add(logEntry)
         mutex.unlock()
     }
 
@@ -213,15 +213,15 @@ public class MemorySpanCollector <: SpanCollector {
             // 移除最老的span - 简化实现
             let newSpans = ArrayList<Span>()
             for (i in 1..spans.size) {
-                newSpans.append(spans[i])
+                newSpans.add(spans[i])
             }
             spans.clear()
             for (s in newSpans) {
-                spans.append(s)
+                spans.add(s)
             }
         }
 
-        spans.append(span)
+        spans.add(span)
         mutex.unlock()
     }
     
@@ -274,7 +274,7 @@ public class DistributedTracer {
         )
         
         // 添加到活跃span列表
-        activeSpans.put(span.spanId.value, span)
+        activeSpans.add(span.spanId.value, span)
         
         return span
     }

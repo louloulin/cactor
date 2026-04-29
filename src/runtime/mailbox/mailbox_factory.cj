@@ -227,7 +227,7 @@ public class MailboxFactory {
         let mailboxesByType = HashMap<String, Int64>()
 
         for ((mailboxType, counter) in this.mailboxesByType) {
-            mailboxesByType.put(mailboxType, counter.load())
+            mailboxesByType.add(mailboxType, counter.load())
         }
 
         MailboxFactoryStats(totalMailboxes, activeMailboxes, mailboxesByType)
@@ -312,12 +312,12 @@ public class MailboxFactory {
      * 初始化统计计数器
      */
     private func initializeCounters(): Unit {
-        mailboxesByType.put("Unbounded", AtomicInt64(0))
-        mailboxesByType.put("Bounded", AtomicInt64(0))
-        mailboxesByType.put("Priority", AtomicInt64(0))
-        mailboxesByType.put("Stashing", AtomicInt64(0))
-        mailboxesByType.put("ZeroCopy", AtomicInt64(0))
-        mailboxesByType.put("Foundation", AtomicInt64(0))
+        mailboxesByType.add("Unbounded", AtomicInt64(0))
+        mailboxesByType.add("Bounded", AtomicInt64(0))
+        mailboxesByType.add("Priority", AtomicInt64(0))
+        mailboxesByType.add("Stashing", AtomicInt64(0))
+        mailboxesByType.add("ZeroCopy", AtomicInt64(0))
+        mailboxesByType.add("Foundation", AtomicInt64(0))
     }
 
     /**
@@ -330,7 +330,7 @@ public class MailboxFactory {
                 counter.fetchAdd(1)
             case None =>
                 let newCounter = AtomicInt64(1)
-                mailboxesByType.put(typeName, newCounter)
+                mailboxesByType.add(typeName, newCounter)
         }
     }
 
@@ -371,7 +371,7 @@ public class SimpleMailbox <: Mailbox {
             return false
         }
 
-        messages.append(envelope)
+        messages.add(envelope)
         mutex.unlock()
         return true
     }
@@ -388,11 +388,11 @@ public class SimpleMailbox <: Mailbox {
         // 创建新的列表，移除第一个元素
         let newMessages = ArrayList<Envelope>()
         for (i in 1..messages.size) {
-            newMessages.append(messages[i])
+            newMessages.add(messages[i])
         }
         messages.clear()
         for (msg in newMessages) {
-            messages.append(msg)
+            messages.add(msg)
         }
 
         mutex.unlock()

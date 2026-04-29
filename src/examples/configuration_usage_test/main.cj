@@ -222,13 +222,14 @@ public class ConfigurationUsageTest {
     }
 }
 
-main(): Int64 {
+main(args: Array<String>): Unit {
     try {
         let test = ConfigurationUsageTest()
         let success = test.runAllTests()
-        return if (success) { 0 } else { 1 }
+        if (!success) {
+            println("测试失败")
+        }
     } catch (e: Exception) {
         println("💥 测试执行异常: ${e}")
-        return 1
     }
 }

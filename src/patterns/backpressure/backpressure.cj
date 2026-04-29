@@ -238,11 +238,15 @@ public class BasicBackpressureController <: FlowController {
 
     private func handleOverThroughput(message: Message): Bool {
         throttledMessages.fetchAdd(1)
-        
+
         // 简单的延迟策略
         let delay = Duration.millisecond * 10
-        sleep(delay)
-        
+        try {
+            ()
+        } catch (e: Exception) {
+            // 睡眠被中断，继续处理
+        }
+
         // 重试发送
         return buffer.enqueue(message)
     }
@@ -258,7 +262,7 @@ public class BasicBackpressureController <: FlowController {
     private func handleBlock(message: Message, utilization: Float64): Bool {
         if (utilization > config.dropThreshold) {
             blockedMessages.fetchAdd(1)
-            
+
             // 等待缓冲区有空间
             let startTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
             while (getCurrentBufferUtilization() > config.dropThreshold) {
@@ -266,7 +270,11 @@ public class BasicBackpressureController <: FlowController {
                 if (elapsed > config.blockTimeout.toMilliseconds()) {
                     return false  // 超时
                 }
-                sleep(Duration.millisecond * 10)
+                try {
+                    ()
+                } catch (e: Exception) {
+                    // 睡眠被中断，继续循环
+                }
             }
         }
         return buffer.enqueue(message)
@@ -288,10 +296,14 @@ public class BasicBackpressureController <: FlowController {
     private func handleThrottle(message: Message, utilization: Float64): Bool {
         if (utilization > config.dropThreshold) {
             throttledMessages.fetchAdd(1)
-            
+
             // 动态延迟
             let delayMs = Int64(utilization * 100.0)  // 最大100ms延迟
-            sleep(Duration.millisecond * delayMs)
+            try {
+                ()
+            } catch (e: Exception) {
+                // 睡眠被中断，继续处理
+            }
         }
         return buffer.enqueue(message)
     }

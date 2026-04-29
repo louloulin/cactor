@@ -150,7 +150,7 @@ public class OneForOneStrategy <: SupervisionStrategy {
             case Some(info) => info
             case None =>
                 let newInfo = RetryInfo()
-                retryHistory.put(actorKey, newInfo)
+                retryHistory.add(actorKey, newInfo)
                 newInfo
         }
     }
@@ -332,7 +332,7 @@ public class BasicSupervisor <: Supervisor {
     }
 
     public func addChild(child: ActorRef): Unit {
-        children.put(child.path.toString(), child)
+        children.add(child.path.toString(), child)
     }
 
     public func removeChild(child: ActorRef): Unit {
@@ -342,7 +342,7 @@ public class BasicSupervisor <: Supervisor {
     public func getChildren(): Array<ActorRef> {
         let childList = ArrayList<ActorRef>()
         for ((_, actor) in children) {
-            childList.append(actor)
+            childList.add(actor)
         }
         childList.toArray()
     }

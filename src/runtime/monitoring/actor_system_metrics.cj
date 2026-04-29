@@ -217,7 +217,7 @@ public class ActorSystemMetrics {
                 counter.store(value)
             case None =>
                 let newCounter = AtomicInt64(value)
-                customMetrics.put(name, newCounter)
+                customMetrics.add(name, newCounter)
         }
     }
     
@@ -230,7 +230,7 @@ public class ActorSystemMetrics {
                 counter.fetchAdd(delta)
             case None =>
                 let newCounter = AtomicInt64(delta)
-                customMetrics.put(name, newCounter)
+                customMetrics.add(name, newCounter)
         }
     }
     
@@ -238,7 +238,7 @@ public class ActorSystemMetrics {
      * 设置自定义仪表
      */
     public func setCustomGauge(name: String, value: Float64): Unit {
-        customGauges.put(name, value)
+        customGauges.add(name, value)
     }
     
     /**
@@ -272,11 +272,11 @@ public class ActorSystemMetrics {
         lastHealthCheck.store(currentTime)
         
         let details = HashMap<String, String>()
-        details.put("totalActors", totalActors.load().toString())
-        details.put("activeActors", activeActors.load().toString())
-        details.put("processedMessages", processedMessages.load().toString())
-        details.put("failedMessages", failedMessages.load().toString())
-        details.put("restartCount", restartCount.load().toString())
+        details.add("totalActors", totalActors.load().toString())
+        details.add("activeActors", activeActors.load().toString())
+        details.add("processedMessages", processedMessages.load().toString())
+        details.add("failedMessages", failedMessages.load().toString())
+        details.add("restartCount", restartCount.load().toString())
         
         // 简单的健康检查逻辑
         let errorRate = calculateErrorRate()
@@ -307,13 +307,13 @@ public class ActorSystemMetrics {
      */
     public func getBasicStats(): HashMap<String, Int64> {
         let stats = HashMap<String, Int64>()
-        stats.put("totalActors", totalActors.load())
-        stats.put("activeActors", activeActors.load())
-        stats.put("totalMessages", totalMessages.load())
-        stats.put("processedMessages", processedMessages.load())
-        stats.put("failedMessages", failedMessages.load())
-        stats.put("restartCount", restartCount.load())
-        stats.put("uptime", getCurrentTimeNanos() - systemStartTime)
+        stats.add("totalActors", totalActors.load())
+        stats.add("activeActors", activeActors.load())
+        stats.add("totalMessages", totalMessages.load())
+        stats.add("processedMessages", processedMessages.load())
+        stats.add("failedMessages", failedMessages.load())
+        stats.add("restartCount", restartCount.load())
+        stats.add("uptime", getCurrentTimeNanos() - systemStartTime)
         stats
     }
     
@@ -323,7 +323,7 @@ public class ActorSystemMetrics {
     public func getCustomMetrics(): HashMap<String, Int64> {
         let result = HashMap<String, Int64>()
         for ((name, counter) in customMetrics) {
-            result.put(name, counter.load())
+            result.add(name, counter.load())
         }
         result
     }

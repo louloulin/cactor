@@ -59,7 +59,7 @@ public struct MailboxConfig {
      */
     public static func batching(batchSize: Int32): MailboxConfig {
         let options = HashMap<String, String>()
-        options.put("batchSize", batchSize.toString())
+        options.add("batchSize", batchSize.toString())
         MailboxConfig("batching", -1, options)
     }
 

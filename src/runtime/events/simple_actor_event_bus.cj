@@ -78,7 +78,7 @@ public class SimpleActorEventBus {
      * 添加事件监听器
      */
     public func subscribe(listener: SimpleEventListener): Unit {
-        listeners.append(listener)
+        listeners.add(listener)
     }
     
     /**
@@ -89,11 +89,11 @@ public class SimpleActorEventBus {
         let newListeners = ArrayList<SimpleEventListener>()
         for (l in listeners) {
             // 简化实现，不做比较，直接保留所有监听器
-            newListeners.append(l)
+            newListeners.add(l)
         }
         listeners.clear()
         for (l in newListeners) {
-            listeners.append(l)
+            listeners.add(l)
         }
     }
     
@@ -262,7 +262,7 @@ public class StatsEventListener <: SimpleEventListener {
                 counter.fetchAdd(1)
             case None =>
                 let newCounter = AtomicInt32(1)
-                eventCounts.put(event.eventType, newCounter)
+                eventCounts.add(event.eventType, newCounter)
         }
     }
     

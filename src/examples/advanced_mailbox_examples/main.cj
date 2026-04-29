@@ -82,7 +82,7 @@ public class LogAggregatorActor <: Actor {
                 let content = msg.getContent()
                 
                 if (content.startsWith("LOG:")) {
-                    logBuffer.append(content)
+                    logBuffer.add(content)
                     println("📝 日志聚合 #${logCount}: ${content}")
                     
                     // 每100条日志批量处理一次
@@ -358,10 +358,10 @@ public class AdvancedMailboxExamples {
 /**
  * 主函数 - 执行高级邮箱示例
  */
-main(): Unit {
+main(args: Array<String>): Unit {
     let examples = AdvancedMailboxExamples()
     let success = examples.runAllExamples()
-    
+
     if (success) {
         println("\n🚀 高级邮箱示例演示完成!")
         println("📋 展示了CActor系统的高级邮箱特性")

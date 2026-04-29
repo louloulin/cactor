@@ -255,11 +255,11 @@ public class LocalMemoryPool {
         // 简化实现：获取或创建块列表
         match (freeBlocks.get(block.size)) {
             case Some(blockList) =>
-                blockList.append(block)
+                blockList.add(block)
             case None =>
                 let newList = ArrayList<MemoryBlock>()
-                newList.append(block)
-                freeBlocks.put(block.size, newList)
+                newList.add(block)
+                freeBlocks.add(block.size, newList)
         }
     }
 

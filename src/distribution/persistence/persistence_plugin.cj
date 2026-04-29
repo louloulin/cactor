@@ -107,7 +107,7 @@ public class DefaultPersistencePlugin <: PersistencePlugin {
                 case Some(seq) => seq + 1
                 case None => 1
             }
-            sequenceNumbers.put(actorName, currentSeq)
+            sequenceNumbers.add(actorName, currentSeq)
             
             let event = BasicEvent("${actorName}_${currentSeq}", actorName, eventType, eventData)
             eventStore.saveEvent(event)
@@ -141,7 +141,7 @@ public class DefaultPersistencePlugin <: PersistencePlugin {
                 }
                 
                 mutex.lock()
-                sequenceNumbers.put(actorName, snapshot.getSequenceNumber())
+                sequenceNumbers.add(actorName, snapshot.getSequenceNumber())
                 mutex.unlock()
                 
             case None => 
@@ -157,7 +157,7 @@ public class DefaultPersistencePlugin <: PersistencePlugin {
                 }
                 
                 mutex.lock()
-                sequenceNumbers.put(actorName, maxSeq)
+                sequenceNumbers.add(actorName, maxSeq)
                 mutex.unlock()
         }
         

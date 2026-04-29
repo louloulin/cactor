@@ -1,0 +1,728 @@
+/*
+ * Copyright (c) 2024. All rights reserved.
+ * CActor - Cluster Sharding 实现
+ * 对标 Akka Cluster Sharding
+ * 提供跨节点 Actor 分片管理
+ */
+package cactor.distribution.cluster
+
+import std.collection.*
+import std.sync.*
+import std.time.*
+
+/**
+ * 分片策略接口 - 对标 Akka ShardRegionResolver
+ */
+public interface ShardResolver {
+    /**
+     * 根据实体 ID 计算分片 ID
+     * @param entityId 实体 ID
+     * @param numberOfShards 分片数量
+     * @return 分片 ID
+     */
+    func shardId(entityId: String, numberOfShards: Int64): String
+}
+
+/**
+ * 默认分片策略 - 哈希分片
+ */
+public class HashShardResolver <: ShardResolver {
+    public func shardId(entityId: String, numberOfShards: Int64): String {
+        let hash = hashCode(entityId)
+        let shardNum = ((hash & 0x7FFFFFFF) % numberOfShards) + 1
+        "${shardNum}"
+    }
+
+    private func hashCode(s: String): Int64 {
+        var hash: Int64 = 0
+        for (c in s) {
+            hash = 31 * hash + Int64(c)
+        }
+        hash
+    }
+}
+
+/**
+ * 游标分片策略 - 游标式分配
+ */
+public class CursorShardResolver <: ShardResolver {
+    private var cursor: Int64 = 0
+    private let mutex: ReentrantMutex
+
+    public init() {
+        this.cursor = 0
+        this.mutex = ReentrantMutex()
+    }
+
+    public func shardId(entityId: String, numberOfShards: Int64): String {
+        mutex.lock()
+        cursor = (cursor + 1) % numberOfShards
+        let shard = cursor
+        mutex.unlock()
+        "${shard + 1}"
+    }
+}
+
+/**
+ * 角色分片策略 - 按角色分配
+ */
+public class RoleShardResolver <: ShardResolver {
+    private let numberOfShards: Int64
+
+    public init(numberOfShards: Int64) {
+        this.numberOfShards = numberOfShards
+    }
+
+    public func shardId(entityId: String, numberOfShards: Int64): String {
+        // 简化实现：使用 entityId 的哈希
+        let hash = hashCode(entityId)
+        let shardNum = ((hash & 0x7FFFFFFF) % numberOfShards) + 1
+        "${shardNum}"
+    }
+
+    private func hashCode(s: String): Int64 {
+        var hash: Int64 = 0
+        for (c in s) {
+            hash = 31 * hash + Int64(c)
+        }
+        hash
+    }
+}
+
+/**
+ * 分片设置 - 对标 Akka ClusterShardingSettings
+ */
+public struct ShardingSettings {
+    public let typeName: String           // 实体类型名称
+    public let role: String               // 节点角色
+    public let numberOfShards: Int64      // 分片数量
+    public let rememberEntities: Bool      // 是否记住实体位置
+    public let rememberEntitiesStartAfter: Duration  // 启动延迟
+    public val passivationStrategy: PassivationStrategy  // 老化策略
+    public val shardResolver: ShardResolver  // 分片解析器
+
+    public init(
+        typeName: String,
+        role!: String = "",
+        numberOfShards!: Int64 = 10,
+        rememberEntities!: Bool = false,
+        rememberEntitiesStartAfter!: Duration = Duration.second * 5,
+        passivationStrategy!: PassivationStrategy = PassivationStrategy.getDefault(),
+        shardResolver!: ShardResolver = HashShardResolver()
+    ) {
+        this.typeName = typeName
+        this.role = role
+        this.numberOfShards = numberOfShards
+        this.rememberEntities = rememberEntities
+        this.rememberEntitiesStartAfter = rememberEntitiesStartAfter
+        this.passivationStrategy = passivationStrategy
+        this.shardResolver = shardResolver
+    }
+
+    /**
+     * 创建默认设置
+     */
+    public static func getDefault(typeName: String, numberOfShards: Int64 = 10): ShardingSettings {
+        ShardingSettings(typeName, numberOfShards: numberOfShards)
+    }
+}
+
+/**
+ * 老化策略 - 对标 Akka Passivation
+ */
+public enum PassivationStrategy {
+    | Idle                         // 空闲时老化
+    | Count(Int64)               // 消息数量后老化
+    | Time(Duration)             // 时间后老化
+    | IdleOrCount(Int64, Duration)  // 空闲或计数
+    | IdleOrTime(Duration)       // 空闲或时间
+
+    public func toString(): String {
+        match (this) {
+            case Idle => "Idle"
+            case Count(n) => "Count(${n})"
+            case Time(d) => "Time(${d})"
+            case IdleOrCount(n, d) => "IdleOrCount(${n}, ${d})"
+            case IdleOrTime(d) => "IdleOrTime(${d})"
+        }
+    }
+
+    public static func getDefault(): PassivationStrategy {
+        IdleOrTime(Duration.minute * 2)
+    }
+}
+
+/**
+ * 实体引用 - 对标 Akka EntityRef
+ */
+public interface EntityRef {
+    /**
+     * 发送消息
+     */
+    func tell(message: Message): Unit
+
+    /**
+     * 发送消息并等待回复
+     */
+    func ask(message: Message, timeout: Duration): Option[Message]
+}
+
+/**
+ * 实体槽位引用
+ */
+public class EntityRefImpl <: EntityRef {
+    private let typeName: String
+    private let entityId: String
+    private let shardId: String
+    private let shardRegion: ActorPath
+
+    public init(typeName: String, entityId: String, shardId: String, shardRegion: ActorPath) {
+        this.typeName = typeName
+        this.entityId = entityId
+        this.shardId = shardId
+        this.shardRegion = shardRegion
+    }
+
+    public func tell(message: Message): Unit {
+        // 构造 ShardEnvelope 并发送
+        let envelope = ShardEnvelope(entityId, message)
+        // 通过 shardRegion 发送
+        println("EntityRef.tell: entity=${entityId}, shard=${shardId}")
+    }
+
+    public func ask(message: Message, timeout: Duration): Option[Message] {
+        tell(message)
+        None  // 简化实现
+    }
+
+    public func getEntityId(): String {
+        entityId
+    }
+
+    public func getShardId(): String {
+        shardId
+    }
+}
+
+/**
+ * 分片信封 - 对标 Akka ShardEnvelope
+ */
+public class ShardEnvelope {
+    public let entityId: String
+    public let message: Message
+
+    public init(entityId: String, message: Message) {
+        this.entityId = entityId
+        this.message = message
+    }
+}
+
+/**
+ * 分片命令 - 内部使用
+ */
+public enum ShardCommand {
+    | Add(entityId: String, entityRef: EntityRef)
+    | Remove(entityId: String)
+    | Passivate(entityId: String)
+    | GetEntityIds
+    | GetStats
+}
+
+/**
+ * 分片区域状态
+ */
+public class ShardRegionState {
+    public let shardId: String
+    public let entityIds: HashSet<String>
+    public var totalEntityCount: Int64
+    public var avgEntityCountPerShard: Float64
+
+    public init(shardId: String) {
+        this.shardId = shardId
+        this.entityIds = HashSet<String>()
+        this.totalEntityCount = 0
+        this.avgEntityCountPerShard = 0.0
+    }
+}
+
+/**
+ * 分片统计信息
+ */
+public class ShardingStats {
+    public let regions: HashMap<String, ShardRegionState>
+    public let totalShards: Int64
+    public let totalEntities: Int64
+    public let avgEntitiesPerShard: Float64
+
+    public init(
+        regions: HashMap<String, ShardRegionState>,
+        totalShards: Int64,
+        totalEntities: Int64,
+        avgEntitiesPerShard: Float64
+    ) {
+        this.regions = regions
+        this.totalShards = totalShards
+        this.totalEntities = totalEntities
+        this.avgEntitiesPerShard = avgEntitiesPerShard
+    }
+}
+
+/**
+ * 分片 Actor - 对标 Akka Shard
+ */
+public interface Shard {
+    /**
+     * 获取分片 ID
+     */
+    func shardId(): String
+
+    /**
+     * 实体 ID 到分片 ID
+     */
+    func shardIdForEntity(entityId: String): String
+
+    /**
+     * 添加实体
+     */
+    func addEntity(entityId: String): EntityRef
+
+    /**
+     * 移除实体
+     */
+    func removeEntity(entityId: String): Unit
+
+    /**
+     * 获取实体数量
+     */
+    func entityCount(): Int64
+
+    /**
+     * 获取实体 ID 列表
+     */
+    func getEntityIds(): Array<String>
+}
+
+/**
+ * 简化分片实现
+ */
+public class SimpleShard <: Shard {
+    private let shardId: String
+    private let settings: ShardingSettings
+    private let entities: HashMap<String, EntityRefImpl>
+    private let mutex: ReentrantMutex
+    private var entityCount: Int64
+
+    public init(shardId: String, settings: ShardingSettings) {
+        this.shardId = shardId
+        this.settings = settings
+        this.entities = HashMap<String, EntityRefImpl>()
+        this.mutex = ReentrantMutex()
+        this.entityCount = 0
+    }
+
+    public func shardId(): String {
+        shardId
+    }
+
+    public func shardIdForEntity(entityId: String): String {
+        settings.shardResolver.shardId(entityId, settings.numberOfShards)
+    }
+
+    public func addEntity(entityId: String): EntityRef {
+        mutex.lock()
+        let existing = entities.get(entityId)
+        mutex.unlock()
+
+        match (existing) {
+            case Some(ref) => ref
+            case None =>
+                mutex.lock()
+                let ref = EntityRefImpl(settings.typeName, entityId, shardId, ActorPath(Address("", "", "", 0), Array<String>()))
+                entities.add(entityId, ref)
+                entityCount += 1
+                mutex.unlock()
+                println("Shard ${shardId}: Added entity ${entityId}")
+                ref
+        }
+    }
+
+    public func removeEntity(entityId: String): Unit {
+        mutex.lock()
+        entities.remove(entityId)
+        entityCount -= 1
+        mutex.unlock()
+        println("Shard ${shardId}: Removed entity ${entityId}")
+    }
+
+    public func entityCount(): Int64 {
+        mutex.lock()
+        let count = entityCount
+        mutex.unlock()
+        count
+    }
+
+    public func getEntityIds(): Array<String> {
+        mutex.lock()
+        let ids = ArrayList<String>()
+        for ((id, _) in entities) {
+            ids.add(id)
+        }
+        mutex.unlock()
+        ids.toArray()
+    }
+}
+
+/**
+ * 分片区域 - 对标 Akka ShardRegion
+ */
+public interface ShardRegion {
+    /**
+     * 获取区域路径
+     */
+    func path(): ActorPath
+
+    /**
+     * 获取指定实体的引用
+     */
+    func entityRefFor(entityId: String): EntityRef
+
+    /**
+     * 初始化分片区域
+     */
+    func init(): Unit
+
+    /**
+     * 关闭分片区域
+     */
+    func shutdown(): Unit
+}
+
+/**
+ * 简化分片区域实现
+ */
+public class SimpleShardRegion <: ShardRegion {
+    private let settings: ShardingSettings
+    private let shards: HashMap<String, SimpleShard>
+    private let entitiesByShard: HashMap<String, HashSet<String>>
+    private let shardRegionPath: ActorPath
+    private let started: AtomicBool
+    private val mutex: ReentrantMutex
+
+    public init(settings: ShardingSettings, path: ActorPath) {
+        this.settings = settings
+        this.shards = HashMap<String, SimpleShard>()
+        this.entitiesByShard = HashMap<String, HashSet<String>>()
+        this.shardRegionPath = path
+        this.started = AtomicBool(false)
+        this.mutex = ReentrantMutex()
+    }
+
+    public func path(): ActorPath {
+        shardRegionPath
+    }
+
+    public func entityRefFor(entityId: String): EntityRef {
+        if (!started.load()) {
+            throw Exception("ShardRegion not started")
+        }
+
+        let shardId = settings.shardResolver.shardId(entityId, settings.numberOfShards)
+
+        mutex.lock()
+        let shard = match (shards.get(shardId)) {
+            case Some(s) => s
+            case None =>
+                let newShard = SimpleShard(shardId, settings)
+                shards.add(shardId, newShard)
+                entitiesByShard.add(shardId, HashSet<String>())
+                newShard
+        }
+        mutex.unlock()
+
+        let entityRef = shard.addEntity(entityId)
+
+        // 记录实体到分片的映射
+        mutex.lock()
+        match (entitiesByShard.get(shardId)) {
+            case Some(set) => set.add(entityId)
+            case None => ()
+        }
+        mutex.unlock()
+
+        entityRef
+    }
+
+    public func init(): Unit {
+        if (started.compareAndSwap(false, true)) {
+            println("ShardRegion initialized for type: ${settings.typeName}")
+            println("Number of shards: ${settings.numberOfShards}")
+        }
+    }
+
+    public func shutdown(): Unit {
+        if (started.compareAndSwap(true, false)) {
+            mutex.lock()
+            shards.clear()
+            entitiesByShard.clear()
+            mutex.unlock()
+            println("ShardRegion shutdown for type: ${settings.typeName}")
+        }
+    }
+
+    /**
+     * 获取统计信息
+     */
+    public func getStats(): ShardingStats {
+        mutex.lock()
+        var totalEntities: Int64 = 0
+        let regions = HashMap<String, ShardRegionState>()
+
+        for ((shardId, shard) in shards) {
+            let count = shard.entityCount()
+            totalEntities += count
+
+            let state = ShardRegionState(shardId)
+            for (id in shard.getEntityIds()) {
+                state.entityIds.add(id)
+            }
+            state.totalEntityCount = count
+            regions.add(shardId, state)
+        }
+
+        let avg = if (shards.size > 0) {
+            Float64(totalEntities) / Float64(shards.size)
+        } else {
+            0.0
+        }
+        mutex.unlock()
+
+        ShardingStats(regions, settings.numberOfShards, totalEntities, avg)
+    }
+
+    /**
+     * 手动分配分片
+     */
+    public func allocateShard(shardId: String, nodeAddress: Address): Unit {
+        mutex.lock()
+        if (!shards.contains(shardId)) {
+            let shard = SimpleShard(shardId, settings)
+            shards.add(shardId, shard)
+            entitiesByShard.add(shardId, HashSet<String>())
+        }
+        mutex.unlock()
+        println("Allocated shard ${shardId} to ${nodeAddress.toString()}")
+    }
+}
+
+/**
+ * 集群分片管理器 - 对标 Akka ClusterSharding
+ */
+public class ClusterSharding {
+    private let settings: ShardingSettings
+    private let regions: HashMap<String, SimpleShardRegion>
+    private let shardCoordinator: Option<ShardCoordinator]
+    private val started: AtomicBool
+    private val mutex: ReentrantMutex
+
+    public init(settings: ShardingSettings) {
+        this.settings = settings
+        this.regions = HashMap<String, SimpleShardRegion>()
+        this.shardCoordinator = None
+        this.started = AtomicBool(false)
+        this.mutex = ReentrantMutex()
+    }
+
+    /**
+     * 启动分片系统
+     */
+    public func start(): SimpleShardRegion {
+        if (!started.load()) {
+            mutex.lock()
+            if (!started.load()) {
+                let addr = Address("cactor", "sharding", "localhost", 0)
+                let path = ActorPath(addr, [settings.typeName])
+                let region = SimpleShardRegion(settings, path)
+                regions.add(settings.typeName, region)
+                region.init()
+                started.store(true)
+                println("ClusterSharding started for type: ${settings.typeName}")
+            }
+            mutex.unlock()
+        }
+
+        match (regions.get(settings.typeName)) {
+            case Some(region) => region
+            case None => throw Exception("Failed to start ClusterSharding")
+        }
+    }
+
+    /**
+     * 获取指定类型的分片区域
+     */
+    public func shardRegion(typeName: String): Option[SimpleShardRegion] {
+        regions.get(typeName)
+    }
+
+    /**
+     * 停止分片系统
+     */
+    public func shutdown(): Unit {
+        if (started.compareAndSwap(true, false)) {
+            mutex.lock()
+            for ((_, region) in regions) {
+                region.shutdown()
+            }
+            regions.clear()
+            mutex.unlock()
+            println("ClusterSharding shutdown")
+        }
+    }
+
+    /**
+     * 获取所有分片统计
+     */
+    public func getStats(typeName: String): Option[ShardingStats] {
+        match (regions.get(typeName)) {
+            case Some(region) => Some(region.getStats())
+            case None => None
+        }
+    }
+}
+
+/**
+ * 分片协调器接口 - 对标 Akka ShardCoordinator
+ */
+public interface ShardCoordinator {
+    /**
+     * 分配分片到节点
+     */
+    func allocateShard(shardId: String, nodeAddress: Address): Unit
+
+    /**
+     * 更新分片位置
+     */
+    func updateShardLocation(shardId: String, nodeAddress: Address): Unit
+
+    /**
+     * 获取分片位置
+     */
+    func getShardLocation(shardId: String): Option[Address]
+
+    /**
+     * 获取所有分配
+     */
+    func getAllAllocations(): HashMap<String, Address]
+}
+
+/**
+ * 简化分片协调器
+ */
+public class SimpleShardCoordinator <: ShardCoordinator {
+    private let allocations: HashMap<String, Address]
+    private let mutex: ReentrantMutex
+
+    public init() {
+        this.allocations = HashMap<String, Address>()
+        this.mutex = ReentrantMutex()
+    }
+
+    public func allocateShard(shardId: String, nodeAddress: Address): Unit {
+        mutex.lock()
+        allocations.add(shardId, nodeAddress)
+        mutex.unlock()
+    }
+
+    public func updateShardLocation(shardId: String, nodeAddress: Address): Unit {
+        mutex.lock()
+        allocations.add(shardId, nodeAddress)
+        mutex.unlock()
+    }
+
+    public func getShardLocation(shardId: String): Option<Address] {
+        mutex.lock()
+        let result = allocations.get(shardId)
+        mutex.unlock()
+        result
+    }
+
+    public func getAllAllocations(): HashMap<String, Address] {
+        mutex.lock()
+        let result = HashMap<String, Address>()
+        for ((k, v) in allocations) {
+            result.add(k, v)
+        }
+        mutex.unlock()
+        result
+    }
+}
+
+/**
+ * 集群分片工厂
+ */
+public class ClusterShardingFactory {
+    /**
+     * 创建默认分片系统
+     */
+    public static func create(
+        typeName: String,
+        numberOfShards!: Int64 = 10,
+        rememberEntities!: Bool = false
+    ): ClusterSharding {
+        let settings = ShardingSettings.getDefault(typeName, numberOfShards: numberOfShards)
+        ClusterSharding(settings)
+    }
+
+    /**
+     * 创建带自定义分片策略的分片系统
+     */
+    public static func createWithResolver(
+        typeName: String,
+        resolver: ShardResolver,
+        numberOfShards!: Int64 = 10,
+        rememberEntities!: Bool = false
+    ): ClusterSharding {
+        let settings = ShardingSettings(
+            typeName,
+            numberOfShards: numberOfShards,
+            rememberEntities: rememberEntities,
+            shardResolver: resolver
+        )
+        ClusterSharding(settings)
+    }
+
+    /**
+     * 创建哈希分片系统
+     */
+    public static func createHashSharded(
+        typeName: String,
+        numberOfShards!: Int64 = 10
+    ): ClusterSharding {
+        createWithResolver(typeName, HashShardResolver(), numberOfShards: numberOfShards)
+    }
+}
+
+/**
+ * 分片系统事件
+ */
+public enum ShardingEvent {
+    | ShardStarted(shardId: String, entityIds: Array<String>)
+    | ShardStoped(shardId: String)
+    | EntityStarted(entityId: String, shardId: String)
+    | EntityPassivated(entityId: String, shardId: String)
+
+    public func toString(): String {
+        match (this) {
+            case ShardStarted(sid, ids) => "ShardStarted(${sid}, ${ids.size} entities)"
+            case ShardStoped(sid) => "ShardStoped(${sid})"
+            case EntityStarted(eid, sid) => "EntityStarted(${eid} in ${sid})"
+            case EntityPassivated(eid, sid) => "EntityPassivated(${eid} in ${sid})"
+        }
+    }
+}
+
+/**
+ * 分片事件监听器
+ */
+public interface ShardingEventListener {
+    func onShardingEvent(event: ShardingEvent): Unit
+}

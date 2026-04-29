@@ -208,7 +208,7 @@ public class ConfigurationManager {
         mutex.lock()
         let keys = ArrayList<String>()
         for ((key, _) in configs) {
-            keys.append(key)
+            keys.add(key)
         }
         mutex.unlock()
         keys.toArray()
@@ -216,7 +216,7 @@ public class ConfigurationManager {
     
     public func addChangeListener(listener: ConfigChangeListener): Unit {
         mutex.lock()
-        changeListeners.append(listener)
+        changeListeners.add(listener)
         mutex.unlock()
     }
     

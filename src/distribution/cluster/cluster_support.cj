@@ -155,7 +155,7 @@ public class ClusterState {
         let availableNodes = ArrayList<ClusterNode>()
         for ((_, node) in nodes) {
             if (node.getState().isAvailable()) {
-                availableNodes.append(node)
+                availableNodes.add(node)
             }
         }
         mutex.unlock()
@@ -173,7 +173,7 @@ public class ClusterState {
         mutex.lock()
         let allNodes = ArrayList<ClusterNode>()
         for ((_, node) in nodes) {
-            allNodes.append(node)
+            allNodes.add(node)
         }
         mutex.unlock()
         allNodes.toArray()
@@ -299,7 +299,7 @@ public class SimpleClusterManager {
     
     public func addEventListener(listener: ClusterEventListener): Unit {
         mutex.lock()
-        eventListeners.append(listener)
+        eventListeners.add(listener)
         mutex.unlock()
     }
     

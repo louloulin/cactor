@@ -163,7 +163,7 @@ public class LeastConnectionsRoutingStrategy <: RoutingStrategy {
                     case Some(counter) => counter.load()
                     case None =>
                         let newCounter = AtomicInt32(0)
-                        connectionCounts.put(actorKey, newCounter)
+                        connectionCounts.add(actorKey, newCounter)
                         Int32(0)
                 }
                 
@@ -239,7 +239,7 @@ public class FastestResponseRoutingStrategy <: RoutingStrategy {
                     case Some(tracker) => tracker.getAverageResponseTime()
                     case None => 
                         let newTracker = ResponseTimeTracker()
-                        responseTimes.put(actorKey, newTracker)
+                        responseTimes.add(actorKey, newTracker)
                         100.0  // 默认响应时间
                 }
                 
@@ -268,7 +268,7 @@ public class FastestResponseRoutingStrategy <: RoutingStrategy {
                 case None => 
                     let newTracker = ResponseTimeTracker()
                     newTracker.recordResponseTime(responseTime.toMilliseconds())
-                    responseTimes.put(actorKey, newTracker)
+                    responseTimes.add(actorKey, newTracker)
             }
         } finally {
             mutex.unlock()
@@ -297,7 +297,7 @@ public class ResponseTimeTracker {
         requestCount.fetchAdd(1)
         
         // 保留最近的响应时间
-        recentTimes.append(responseTimeMs)
+        recentTimes.add(responseTimeMs)
         if (recentTimes.size > Int64(maxRecentCount)) {
             recentTimes.remove(0)
         }
@@ -383,7 +383,7 @@ public class FailoverRoutingStrategy <: RoutingStrategy {
     public func markActorAsFailed(actor: ActorRef): Unit {
         mutex.lock()
         try {
-            failedActors.put(actor.path.toString())
+            failedActors.add(actor.path.toString())
         } finally {
             mutex.unlock()
         }
@@ -450,7 +450,7 @@ public class ContentBasedRoutingStrategy <: RoutingStrategy {
     public func addRoutingRule(content: String, actorIndex: Int32): Unit {
         mutex.lock()
         try {
-            routingTable.put(content, actorIndex)
+            routingTable.add(content, actorIndex)
         } finally {
             mutex.unlock()
         }
@@ -533,7 +533,7 @@ public class AdvancedRouter <: Router {
     public func addRoutee(routee: ActorRef): Unit {
         mutex.lock()
         try {
-            routees.append(routee)
+            routees.add(routee)
             healthChecker.addActor(routee)
             routingMetrics.recordRouteeAdded()
         } finally {
@@ -630,7 +630,7 @@ public class RoutingMetrics {
                 case Some(counter) => counter.load()
                 case None => 0
             }
-            failureReasons.put(reason, AtomicInt64(currentCount + 1))
+            failureReasons.add(reason, AtomicInt64(currentCount + 1))
         } finally {
             mutex.unlock()
         }
@@ -706,7 +706,7 @@ public class RouterHealthChecker {
         mutex.lock()
         try {
             let actorKey = actor.path.toString()
-            actorHealth.put(actorKey, ActorHealthStatus())
+            actorHealth.add(actorKey, ActorHealthStatus())
         } finally {
             mutex.unlock()
         }
@@ -760,11 +760,11 @@ public class RouterHealthChecker {
                 match (actorHealth.get(actorKey)) {
                     case Some(status) =>
                         if (status.isHealthy()) {
-                            healthyActors.append(actor)
+                            healthyActors.add(actor)
                         }
                     case None =>
                         // 未知状态的Actor默认为健康
-                        healthyActors.append(actor)
+                        healthyActors.add(actor)
                 }
             }
 

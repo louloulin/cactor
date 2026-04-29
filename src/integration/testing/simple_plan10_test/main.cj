@@ -28,8 +28,8 @@ public class SimplePlan10Test {
         try {
             // 测试HashMap
             let map = HashMap<String, Int32>()
-            map.put("test1", 100)
-            map.put("test2", 200)
+            map.add("test1", 100)
+            map.add("test2", 200)
             
             match (map.get("test1")) {
                 case Some(value) =>
@@ -83,9 +83,9 @@ public class SimplePlan10Test {
         try {
             // 测试ArrayList
             let list = ArrayList<String>()
-            list.append("item1")
-            list.append("item2")
-            list.append("item3")
+            list.add("item1")
+            list.add("item2")
+            list.add("item3")
             
             if (list.size == 3 && list[0] == "item1") {
                 println("✅ ArrayList测试通过")
@@ -216,10 +216,10 @@ public class SimplePlan10Test {
 /**
  * 主函数 - 执行简化Plan10测试
  */
-main(): Unit {
+main(args: Array<String>): Unit {
     let test = SimplePlan10Test()
     let success = test.runAllTests()
-    
+
     if (success) {
         println("\n🚀 简化Plan10.md功能验证完成 - 所有测试通过!")
         println("📋 这验证了Cangjie语言的基础功能正常工作")

@@ -240,7 +240,7 @@ public class MPSCQueue<T> {
         while (count < maxCount) {
             match (this.poll()) {
                 case Some(item) =>
-                    results.append(item)
+                    results.add(item)
                     count += 1
                 case None => break
             }

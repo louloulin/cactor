@@ -639,7 +639,7 @@ public class LockFreeQueue<T> <: Queue<T> {
                 if (slot.tryStartRead()) {
                     match (slot.finishRead()) {
                         case Some(item) =>
-                            results.append(item)
+                            results.add(item)
                             successCount += 1
                             success = true
                         case None => break

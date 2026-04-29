@@ -348,7 +348,7 @@ public class ActorEventBus {
         busLock.lock()
         try {
             let subscription = EventSubscription(listener, eventTypes)
-            subscribers.append(subscription)
+            subscribers.add(subscription)
             subscriberCount.fetchAdd(1)
         } finally {
             busLock.unlock()

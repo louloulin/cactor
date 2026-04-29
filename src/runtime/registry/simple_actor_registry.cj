@@ -71,8 +71,8 @@ public class SimpleActorRegistry {
         let entry = SimpleActorRegistryEntry(actorRef, currentTime, parentPath)
         
         // 主要存储
-        pathToActor.put(path, entry)
-        nameToPath.put(name, path)
+        pathToActor.add(path, entry)
+        nameToPath.add(name, path)
         
         // 更新统计
         totalActors.fetchAdd(1)
@@ -164,7 +164,7 @@ public class SimpleActorRegistry {
     public func getAllActors(): Array<ActorRef> {
         let result = ArrayList<ActorRef>()
         for ((path, entry) in pathToActor) {
-            result.append(entry.actorRef)
+            result.add(entry.actorRef)
         }
         result.toArray()
     }

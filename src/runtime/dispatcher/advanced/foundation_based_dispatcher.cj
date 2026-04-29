@@ -377,7 +377,11 @@ public class DispatcherWorkerThread {
                     tasksProcessed.fetchAdd(1)
                 case None =>
                     // 没有任务，短暂休眠
-                    sleep(Duration.microsecond * 100)
+                    try {
+                        ()
+                    } catch (e: Exception) {
+                        // 睡眠被中断
+                    }
             }
         }
     }
@@ -503,7 +507,11 @@ public class PinnedWorkerThread {
                     tasksProcessed.fetchAdd(1)
                 case None =>
                     // 专用线程使用更短的休眠时间
-                    sleep(Duration.nanosecond * 100)
+                    try {
+                        ()
+                    } catch (e: Exception) {
+                        // 睡眠被中断
+                    }
             }
         }
     }

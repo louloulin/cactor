@@ -6,8 +6,8 @@
 package cactor.api
 
 // API组件导出 - 按照plan10.md要求，统一API入口
-public import cactor.api.config.*
-public import cactor.api.public.*
+import cactor.api.config.*
 
 // 导出核心API类型
 // 这些在cactor.cj和cactor_system_api.cj中定义
+// 注意：不导入 cactor.api.public.* 以避免循环依赖

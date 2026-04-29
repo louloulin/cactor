@@ -8,6 +8,7 @@ package cactor.api.public
 import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory}
 import cactor.core.system.{ActorSystem}
 import cactor.core.message.{Message}
+import cactor.api.{CActorSystem, CActorSystemFactory, ActorProps}
 
 /**
  * CActor系统工厂
@@ -17,24 +18,29 @@ public struct CActorFactory {
     /**
      * 创建默认Actor系统
      */
-    public static func createSystem(): ActorSystem {
+    public static func createSystem(): CActorSystem {
         createSystem("default")
     }
-    
+
     /**
      * 创建命名Actor系统
      */
-    public static func createSystem(name: String): ActorSystem {
-        // 这里需要引用具体的实现类
-        // 暂时返回一个简单的实现
-        throw Exception("Not implemented yet")
+    public static func createSystem(name: String): CActorSystem {
+        CActorSystemFactory.create(name)
     }
-    
+
     /**
-     * 创建Actor Props
+     * 创建Actor Props - 使用工厂方法创建Props
      */
-    public static func createProps<T>(creator: () -> T): Props<T> where T <: Actor {
-        PropsFactory.create(creator)
+    public static func createProps<T>(creator: () -> T): ActorProps where T <: Actor {
+        ActorProps(creator)
+    }
+
+    /**
+     * 使用现有的Props创建ActorProps
+     */
+    public static func createPropsFrom<T>(props: Props<T>): ActorProps where T <: Actor {
+        ActorProps(props)
     }
 }
 
@@ -46,25 +52,25 @@ public class CActorSystemBuilder {
     private var systemName: String = "default"
     private var dispatcherType: String = "default"
     private var mailboxType: String = "unbounded"
-    
+
     public init() {}
-    
+
     public func withName(name: String): CActorSystemBuilder {
         this.systemName = name
         this
     }
-    
+
     public func withDispatcher(dispatcher: String): CActorSystemBuilder {
         this.dispatcherType = dispatcher
         this
     }
-    
+
     public func withMailbox(mailbox: String): CActorSystemBuilder {
         this.mailboxType = mailbox
         this
     }
-    
-    public func build(): ActorSystem {
+
+    public func build(): CActorSystem {
         CActorFactory.createSystem(systemName)
     }
 }

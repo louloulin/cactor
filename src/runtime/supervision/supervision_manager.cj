@@ -196,7 +196,7 @@ public class SupervisionManager {
                 0       // circuitBreakerOpenTime
             )
 
-            supervisionInfos.put(path, info)
+            supervisionInfos.add(path, info)
             totalSupervised.fetchAdd(1)
         } finally {
             managerLock.writeMutex.unlock()
@@ -276,7 +276,7 @@ public class SupervisionManager {
     public func getAllSupervisionInfos(): ArrayList<ActorSupervisionInfo> {
         let result = ArrayList<ActorSupervisionInfo>()
         for ((path, info) in supervisionInfos) {
-            result.append(info)
+            result.add(info)
         }
         result
     }
@@ -402,7 +402,7 @@ public class SupervisionManager {
                     oldInfo.escalationCount,
                     oldInfo.circuitBreakerOpenTime
                 )
-                supervisionInfos.put(path, newInfo)
+                supervisionInfos.add(path, newInfo)
             case None =>
                 // Actor不存在，忽略
                 ()
@@ -423,7 +423,7 @@ public class SupervisionManager {
                     oldInfo.escalationCount,
                     oldInfo.circuitBreakerOpenTime
                 )
-                supervisionInfos.put(path, newInfo)
+                supervisionInfos.add(path, newInfo)
             case None =>
                 // Actor不存在，忽略
                 ()
@@ -444,7 +444,7 @@ public class SupervisionManager {
                     oldInfo.escalationCount + 1,
                     oldInfo.circuitBreakerOpenTime
                 )
-                supervisionInfos.put(path, newInfo)
+                supervisionInfos.add(path, newInfo)
             case None =>
                 // Actor不存在，忽略
                 ()
@@ -465,7 +465,7 @@ public class SupervisionManager {
                     oldInfo.escalationCount,
                     oldInfo.circuitBreakerOpenTime
                 )
-                supervisionInfos.put(path, newInfo)
+                supervisionInfos.add(path, newInfo)
             case None =>
                 // Actor不存在，忽略
                 ()
@@ -493,7 +493,7 @@ public class SupervisionManager {
                         info.escalationCount,
                         currentTime
                     )
-                    supervisionInfos.put(path, newInfo)
+                    supervisionInfos.add(path, newInfo)
                 }
             case None =>
                 // Actor不存在，忽略

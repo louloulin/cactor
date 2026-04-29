@@ -33,7 +33,7 @@ public class StreamPipelineBuilder {
     public func map(name: String, mapFunction: (StreamElement) -> StreamElement): StreamPipelineBuilder {
         let processor = MapProcessor(mapFunction)
         let stage = StreamProcessorStage(name, processor)
-        stages.append(stage)
+        stages.add(stage)
         this
     }
     
@@ -41,7 +41,7 @@ public class StreamPipelineBuilder {
     public func filter(name: String, filterFunction: (StreamElement) -> Bool): StreamPipelineBuilder {
         let processor = FilterProcessor(filterFunction)
         let stage = StreamProcessorStage(name, processor)
-        stages.append(stage)
+        stages.add(stage)
         this
     }
     
@@ -151,16 +151,16 @@ public class StreamPipeline {
         
         // 创建所有 Actor
         let allStages = ArrayList<StreamStage>()
-        allStages.append(sourceStage)
+        allStages.add(sourceStage)
         for (stage in processingStages) {
-            allStages.append(stage)
+            allStages.add(stage)
         }
-        allStages.append(sinkStage)
+        allStages.add(sinkStage)
         
         let actorList = ArrayList<Actor>()
         for (stage in allStages) {
             let actor = stage.createActor()
-            actorList.append(actor)
+            actorList.add(actor)
             actor.preStart()
         }
         

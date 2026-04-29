@@ -68,11 +68,11 @@ public class MemoryEventStore <: EventStore {
             let actorId = event.getActorId()
             match (events.get(actorId)) {
                 case Some(eventList) => 
-                    eventList.append(event)
+                    eventList.add(event)
                 case None =>
                     let newList = ArrayList<Event>()
-                    newList.append(event)
-                    events.put(actorId, newList)
+                    newList.add(event)
+                    events.add(actorId, newList)
             }
         } finally {
             mutex.unlock()
@@ -86,7 +86,7 @@ public class MemoryEventStore <: EventStore {
                 case Some(eventList) =>
                     let result = ArrayList<Event>()
                     for (event in eventList) {
-                        result.append(event)
+                        result.add(event)
                     }
                     result.toArray()
                 case None =>
@@ -105,7 +105,7 @@ public class MemoryEventStore <: EventStore {
                     let result = ArrayList<Event>()
                     for (event in eventList) {
                         if (event.getTimestamp() > timestamp) {
-                            result.append(event)
+                            result.add(event)
                         }
                     }
                     result.toArray()

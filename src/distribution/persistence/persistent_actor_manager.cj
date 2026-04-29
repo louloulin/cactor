@@ -23,7 +23,7 @@ public class PersistentActorManager {
     public func registerActor(actor: Actor): Unit {
         mutex.lock()
         try {
-            actors.put(actor.name, actor)
+            actors.add(actor.name, actor)
             if (persistencePlugin.isEnabled()) {
                 startRecovery(actor)
             }

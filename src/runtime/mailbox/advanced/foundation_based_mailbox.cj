@@ -66,7 +66,7 @@ public class FoundationUnboundedMailbox <: Mailbox {
 
         for (i in 0..Int64(batchSize)) {
             match (queue.dequeue()) {
-                case Some(envelope) => batch.append(envelope)
+                case Some(envelope) => batch.add(envelope)
                 case None => break
             }
         }
@@ -421,7 +421,7 @@ public class FoundationPriorityMailbox <: Mailbox {
         while (processed < batchSize) {
             match (priorityQueue.dequeue()) {
                 case Some(priorityEnvelope) =>
-                    batch.append(priorityEnvelope.envelope)
+                    batch.add(priorityEnvelope.envelope)
                     processed += 1
                 case None => break
             }
@@ -431,7 +431,7 @@ public class FoundationPriorityMailbox <: Mailbox {
         while (processed < batchSize) {
             match (normalQueue.dequeue()) {
                 case Some(envelope) =>
-                    batch.append(envelope)
+                    batch.add(envelope)
                     processed += 1
                 case None => break
             }

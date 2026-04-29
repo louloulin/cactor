@@ -43,7 +43,7 @@ public class RuntimeUserGuardian <: BaseGuardianActor {
         }
         
         let userActor = doCreateChild(props, name)
-        userActors.put(name, userActor)
+        userActors.add(name, userActor)
         
         // 应用用户级监督策略
         let supervisionStrategy = defaultSupervisionStrategy  // 简化实现，使用默认策略
@@ -65,7 +65,7 @@ public class RuntimeUserGuardian <: BaseGuardianActor {
     public func getAllUserActors(): Array<ActorRef> {
         let actorList = ArrayList<ActorRef>()
         for ((_, actorRef) in userActors) {
-            actorList.append(actorRef)
+            actorList.add(actorRef)
         }
         return actorList.toArray()
     }

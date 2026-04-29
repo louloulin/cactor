@@ -115,14 +115,14 @@ public class PerformanceCounter {
             // 移除最老的样本 - 简化实现
             let newValues = ArrayList<Float64>()
             for (i in 1..values.size) {
-                newValues.append(values[i])
+                newValues.add(values[i])
             }
             values.clear()
             for (v in newValues) {
-                values.append(v)
+                values.add(v)
             }
         }
-        values.append(value)
+        values.add(value)
 
         mutex.unlock()
     }
@@ -283,7 +283,7 @@ public class SystemPerformanceAnalyzer {
             case Some(monitor) => monitor
             case None =>
                 let newMonitor = ActorPerformanceMonitor(actorPath)
-                actorMonitors.put(pathStr, newMonitor)
+                actorMonitors.add(pathStr, newMonitor)
                 newMonitor
         }
     }

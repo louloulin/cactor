@@ -373,10 +373,10 @@ public class AdvancedDispatcherExamples {
 /**
  * 主函数 - 执行高级调度器示例
  */
-main(): Unit {
+main(args: Array<String>): Unit {
     let examples = AdvancedDispatcherExamples()
     let success = examples.runAllExamples()
-    
+
     if (success) {
         println("\n🚀 高级调度器示例演示完成!")
         println("📋 展示了CActor系统的高级调度器特性")

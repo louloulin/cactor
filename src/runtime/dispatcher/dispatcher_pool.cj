@@ -176,7 +176,7 @@ public class DispatcherPool {
             throw Exception("已达到最大调度器数量限制: ${config.maxDispatchers}")
         }
         
-        dispatchers.put(name, dispatcher)
+        dispatchers.add(name, dispatcher)
         
         if (isRunning.load()) {
             dispatcher.start()
@@ -222,22 +222,22 @@ public class DispatcherPool {
         // 创建默认的工作窃取调度器
         let defaultConfig = DispatcherConfig.createWorkStealingWithName("default-work-stealing")
         let defaultDispatcher = dispatcherFactory.createDispatcher(defaultConfig)
-        dispatchers.put("default", defaultDispatcher)
+        dispatchers.add("default", defaultDispatcher)
 
         // 创建线程池调度器
         let threadPoolConfig = DispatcherConfig.createThreadPoolWithName("thread-pool")
         let threadPoolDispatcher = dispatcherFactory.createDispatcher(threadPoolConfig)
-        dispatchers.put("thread-pool", threadPoolDispatcher)
+        dispatchers.add("thread-pool", threadPoolDispatcher)
 
         // 创建固定线程调度器
         let pinnedConfig = DispatcherConfig.createPinnedWithName("pinned")
         let pinnedDispatcher = dispatcherFactory.createDispatcher(pinnedConfig)
-        dispatchers.put("pinned", pinnedDispatcher)
+        dispatchers.add("pinned", pinnedDispatcher)
 
         // 创建调用线程调度器 - 使用线程池配置作为替代
         let callingThreadConfig = DispatcherConfig.createThreadPoolWithName("calling-thread")
         let callingThreadDispatcher = dispatcherFactory.createDispatcher(callingThreadConfig)
-        dispatchers.put("calling-thread", callingThreadDispatcher)
+        dispatchers.add("calling-thread", callingThreadDispatcher)
     }
     
     /**
@@ -371,7 +371,7 @@ public class DispatcherPool {
     private func getDispatcherNames(): Array<String> {
         let names = ArrayList<String>()
         for ((name, _) in dispatchers) {
-            names.append(name)
+            names.add(name)
         }
         names.toArray()
     }

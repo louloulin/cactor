@@ -12,7 +12,7 @@ import cactor.foundation.serialization.{Serializer, SerializationManager}
  * 消息序列化器
  * 基于Foundation层的通用序列化框架实现消息序列化
  */
-public class MessageSerializer <: Serializer<Message> {
+public class MessageSerializer <: Serializer {
     private let serializationManager: SerializationManager
 
     public init() {
@@ -22,12 +22,12 @@ public class MessageSerializer <: Serializer<Message> {
     public func serialize(message: Message): Array<UInt8> {
         let messageType = message.messageType()
         let result = ArrayList<UInt8>()
-        
+
         // 写入消息类型长度和类型
         let typeBytes = serializationManager.serializeString(messageType)
         writeInt32(result, Int32(typeBytes.size))
-        result.appendAll(typeBytes)
-        
+        for (b in typeBytes) { result.add(b) }
+
         // 根据消息类型序列化具体内容
         match (messageType) {
             case "StringMessage" =>
@@ -35,23 +35,23 @@ public class MessageSerializer <: Serializer<Message> {
                     case Some(msg) =>
                         let contentBytes = serializationManager.serializeString(msg.getContent())
                         writeInt32(result, Int32(contentBytes.size))
-                        result.appendAll(contentBytes)
+                        for (b in contentBytes) { result.add(b) }
                     case None => throw SerializationException("消息类型转换失败")
                 }
             case "PingMessage" =>
                 match (message as PingMessage) {
                     case Some(msg) =>
                         let idBytes = serializationManager.serializeInt(msg.getId())
-                        result.appendAll(idBytes)
+                        for (b in idBytes) { result.add(b) }
                         let timestampBytes = serializationManager.serializeInt(msg.timestamp())
-                        result.appendAll(timestampBytes)
+                        for (b in timestampBytes) { result.add(b) }
                     case None => throw SerializationException("消息类型转换失败")
                 }
             case "PongMessage" =>
                 match (message as PongMessage) {
                     case Some(msg) =>
                         let idBytes = serializationManager.serializeInt(msg.getOriginalId())
-                        result.appendAll(idBytes)
+                        for (b in idBytes) { result.add(b) }
                     case None => throw SerializationException("消息类型转换失败")
                 }
             case "StopMessage" =>
@@ -59,13 +59,13 @@ public class MessageSerializer <: Serializer<Message> {
                     case Some(msg) =>
                         let reasonBytes = serializationManager.serializeString(msg.getReason())
                         writeInt32(result, Int32(reasonBytes.size))
-                        result.appendAll(reasonBytes)
+                        for (b in reasonBytes) { result.add(b) }
                     case None => throw SerializationException("消息类型转换失败")
                 }
             case _ =>
                 throw SerializationException("不支持的消息类型: ${messageType}")
         }
-        
+
         result.toArray()
     }
 
@@ -73,21 +73,21 @@ public class MessageSerializer <: Serializer<Message> {
         if (data.size < 4) {
             throw DeserializationException("数据不完整")
         }
-        
+
         var offset = 0
-        
+
         // 读取消息类型
         let typeLength = readInt32(data, offset)
         offset += 4
-        
+
         if (data.size < offset + Int64(typeLength)) {
             throw DeserializationException("消息类型数据不完整")
         }
-        
+
         let typeBytes = data.slice(Int64(offset), Int64(typeLength))
         let rawMessageType = serializationManager.deserializeString(typeBytes)
 
-        let messageType = trimString(rawMessageType)  // 去除首尾空格和控制字符
+        let messageType = trimString(rawMessageType)
 
         offset += Int64(typeLength)
 
@@ -100,56 +100,52 @@ public class MessageSerializer <: Serializer<Message> {
                 let contentLength = readInt32(data, offset)
                 offset += 4
 
-
-
                 if (data.size < offset + Int64(contentLength)) {
-                    throw DeserializationException("StringMessage内容数据不完整: 需要${offset + Int64(contentLength)}字节，但只有${data.size}字节")
+                    throw DeserializationException("StringMessage内容数据不完整")
                 }
 
                 let contentBytes = data.slice(Int64(offset), Int64(contentLength))
                 let content = serializationManager.deserializeString(contentBytes)
                 StringMessage(content)
-                
+
             case "PingMessage" =>
-                if (data.size < offset + 16) { // 8字节ID + 8字节时间戳
+                if (data.size < offset + 16) {
                     throw DeserializationException("PingMessage数据不完整")
                 }
-                
+
                 let idBytes = data.slice(Int64(offset), 8)
                 let id = serializationManager.deserializeInt(idBytes)
                 offset += 8
 
                 let timestampBytes = data.slice(Int64(offset), 8)
                 let timestamp = serializationManager.deserializeInt(timestampBytes)
-                
-                // 创建PingMessage，但需要设置时间戳
-                // 简化实现：创建新的PingMessage
+
                 PingMessage(id)
-                
+
             case "PongMessage" =>
                 if (data.size < offset + 8) {
                     throw DeserializationException("PongMessage数据不完整")
                 }
-                
+
                 let idBytes = data.slice(Int64(offset), 8)
                 let originalId = serializationManager.deserializeInt(idBytes)
                 PongMessage(originalId)
-                
+
             case "StopMessage" =>
                 if (data.size < offset + 4) {
                     throw DeserializationException("StopMessage原因长度数据不完整")
                 }
                 let reasonLength = readInt32(data, offset)
                 offset += 4
-                
+
                 if (data.size < offset + Int64(reasonLength)) {
                     throw DeserializationException("StopMessage原因数据不完整")
                 }
-                
+
                 let reasonBytes = data.slice(Int64(offset), Int64(reasonLength))
                 let reason = serializationManager.deserializeString(reasonBytes)
                 StopMessage(reason)
-                
+
             case _ =>
                 throw DeserializationException("不支持的消息类型: ${messageType}")
         }
@@ -159,11 +155,30 @@ public class MessageSerializer <: Serializer<Message> {
         "MessageSerializer"
     }
 
+    public func identifier(): Int32 {
+        1
+    }
+
+    public func toBinary(o: Any): Array<UInt8> {
+        match (o as Message) {
+            case Some(msg) => serialize(msg)
+            case None => Array<UInt8>(0, { _ => UInt8(0) })
+        }
+    }
+
+    public func fromBinary(bytes: Array<UInt8>, manifest: Option<String>): Any {
+        deserialize(bytes)
+    }
+
+    public func includeManifest(): Bool {
+        false
+    }
+
     private func writeInt32(buffer: ArrayList<UInt8>, value: Int32): Unit {
-        buffer.append(UInt8((value >> 24) & 0xFF))
-        buffer.append(UInt8((value >> 16) & 0xFF))
-        buffer.append(UInt8((value >> 8) & 0xFF))
-        buffer.append(UInt8(value & 0xFF))
+        buffer.add(UInt8((value >> 24) & 0xFF))
+        buffer.add(UInt8((value >> 16) & 0xFF))
+        buffer.add(UInt8((value >> 8) & 0xFF))
+        buffer.add(UInt8(value & 0xFF))
     }
 
     private func readInt32(data: Array<UInt8>, offset: Int64): Int32 {
@@ -173,9 +188,6 @@ public class MessageSerializer <: Serializer<Message> {
         Int32(data[offset + 3])
     }
 
-    /**
-     * 去除字符串首尾空格
-     */
     private func trimString(str: String): String {
         if (str.size == 0) {
             return str
@@ -184,12 +196,10 @@ public class MessageSerializer <: Serializer<Message> {
         var start = 0
         var end = Int64(str.size) - 1
 
-        // 找到第一个非空格字符
         while (start <= end && isSpace(str[start])) {
             start += 1
         }
 
-        // 找到最后一个非空格字符
         while (end >= start && isSpace(str[end])) {
             end -= 1
         }
@@ -198,19 +208,14 @@ public class MessageSerializer <: Serializer<Message> {
             return ""
         }
 
-        // 提取子字符串
         let chars = ArrayList<Rune>()
         for (i in start..end + 1) {
-            chars.append(Rune(Int32(str[i])))
+            chars.add(Rune(Int32(str[i])))
         }
         String(chars.toArray())
     }
 
-    /**
-     * 检查字符是否为空格或控制字符
-     */
     private func isSpace(byte: UInt8): Bool {
-        // 空格、制表符、换行符、回车符，以及其他控制字符(0-31)
         byte <= UInt8(32) || byte == UInt8(127)
     }
 }
@@ -235,7 +240,6 @@ public class DeserializationException <: Exception {
 
 /**
  * 消息序列化管理器
- * 提供消息序列化的统一接口
  */
 public class MessageSerializationManager {
     private let messageSerializer: MessageSerializer
@@ -244,23 +248,14 @@ public class MessageSerializationManager {
         this.messageSerializer = MessageSerializer()
     }
 
-    /**
-     * 序列化消息
-     */
     public func serialize(message: Message): Array<UInt8> {
         messageSerializer.serialize(message)
     }
 
-    /**
-     * 反序列化消息
-     */
     public func deserialize(data: Array<UInt8>): Message {
         messageSerializer.deserialize(data)
     }
 
-    /**
-     * 获取序列化器名称
-     */
     public func getSerializerName(): String {
         messageSerializer.getName()
     }

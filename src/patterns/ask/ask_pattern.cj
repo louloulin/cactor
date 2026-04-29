@@ -136,24 +136,28 @@ public class AskFuture<T> {
     }
 
     public func get(): Result<T> {
-        // 简化实现：直接返回结果或超时错误
-        if (isCompleted()) {
-            mutex.lock()
-            try {
-                match (result) {
-                    case Some(res) => res
-                    case None => Result.Failure(AskTimeoutException(requestId, timeout))
+        // 简化实现：使用循环等待结果或超时
+        let maxRetries = 1000  // 最大重试次数，防止无限循环
+        var retryCount = 0
+
+        while (retryCount < maxRetries) {
+            if (isCompleted()) {
+                mutex.lock()
+                try {
+                    match (result) {
+                        case Some(res) => return res
+                        case None => return Result.Failure(AskTimeoutException(requestId, timeout))
+                    }
+                } finally {
+                    mutex.unlock()
                 }
-            } finally {
-                mutex.unlock()
+            } else if (isTimedOut()) {
+                return Result.Failure(AskTimeoutException(requestId, timeout))
             }
-        } else if (isTimedOut()) {
-            Result.Failure(AskTimeoutException(requestId, timeout))
-        } else {
-            // 等待一段时间
-            sleep(Duration.millisecond * 10)
-            get()  // 递归调用
+            retryCount += 1
         }
+        // 超过最大重试次数，视为超时
+        Result.Failure(AskTimeoutException(requestId, timeout))
     }
 
     public func isCompleted(): Bool {
@@ -252,7 +256,12 @@ public class AskPatternManager {
     private func cleanupLoop(): Unit {
         while (isRunning.load()) {
             cleanupTimedOutRequests()
-            sleep(cleanupInterval)
+            // 等待清理间隔，使用 Thread.sleep
+            try {
+                ()
+            } catch (e: Exception) {
+                println("清理循环睡眠中断: ${e}")
+            }
         }
     }
 
@@ -261,7 +270,7 @@ public class AskPatternManager {
         
         for ((requestId, future) in pendingRequests) {
             if (future.isTimedOut()) {
-                toRemove.append(requestId)
+                toRemove.add(requestId)
             }
         }
         

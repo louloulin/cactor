@@ -146,8 +146,8 @@ public class BackoffSupervisionStrategy <: SupervisionStrategy {
         let nextDelay = Duration.nanosecond * nextDelayNanos
         
         // 更新状态
-        retryCounts.put(actorKey, currentRetries + 1)
-        retryDelays.put(actorKey, nextDelay)
+        retryCounts.add(actorKey, currentRetries + 1)
+        retryDelays.add(actorKey, nextDelay)
         
         println("[BACKOFF] Actor ${actorKey} 将在 ${currentDelay.toMilliseconds()}ms 后重试")
         
@@ -210,12 +210,12 @@ public class CircuitBreakerSupervisionStrategy <: SupervisionStrategy {
             case None => Int32(1)
         }
         
-        failureCounts.put(actorKey, currentFailures)
-        lastFailureTime.put(actorKey, now)
+        failureCounts.add(actorKey, currentFailures)
+        lastFailureTime.add(actorKey, now)
         
         if (currentFailures >= failureThreshold) {
             // 达到失败阈值，打开电路
-            circuitState.put(actorKey, CircuitState.Open)
+            circuitState.add(actorKey, CircuitState.Open)
             println("[CIRCUIT] 电路熔断器打开: ${actorKey}")
             return SupervisionDirective.Stop
         }
@@ -231,7 +231,7 @@ public class CircuitBreakerSupervisionStrategy <: SupervisionStrategy {
         
         if (now - lastFailure > timeWindow.toMilliseconds()) {
             // 时间窗口过期，进入半开状态
-            circuitState.put(actorKey, CircuitState.HalfOpen)
+            circuitState.add(actorKey, CircuitState.HalfOpen)
             println("[CIRCUIT] 电路熔断器进入半开状态: ${actorKey}")
             return SupervisionDirective.Restart
         }
@@ -242,8 +242,8 @@ public class CircuitBreakerSupervisionStrategy <: SupervisionStrategy {
     
     private func handleHalfOpenState(actorKey: String, now: Int64): SupervisionDirective {
         // 半开状态下的失败，重新打开电路
-        circuitState.put(actorKey, CircuitState.Open)
-        lastFailureTime.put(actorKey, now)
+        circuitState.add(actorKey, CircuitState.Open)
+        lastFailureTime.add(actorKey, now)
         println("[CIRCUIT] 电路熔断器重新打开: ${actorKey}")
         SupervisionDirective.Stop
     }
@@ -253,7 +253,7 @@ public class CircuitBreakerSupervisionStrategy <: SupervisionStrategy {
      */
     public func resetCircuit(actor: ActorRef): Unit {
         let actorKey = actor.path.toString()
-        circuitState.put(actorKey, CircuitState.Closed)
+        circuitState.add(actorKey, CircuitState.Closed)
         failureCounts.remove(actorKey)
         lastFailureTime.remove(actorKey)
         println("[CIRCUIT] 电路熔断器已重置: ${actorKey}")
@@ -304,7 +304,7 @@ public class AdvancedSupervisor <: Supervisor {
     }
     
     private func recordFailure(failure: ActorFailure): Unit {
-        failureHistory.append(failure)
+        failureHistory.add(failure)
         
         // 限制历史记录大小
         while (failureHistory.size > Int64(maxHistorySize)) {
@@ -331,7 +331,7 @@ public class AdvancedSupervisor <: Supervisor {
     }
     
     public func addChild(child: ActorRef): Unit {
-        children.put(child.path.toString(), child)
+        children.add(child.path.toString(), child)
     }
     
     public func removeChild(child: ActorRef): Unit {
@@ -341,7 +341,7 @@ public class AdvancedSupervisor <: Supervisor {
     public func getChildren(): Array<ActorRef> {
         let childList = ArrayList<ActorRef>()
         for ((_, actor) in children) {
-            childList.append(actor)
+            childList.add(actor)
         }
         Array<ActorRef>(Int64(childList.size), { i => childList[i] })
     }

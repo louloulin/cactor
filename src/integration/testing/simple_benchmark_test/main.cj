@@ -11,25 +11,23 @@ import cactor.integration.testing.{SimpleBenchmark, SimpleBenchmarkConfig, Simpl
 /**
  * 简化压测测试主程序
  */
-main(): Int64 {
+main(args: Array<String>): Unit {
     println("🧪 开始CActor简化压测测试")
     println("基于plan2.md的性能优化目标验证")
     println()
-    
+
     // 运行轻量级压测
     testLightBenchmark()
-    
+
     // 运行默认压测
     testDefaultBenchmark()
-    
+
     // 运行性能对比测试
     testPerformanceComparison()
-    
+
     println()
     println("🏆 所有简化性能测试通过！")
     println("CActor性能优化验证成功")
-    
-    return 0
 }
 
 /**

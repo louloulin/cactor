@@ -138,16 +138,16 @@ public struct HighPerformanceActorSystemConfig {
     public func getDescription(): String {
         let features = ArrayList<String>()
         
-        if (messageBatching) { features.append("消息批处理") }
-        if (zeroCopyMessaging) { features.append("零拷贝消息") }
-        if (objectPooling) { features.append("对象池") }
-        if (gcOptimization) { features.append("GC优化") }
-        if (memoryCompaction) { features.append("内存压缩") }
-        if (lazyLoading) { features.append("懒加载") }
-        if (directMemoryAccess) { features.append("直接内存访问") }
-        if (jitOptimization) { features.append("JIT优化") }
-        if (bulkProcessing) { features.append("批量处理") }
-        if (pipelineOptimization) { features.append("流水线优化") }
+        if (messageBatching) { features.add("消息批处理") }
+        if (zeroCopyMessaging) { features.add("零拷贝消息") }
+        if (objectPooling) { features.add("对象池") }
+        if (gcOptimization) { features.add("GC优化") }
+        if (memoryCompaction) { features.add("内存压缩") }
+        if (lazyLoading) { features.add("懒加载") }
+        if (directMemoryAccess) { features.add("直接内存访问") }
+        if (jitOptimization) { features.add("JIT优化") }
+        if (bulkProcessing) { features.add("批量处理") }
+        if (pipelineOptimization) { features.add("流水线优化") }
         
         if (features.isEmpty()) {
             return "标准配置"
@@ -164,15 +164,15 @@ public struct HighPerformanceActorSystemConfig {
         
         // 检查冲突配置
         if (gcOptimization && memoryCompaction) {
-            warnings.append("GC优化与内存压缩可能冲突")
+            warnings.add("GC优化与内存压缩可能冲突")
         }
         
         if (messageBatching && directMemoryAccess) {
-            warnings.append("消息批处理与直接内存访问需要仔细调优")
+            warnings.add("消息批处理与直接内存访问需要仔细调优")
         }
         
         if (lazyLoading && (messageBatching || bulkProcessing)) {
-            warnings.append("懒加载可能影响批处理性能")
+            warnings.add("懒加载可能影响批处理性能")
         }
         
         return warnings.toArray()

@@ -51,14 +51,14 @@ public class TimeSeries {
             // 移除最老的数据点 - 简化实现：清空并重新添加
             let newPoints = ArrayList<DataPoint>()
             for (i in 1..dataPoints.size) {
-                newPoints.append(dataPoints[i])
+                newPoints.add(dataPoints[i])
             }
             dataPoints.clear()
             for (p in newPoints) {
-                dataPoints.append(p)
+                dataPoints.add(p)
             }
         }
-        dataPoints.append(point)
+        dataPoints.add(point)
         mutex.unlock()
     }
     
@@ -133,7 +133,7 @@ public class DashboardComponent {
     
     public func addTimeSeries(series: TimeSeries): Unit {
         mutex.lock()
-        timeSeries.append(series)
+        timeSeries.add(series)
         mutex.unlock()
     }
     
@@ -142,12 +142,12 @@ public class DashboardComponent {
         let newTimeSeries = ArrayList<TimeSeries>()
         for (series in timeSeries) {
             if (series.name != name) {
-                newTimeSeries.append(series)
+                newTimeSeries.add(series)
             }
         }
         timeSeries.clear()
         for (series in newTimeSeries) {
-            timeSeries.append(series)
+            timeSeries.add(series)
         }
         mutex.unlock()
     }
@@ -184,7 +184,7 @@ public class DashboardComponent {
                 let startIndex = points.size - 5
                 let result = ArrayList<DataPoint>()
                 for (i in startIndex..points.size) {
-                    result.append(points[i])
+                    result.add(points[i])
                 }
                 result.toArray()
             } else {
@@ -242,7 +242,7 @@ public class MonitoringDashboard {
         mutex.lock()
         let result = ArrayList<DashboardComponent>()
         for ((_, component) in components) {
-            result.append(component)
+            result.add(component)
         }
         mutex.unlock()
         return result.toArray()

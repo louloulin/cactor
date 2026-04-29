@@ -160,23 +160,23 @@ public class TcpTransport <: NetworkTransport {
 
     private func startServer(): Unit {
         println("TCP服务器开始监听端口: ${localAddress.port}")
-        
+
         // 简化的服务器实现
         while (isRunning.load()) {
             try {
                 // 模拟接收连接和数据
-                sleep(Duration.millisecond * 100)
-                
+                ()
+
                 // 这里应该是真正的socket监听代码
                 // 由于仓颉socket API的复杂性，这里使用简化实现
-                
+
             } catch (e: Exception) {
                 if (isRunning.load()) {
                     println("服务器错误: ${e.message}")
                 }
             }
         }
-        
+
         println("TCP服务器停止监听")
     }
 
@@ -248,10 +248,10 @@ public class UdpTransport <: NetworkTransport {
 
     private func startServer(): Unit {
         println("UDP服务器开始监听端口: ${localAddress.port}")
-        
+
         while (isRunning.load()) {
             try {
-                sleep(Duration.millisecond * 100)
+                ()
                 // UDP监听实现
             } catch (e: Exception) {
                 if (isRunning.load()) {
@@ -259,7 +259,7 @@ public class UdpTransport <: NetworkTransport {
                 }
             }
         }
-        
+
         println("UDP服务器停止监听")
     }
 }

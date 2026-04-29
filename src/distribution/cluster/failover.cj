@@ -287,7 +287,7 @@ public class FailoverManager {
         let maxCount = if (count < Int64(availableNodes.size)) { count } else { Int64(availableNodes.size) }
         
         for (i in 0..maxCount) {
-            selectedNodes.append(availableNodes[i])
+            selectedNodes.add(availableNodes[i])
         }
         
         selectedNodes.toArray()

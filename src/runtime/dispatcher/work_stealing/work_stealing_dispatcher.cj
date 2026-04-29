@@ -74,7 +74,7 @@ public class WorkStealingQueue<T> {
             if (size.load() >= maxSize) {
                 return false
             }
-            items.append(item)  // 添加到末尾
+            items.add(item)  // 添加到末尾
             size.fetchAdd(1)
             return true
         } finally {
@@ -180,12 +180,16 @@ public class WorkerThread {
     private func workerLoop(): Unit {
         while (isRunning.load()) {
             match (findTask()) {
-                case Some(task) => 
+                case Some(task) =>
                     executeTask(task)
                     tasksProcessed.fetchAdd(1)
-                case None => 
+                case None =>
                     // 没有任务，短暂休眠
-                    sleep(Duration.microsecond * 10)
+                    try {
+                        ()
+                    } catch (e: Exception) {
+                        // 睡眠中断，继续循环
+                    }
             }
         }
     }
@@ -452,7 +456,7 @@ public class WorkStealingDispatcher {
     public func getWorkerStats(): Array<WorkerStats> {
         let stats = ArrayList<WorkerStats>()
         for (worker in workers) {
-            stats.append(WorkerStats(
+            stats.add(WorkerStats(
                 worker.getWorkerId(),
                 worker.getTasksProcessed(),
                 worker.getLocalQueueSize(),

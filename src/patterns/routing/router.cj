@@ -193,7 +193,7 @@ public class BasicRouter <: Router {
     public func addRoutee(routee: ActorRef): Unit {
         mutex.lock()
         try {
-            routees.append(routee)
+            routees.add(routee)
         } finally {
             mutex.unlock()
         }

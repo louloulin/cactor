@@ -283,10 +283,10 @@ public class Plan10APITest {
 /**
  * 主函数 - 执行Plan10 API测试
  */
-main(): Unit {
+main(args: Array<String>): Unit {
     let test = Plan10APITest()
     let success = test.runAllTests()
-    
+
     if (success) {
         println("\n🚀 Plan10 API层验证完成 - 所有测试通过!")
         println("📋 API层设计符合plan10.md要求")

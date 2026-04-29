@@ -127,7 +127,7 @@ public class FileAppender <: LogAppender {
     
     public func append(record: LogRecord): Unit {
         mutex.lock()
-        buffer.append(record.toString())
+        buffer.add(record.toString())
         
         if (buffer.size >= maxBufferSize) {
             flushBuffer()
@@ -179,19 +179,19 @@ public class AsyncAppender <: LogAppender {
     public func append(record: LogRecord): Unit {
         mutex.lock()
         if (queue.size < maxQueueSize) {
-            queue.append(record)
+            queue.add(record)
         } else {
             // 队列满时丢弃最旧的记录
             // 简化实现：清空队列重新添加
             let newQueue = ArrayList<LogRecord>()
             for (i in 1..queue.size) {
-                newQueue.append(queue[i])
+                newQueue.add(queue[i])
             }
             queue.clear()
             for (record in newQueue) {
-                queue.append(record)
+                queue.add(record)
             }
-            queue.append(record)
+            queue.add(record)
         }
         mutex.unlock()
     }
@@ -214,14 +214,14 @@ public class AsyncAppender <: LogAppender {
         mutex.lock()
         let recordsToProcess = ArrayList<LogRecord>()
         for (record in queue) {
-            recordsToProcess.append(record)
+            recordsToProcess.add(record)
         }
         queue.clear()
         mutex.unlock()
         
         // 处理记录
         for (record in recordsToProcess) {
-            targetAppender.append(record)
+            targetAppender.add(record)
         }
     }
     
@@ -255,7 +255,7 @@ public class Logger {
     
     public func addAppender(appender: LogAppender): Unit {
         mutex.lock()
-        appenders.append(appender)
+        appenders.add(appender)
         mutex.unlock()
     }
     
@@ -274,7 +274,7 @@ public class Logger {
             mutex.lock()
             for (appender in appenders) {
                 try {
-                    appender.append(record)
+                    appender.add(record)
                 } catch (e: Exception) {
                     println("日志输出器异常: ${e.message}")
                 }

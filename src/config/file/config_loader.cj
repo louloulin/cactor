@@ -105,35 +105,35 @@ public class ActorSystemConfig {
      * 添加邮箱配置
      */
     public func addMailboxConfig(name: String, config: MailboxConfig): Unit {
-        mailboxConfigs.put(name, config)
+        mailboxConfigs.add(name, config)
     }
     
     /**
      * 添加调度器配置
      */
     public func addDispatcherConfig(name: String, config: DispatcherConfig): Unit {
-        dispatcherConfigs.put(name, config)
+        dispatcherConfigs.add(name, config)
     }
     
     /**
      * 添加监督配置
      */
     public func addSupervisionConfig(name: String, config: SupervisionConfig): Unit {
-        supervisionConfigs.put(name, config)
+        supervisionConfigs.add(name, config)
     }
     
     /**
      * 添加路由配置
      */
     public func addRoutingConfig(name: String, config: RoutingConfig): Unit {
-        routingConfigs.put(name, config)
+        routingConfigs.add(name, config)
     }
     
     /**
      * 添加Actor配置
      */
     public func addActorConfiguration(name: String, config: ActorConfiguration): Unit {
-        actorConfigurations.put(name, config)
+        actorConfigurations.add(name, config)
     }
     
     /**
@@ -323,33 +323,33 @@ public class TOMLConfigLoader <: ConfigLoader {
         
         // 验证系统名称
         if (config.systemName.isEmpty()) {
-            errors.append("System name cannot be empty")
+            errors.add("System name cannot be empty")
         }
         
         // 验证邮箱配置
         for ((name, mailboxConfig) in config.mailboxConfigs) {
             if (name.isEmpty()) {
-                errors.append("Mailbox config name cannot be empty")
+                errors.add("Mailbox config name cannot be empty")
             }
             if (mailboxConfig.capacity < 0) {
-                errors.append("Mailbox capacity cannot be negative: ${name}")
+                errors.add("Mailbox capacity cannot be negative: ${name}")
             }
         }
         
         // 验证调度器配置
         for ((name, dispatcherConfig) in config.dispatcherConfigs) {
             if (name.isEmpty()) {
-                errors.append("Dispatcher config name cannot be empty")
+                errors.add("Dispatcher config name cannot be empty")
             }
             if (dispatcherConfig.throughput <= 0) {
-                errors.append("Dispatcher throughput must be positive: ${name}")
+                errors.add("Dispatcher throughput must be positive: ${name}")
             }
         }
         
         // 验证Actor配置
         for ((name, actorConfig) in config.actorConfigurations) {
             if (name.isEmpty()) {
-                errors.append("Actor config name cannot be empty")
+                errors.add("Actor config name cannot be empty")
             }
         }
         
@@ -761,8 +761,8 @@ public class ConfigurationManager {
         }
 
         // 缓存配置
-        configCache.put(filePath, config)
-        loadedConfigs.put(filePath, config)
+        configCache.add(filePath, config)
+        loadedConfigs.add(filePath, config)
 
         config
     }
@@ -815,7 +815,7 @@ public class ConfigurationManager {
     public func getLoadedConfigPaths(): Array<String> {
         let paths = ArrayList<String>()
         for ((path, _) in loadedConfigs) {
-            paths.append(path)
+            paths.add(path)
         }
         Array<String>(Int64(paths.size), { i => paths[i] })
     }

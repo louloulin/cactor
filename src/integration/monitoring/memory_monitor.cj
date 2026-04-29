@@ -230,15 +230,15 @@ public class HighPerfMemoryMonitor <: MemoryMonitor {
         let recommendations = ArrayList<String>()
         
         if (stats.utilizationRatio > 0.8) {
-            recommendations.append("内存使用率过高，建议增加内存池大小")
+            recommendations.add("内存使用率过高，建议增加内存池大小")
         }
         
         if (stats.fragmentationRatio > 0.25) {
-            recommendations.append("内存碎片化严重，建议执行内存整理")
+            recommendations.add("内存碎片化严重，建议执行内存整理")
         }
         
         if (stats.allocationCount > stats.deallocationCount * 2) {
-            recommendations.append("内存分配频繁，建议优化内存复用")
+            recommendations.add("内存分配频繁，建议优化内存复用")
         }
         
         return recommendations.toArray()
@@ -404,7 +404,7 @@ public class CircularBuffer<T> {
         for (i in 0..size) {
             match (buffer[current]) {
                 case Some(item) =>
-                    result.append(item)
+                    result.add(item)
                 case None =>
                     ()
             }

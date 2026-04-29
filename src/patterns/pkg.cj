@@ -6,7 +6,7 @@
 package cactor.patterns
 
 // 模式组件导出
-public import cactor.patterns.ask.*
-public import cactor.patterns.routing.*
-public import cactor.patterns.circuit_breaker.*
-public import cactor.patterns.backpressure.*
+import cactor.patterns.ask.*
+import cactor.patterns.routing.*
+import cactor.patterns.circuit_breaker.*
+import cactor.patterns.backpressure.*

@@ -223,7 +223,7 @@ public class SPSCQueue<T> {
             let index = (currentConsumerIndex + Int64(i)) & this.consumerMask
             match (this.consumerBuffer[index]) {
                 case Some(value) =>
-                    results.append(value)
+                    results.add(value)
                     this.consumerBuffer[index] = None
                     count += 1
                 case None =>

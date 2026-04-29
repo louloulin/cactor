@@ -281,10 +281,10 @@ public class Plan10CActorRuntimeTest {
 /**
  * 主函数 - 执行Plan10 CActorRuntime测试
  */
-main(): Unit {
+main(args: Array<String>): Unit {
     let test = Plan10CActorRuntimeTest()
     let success = test.runAllTests()
-    
+
     if (success) {
         println("\n🚀 Plan10 CActorRuntime验证完成 - 所有测试通过!")
         println("📋 CActorRuntime统一运行时管理器功能正常")
