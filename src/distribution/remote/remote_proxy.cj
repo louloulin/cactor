@@ -277,7 +277,7 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
         message: Message,
         config!: RemoteCallConfig = RemoteCallConfig()
     ): RemoteCallResult<Message> {
-        let startTime = DateTime.now().toUnixTimeStamp()
+        let startTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
         let correlationId = this.generateCorrelationId()
 
         // 创建 CompletableFuture
@@ -317,8 +317,8 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
         // 等待响应（带超时）
         match (future.getWithTimeout(config.timeout)) {
             case Some(resultMsg) =>
-                let endTime = DateTime.now().toUnixTimeStamp()
-                let latencyMs = Int64(endTime - startTime)
+                let endTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
+                let latencyMs = endTime - startTime
                 return RemoteCallResult<Message>.ok(resultMsg, latencyMs, this.nodeId)
             case None =>
                 // 超时
@@ -562,48 +562,51 @@ public class ActorPathParser {
      */
     public static func parse(path: String): ActorPath {
         // 格式: cactor://system@host:port/actor/path/element
+        // 简化的解析器，使用 split 代替 substring
         var protocolStr = "cactor"
         var system = "default"
-        var host = ""
+        var host = "localhost"
         var port: Int32 = 0
         var elements = ArrayList<String>()
 
         // 移除协议前缀
         let withoutProtocol = path.replace("cactor://", "")
 
-        // 分割系统/主机部分和路径部分
-        let atIndexOpt = withoutProtocol.lastIndexOf("@")
-        let slashIndexOpt = withoutProtocol.lastIndexOf("/")
+        // 使用 split 分割路径
+        let parts = withoutProtocol.split("@")
+        if (parts.size >= 2) {
+            // 解析 system 部分
+            let systemPart = parts[0]
+            let systemParts = systemPart.split(":")
+            if (systemParts.size >= 1) {
+                system = systemParts[0]
+            }
 
-        match (atIndexOpt) {
-            case Some(atIndex) =>
-                let slashIdx = slashIndexOpt.getOrThrow()
-                let systemHost = withoutProtocol.subString(0, atIndex)
-                let systemParts = systemHost.split(":")
-                if (systemParts.size >= 1) {
-                    system = systemParts[0]
-                }
+            // 解析 host:port/路径 部分
+            let hostPathPart = parts[1]
+            let pathParts = hostPathPart.split("/")
 
-                if (slashIdx > atIndex) {
-                    // 有端口和路径
-                    let hostPort = withoutProtocol.subString(atIndex + 1, slashIdx)
-                    let hostParts = hostPort.split(":")
-                    host = hostParts[0]
-                    if (hostParts.size > 1) {
-                        port = Int32.parse(hostParts[1])
-                    }
-                    let pathPart = withoutProtocol.subString(slashIdx + 1)
-                    elements = ArrayList<String>(pathPart.split("/").toArray())
-                } else {
-                    // 只有主机:端口
-                    let hostPort = withoutProtocol.subString(atIndex + 1)
-                    let hostParts = hostPort.split(":")
-                    host = hostParts[0]
-                    if (hostParts.size > 1) {
-                        port = Int32.parse(hostParts[1])
-                    }
+            // 第一个部分是 host:port
+            if (pathParts.size >= 1) {
+                let hostPortPart = pathParts[0]
+                let hostPortParts = hostPortPart.split(":")
+                host = hostPortParts[0]
+                if (hostPortParts.size > 1) {
+                    port = Int32.parse(hostPortParts[1])
                 }
-            case None => ()
+            }
+
+            // 其余部分是路径元素
+            if (pathParts.size > 1) {
+                var elementIndex = 1
+                while (elementIndex < pathParts.size) {
+                    let elem = pathParts[elementIndex]
+                    if (elem.size > 0) {
+                        elements.add(elem)
+                    }
+                    elementIndex += 1
+                }
+            }
         }
 
         let address = Address(protocolStr, system, host, port)

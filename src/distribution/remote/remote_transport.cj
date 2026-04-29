@@ -67,7 +67,11 @@ public class RemoteEnvelope {
     }
 
     public func toString(): String {
-        "RemoteEnvelope(to=${recipient.toString()}, from=${senderOption})"
+        let senderStr = match (senderOption) {
+            case Some(path) => path.toString()
+            case None => "None"
+        }
+        "RemoteEnvelope(to=${recipient.toString()}, from=${senderStr})"
     }
 }
 
@@ -156,26 +160,29 @@ public interface RemoteActorRef <: ActorRef {
  * 简单远程消息流
  */
 public class SimpleRemoteMessageStream <: RemoteMessageStream {
-    private let queue: ArrayQueue<RemoteEnvelope>
+    private let queue: ArrayList<RemoteEnvelope>
+    private var headIndex: Int64 = 0
     private let mutex: ReentrantMutex
     private var closed: Bool
 
     public init() {
-        this.queue = ArrayQueue<RemoteEnvelope>()
+        this.queue = ArrayList<RemoteEnvelope>()
         this.mutex = ReentrantMutex()
         this.closed = false
     }
 
     public func enqueue(envelope: RemoteEnvelope): Unit {
         mutex.lock()
-        queue.enqueue(envelope)
+        queue.add(envelope)
         mutex.unlock()
     }
 
     public func next(): Option<RemoteEnvelope> {
         mutex.lock()
-        let result = if (!queue.isEmpty()) {
-            Some(queue.dequeue())
+        let result = if (headIndex < queue.size()) {
+            let item = queue[headIndex]
+            headIndex += 1
+            Some(item)
         } else {
             None
         }
@@ -267,9 +274,9 @@ public enum TransportProtocol {
 }
 
 /**
- * 传输工厂
+ * 远程传输工厂
  */
-public class TransportFactory {
+public class RemoteTransportFactory {
     public static func createTransport(protocol: TransportProtocol, address: NetworkAddress): NetworkTransport {
         SimpleNetworkTransport(address)
     }
