@@ -67,6 +67,23 @@ public enum TcpConnectionState {
             case CLOSED => "closed"
         }
     }
+
+    public func isConnected(): Bool {
+        match (this) {
+            case CONNECTED => true
+            case _ => false
+        }
+    }
+
+    public func isNot(state: TcpConnectionState): Bool {
+        match ((this, state)) {
+            case (CONNECTING, CONNECTING) => false
+            case (CONNECTED, CONNECTED) => false
+            case (CLOSING, CLOSING) => false
+            case (CLOSED, CLOSED) => false
+            case _ => true
+        }
+    }
 }
 
 /**
@@ -196,7 +213,7 @@ public class TcpConnection {
     public func send(data: Array<UInt8>): Bool {
         try {
             lock.readMutex.lock()
-            if (state != TcpConnectionState.CONNECTED) {
+            if (state.isNot(TcpConnectionState.CONNECTED)) {
                 lock.readMutex.unlock()
                 return false
             }
@@ -226,7 +243,7 @@ public class TcpConnection {
     public func receive(bufferSize: Int64): Option<Array<UInt8>> {
         try {
             lock.readMutex.lock()
-            if (state != TcpConnectionState.CONNECTED) {
+            if (state.isNot(TcpConnectionState.CONNECTED)) {
                 lock.readMutex.unlock()
                 return None
             }
@@ -736,7 +753,7 @@ public class TcpClient {
                 case Some(conn) =>
                     let info = conn.getConnectionInfo()
                     lock.readMutex.unlock()
-                    return info.state == TcpConnectionState.CONNECTED
+                    return info.state.isConnected()
                 case None =>
                     lock.readMutex.unlock()
                     return false

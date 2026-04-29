@@ -21,7 +21,7 @@ public interface ActorContext {
     func actorOf(props: Props<Actor>): ActorRef
     func watch(actorRef: ActorRef): Unit
     func unwatch(actorRef: ActorRef): Unit
-    func system(): ActorSystem
+    func system(): cactor.core.system.ActorSystem
     func setReceiveTimeout(timeout: Duration): Unit
     func receiveTimeout(): Duration
     func stop(): Unit
