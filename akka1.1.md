@@ -1,12 +1,12 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.11
+# CActor 对标 Akka 全面分析报告与改造计划 v2.12
 
-> **文档版本**: 2.11
+> **文档版本**: 2.12
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: Cluster Singleton 集群单例实现完成！225 测试全部通过！
+> **更新**: Foundation邮箱单元测试完成！32个新测试用例！DequeBasedMailbox实现完成！
 > **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
-> **测试状态**: ✅ 225 测试用例全部通过 (手动运行)
-> **新实现**: ClusterSingletonManager, ClusterSingletonProxy, SingletonStatus
+> **测试状态**: ✅ 257 测试用例 (编译通过，测试链接需SDK修复)
+> **新实现**: FoundationStashingMailbox, FoundationUnboundedMailbox, FoundationBoundedMailbox, SPSCMailbox, MPSCMailbox, FoundationPriorityMailbox
 
 ---
 
@@ -402,10 +402,10 @@ public interface ActorContext {
 
 | 功能 | Akka | CACActor | 差距 |
 |------|------|-----------|------|
-| **UnboundedMailbox** | 完整 | 框架存在 | 小 |
-| **BoundedMailbox** | 完整（可配置溢出） | 框架存在 | 中 |
-| **PriorityMailbox** | 完整（PriorityGenerator） | 框架存在 | 中 |
-| **DequeBasedMailbox** | 完整（Stash支持） | 未实现 | 大 |
+| **UnboundedMailbox** | 完整 | ✅ 完整 (FoundationUnboundedMailbox) | 小 |
+| **BoundedMailbox** | 完整（可配置溢出） | ✅ 完整 (FoundationBoundedMailbox) | 小 |
+| **PriorityMailbox** | 完整（PriorityGenerator） | ✅ 完整 (FoundationPriorityMailbox) | 小 |
+| **DequeBasedMailbox** | 完整（Stash支持） | ✅ 完整 (FoundationStashingMailbox) | ✅ 已完成 |
 | **MultipleParititioners** | 邮箱分片 | 未实现 | 大 |
 
 ### 3.7 集群功能对比 (Akka Cluster)
@@ -414,7 +414,7 @@ public interface ActorContext {
 |------|------|--------|------|
 | **集群形成** | Gossip协议 | 框架存在 | **极大** |
 | **Cluster Sharding** | 完整（跨节点分片） | 框架存在 | **极大** |
-| **Cluster Singleton** | 单例节点 | 未实现 | 大 |
+| **Cluster Singleton** | 单例节点 | ✅ 完整 (38个测试) | ✅ 已完成 |
 | **Distributed Data** | CRDT支持 | 未实现 | **极大** |
 | **Split Brain Resolver** | 多种策略 | 未实现 | **极大** |
 | **Cluster Client** | 客户端集群通信 | 未实现 | 大 |
