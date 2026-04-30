@@ -328,7 +328,15 @@ public class DummyActorRef <: ActorRef {
     }
 
     public func hashCode(): Int32 {
-        Int32(id.hashCode())
+        // Use modulo to keep within Int32 range and ensure same id = same hash
+        let h = id.hashCode()
+        let max = Int64(2147483647)  // Int32.MAX
+        let result = h % max
+        if (result < 0) {
+            Int32(result + max)
+        } else {
+            Int32(result)
+        }
     }
 
     public func toString(): String {

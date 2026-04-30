@@ -2144,4 +2144,111 @@ typedRef.tell(EchoCommand("hello"))
 
 ---
 
-*本文档 v2.6 - TypedActor 类型安全Actor实现完成！161/161 测试通过！*
+## 五、v2.7 Ask/CircuitBreaker/Backpressure 模式单元测试 (2026-04-30)
+
+### 5.1 Ask Pattern 单元测试 ✅
+
+**文件**: `src/patterns/ask/ask_pattern_test.cj`
+**功能**: 完整的 Ask Pattern (请求-响应) 测试
+
+**测试用例** (23 个):
+```cangjie
+@Test func testAskMessage_creation()
+@Test func testAskMessage_messageType()
+@Test func testAskResponse_success()
+@Test func testAskResponse_failure()
+@Test func testAskTimeoutException_creation()
+@Test func testAskFuture_initialization()
+@Test func testAskFuture_complete()
+@Test func testAskFuture_completeWithError()
+@Test func testAskFuture_getResult()
+@Test func testAskFuture_getResultError()
+@Test func testDummyActorRef_creation()
+@Test func testDummyActorRef_equality()
+@Test func testDummyActorRef_hashCode()
+@Test func testDummyActorRef_toString()
+@Test func testDummyActorRef_path()
+@Test func testAskPatternManager_initialization()
+@Test func testAskPatternManager_getPendingRequestCount()
+@Test func testResult_success()
+@Test func testResult_failure()
+@Test func testResult_get()
+@Test func testResult_getOrElse_success()
+@Test func testResult_getOrElse_failure()
+@Test func testResult_nested()
+```
+
+### 5.2 CircuitBreaker Pattern 单元测试 ✅
+
+**文件**: `src/patterns/circuit_breaker/circuit_breaker_test.cj`
+**功能**: 完整的断路器模式测试
+
+**测试用例** (20 个):
+```cangjie
+@Test func testCircuitBreakerState_values()
+@Test func testCircuitBreakerConfig_creation()
+@Test func testCircuitBreakerConfig_defaultValues()
+@Test func testCircuitBreakerStats_creation()
+@Test func testCircuitBreakerStats_failureRate()
+@Test func testCircuitBreakerStats_successRate()
+@Test func testCircuitBreakerStats_zeroRequests()
+@Test func testCircuitBreakerOpenException_creation()
+@Test func testCircuitBreakerOpenException_message()
+@Test func testBasicCircuitBreaker_initialization()
+@Test func testBasicCircuitBreaker_initialState()
+@Test func testBasicCircuitBreaker_executeSuccess()
+@Test func testBasicCircuitBreaker_executeSuccessUpdatesStats()
+@Test func testBasicCircuitBreaker_executeFailure()
+@Test func testBasicCircuitBreaker_trip()
+@Test func testBasicCircuitBreaker_reset()
+@Test func testBasicCircuitBreaker_openStateBlocksExecution()
+@Test func testCircuitBreakerFactory_createDefault()
+@Test func testCircuitBreakerFactory_createFastFail()
+@Test func testCircuitBreakerFactory_createTolerant()
+@Test func testCircuitBreakerDecorator_withFallback()
+@Test func testCircuitBreakerDecorator_getCircuitBreaker()
+```
+
+### 5.3 Backpressure Pattern 单元测试 ✅
+
+**文件**: `src/patterns/backpressure/backpressure_test.cj`
+**功能**: 完整的背压模式测试
+
+**测试用例** (18 个):
+```cangjie
+@Test func testBackpressureStrategy_values()
+@Test func testBackpressureConfig_creation()
+@Test func testBackpressureConfig_defaultStrategy()
+@Test func testBackpressureStats_creation()
+@Test func testBackpressureStats_dropRate()
+@Test func testBackpressureStats_successRate()
+@Test func testBackpressureStats_zeroMessages()
+@Test func testBackpressureException_creation()
+@Test func testBackpressureException_getStrategy()
+@Test func testBackpressureException_getReason()
+@Test func testBasicBackpressureController_initialization()
+@Test func testBasicBackpressureController_trySendSuccess()
+@Test func testBasicBackpressureController_getStats()
+@Test func testBasicBackpressureController_reset()
+@Test func testBasicBackpressureController_multipleMessages()
+@Test func testFlowControllerInterface()
+```
+
+### 5.4 v2.7 验证结果
+
+| 验证项 | 状态 | 说明 |
+|--------|------|------|
+| `cjpm build` | ✅ 成功 | 所有模块编译通过 |
+| `cjpm test` | ✅ 成功 | Pattern 测试 23+20+18=61 个测试通过 |
+| DummyActorRef.hashCode() | ✅ 修复 | 解决 Int64->Int32 溢出问题 |
+
+### 5.5 修复的问题
+
+| 问题 | 修复方式 |
+|------|---------|
+| `Int32(String.hashCode())` 溢出 | 使用 `Int64 % Int32.MAX` + 偏移量 |
+| macOS SDKROOT 配置 | 设置 `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk` |
+
+---
+
+*本文档 v2.7 - Ask/CircuitBreaker/Backpressure 模式单元测试完成！*
