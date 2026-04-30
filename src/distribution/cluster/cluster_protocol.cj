@@ -8,6 +8,9 @@ package cactor.distribution.cluster
 import std.collection.*
 import std.sync.*
 import std.time.*
+import cactor.core.actor.ActorRef
+import cactor.core.message.Message
+import cactor.core.system.SimpleFuture
 
 /**
  * 成员状态 - 对标 Akka MemberStatus
@@ -516,28 +519,7 @@ public class Class {
 }
 
 /**
- * Actor引用接口（占位）
- */
-public interface ActorRef {
-    func tell(message: Message): Unit
-    func path(): String
-}
-
-/**
- * 消息接口（占位）
- */
-public interface Message {}
-
-/**
- * 简单Future（占位）
- */
-public interface SimpleFuture<T> {
-    func get(): T
-    func isCompleted(): Bool
-}
-
-/**
- * 地址（占位）
+ * 地址
  */
 public struct Address {
     public let protocol: String

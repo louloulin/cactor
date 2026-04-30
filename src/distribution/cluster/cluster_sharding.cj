@@ -10,6 +10,7 @@ import std.collection.*
 import std.sync.*
 import std.time.*
 import cactor.core.actor.{ActorPath}
+import cactor.core.message.Message
 
 /**
  * 分片策略接口 - 对标 Akka ShardRegionResolver
