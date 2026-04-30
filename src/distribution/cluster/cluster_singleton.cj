@@ -259,7 +259,7 @@ public class ClusterSingletonManager <: Actor {
     private let members: HashMap<UniqueAddress, MemberStatus>
 
     /** 待迁移消息 */
-    private let pendingMessages: ArrayList<Envelope>
+    private let pendingMessages: ArrayList<SingletonEnvelope>
 
     /** 单例角色候选者（按优先级排序） */
     private var candidates: ArrayList<UniqueAddress>
@@ -270,7 +270,7 @@ public class ClusterSingletonManager <: Actor {
         this.status = SingletonStatus.Initializing
         this.version = 0
         this.members = HashMap<UniqueAddress, MemberStatus>()
-        this.pendingMessages = ArrayList<Envelope>()
+        this.pendingMessages = ArrayList<SingletonEnvelope>()
         this.candidates = ArrayList<UniqueAddress>()
     }
 
@@ -405,7 +405,7 @@ public class ClusterSingletonManager <: Actor {
                 instance.actorRef.tell(message)
             case None =>
                 // 缓存消息
-                let env = Envelope(message, context.sender())
+                let env = SingletonEnvelope(message, context.sender())
                 pendingMessages.add(env)
                 // 限制缓存大小
                 if (Int64(pendingMessages.size) > settings.proxyBufferSize) {
@@ -559,7 +559,7 @@ public class ClusterSingletonProxy <: Actor {
     private var singletonStatus: SingletonStatus
 
     /** 消息缓冲区 */
-    private let messageBuffer: ArrayList<Envelope>
+    private let messageBuffer: ArrayList<SingletonEnvelope>
 
     /** 是否正在等待单例上线 */
     private var waitingForSingleton: Bool
@@ -569,7 +569,7 @@ public class ClusterSingletonProxy <: Actor {
         this.settings = settings
         this.singletonRef = None
         this.singletonStatus = SingletonStatus.Initializing
-        this.messageBuffer = ArrayList<Envelope>()
+        this.messageBuffer = ArrayList<SingletonEnvelope>()
         this.waitingForSingleton = false
     }
 
@@ -614,7 +614,7 @@ public class ClusterSingletonProxy <: Actor {
             case None =>
                 // 缓存消息
                 let sender = context.sender()
-                let env = Envelope(message, sender)
+                let env = SingletonEnvelope(message, sender)
                 messageBuffer.add(env)
 
                 // 限制缓冲区大小
@@ -680,7 +680,7 @@ public class SingletonManagerFactory {
 /**
  * 消息信封
  */
-public class Envelope {
+public class SingletonEnvelope {
     public let message: Message
     public let sender: ActorRef
 

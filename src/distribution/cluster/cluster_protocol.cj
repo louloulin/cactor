@@ -64,7 +64,7 @@ public enum MemberStatus {
 /**
  * 成员角色
  */
-public class MemberRole {
+public class MemberRole <: Hashable & Equatable<MemberRole> {
     private let name: String
 
     public init(name: String) {
@@ -77,6 +77,10 @@ public class MemberRole {
 
     public func equals(other: MemberRole): Bool {
         name == other.name
+    }
+
+    public operator func ==(other: MemberRole): Bool {
+        equals(other)
     }
 
     public func hashCode(): Int64 {

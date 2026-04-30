@@ -77,7 +77,7 @@ func testSimpleMessageAdapterRegistry_register() {
 func testSimpleMessageAdapterRegistry_registerMultiple() {
     let registry = SimpleMessageAdapterRegistry()
     let adapter1: MessageAdapter<String, Int64> = { s => Int64(s.size) }
-    let adapter2: MessageAdapter<String, String> = { s => s.toUpperCase() }
+    let adapter2: MessageAdapter<String, String> = { s => s + "_adapted" }
 
     registry.register(adapter1, "String", "Int64")
     registry.register(adapter2, "String", "String")
@@ -117,7 +117,7 @@ func testMessageTypeTag_creation() {
 
 @Test
 func testMessageTypeTag_of() {
-    let tag = MessageTypeTag.of<String>("MyType")
+    let tag = MessageTypeTag<String>("MyType")
     @Expect(tag.typeName, "MyType")
 }
 

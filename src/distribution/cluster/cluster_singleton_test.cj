@@ -4,9 +4,9 @@
  */
 package cactor.distribution.cluster
 
-import std.collection.*
 import std.time.*
 import cactor.core.message.*
+import cactor.core.actor.{ActorRef, ActorPath}
 
 // === Test Helper ===
 
@@ -56,7 +56,11 @@ class TestMember <: Member {
 func testClusterSingletonSettings_creation() {
     let settings = ClusterSingletonSettings("mySingleton")
     @Expect(settings.singletonName, "mySingleton")
-    @Expect(settings.role, None)
+    let role: Option<String> = settings.role
+    match (role) {
+        case None => @Expect(true, true)
+        case Some(_) => @Expect(false, true)
+    }
     @Expect(settings.minNrOfMembers, 1)
 }
 
@@ -93,7 +97,11 @@ func testClusterSingletonSettings_withProxyBufferSize() {
 func testClusterSingletonSettings_defaultSettings() {
     let settings = ClusterSingletonSettings.defaultSettings("defaultSingleton")
     @Expect(settings.singletonName, "defaultSingleton")
-    @Expect(settings.role, None)
+    let role: Option<String> = settings.role
+    match (role) {
+        case None => @Expect(true, true)
+        case Some(_) => @Expect(false, true)
+    }
     @Expect(settings.minNrOfMembers, 1)
 }
 
@@ -111,7 +119,7 @@ func testClusterSingletonSettings_withRoleStatic() {
 
 @Test
 func testSingletonInstance_creation() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSystem", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let actorRef = TestActorRef("/user/singleton")
     let instance = SingletonInstance(actorRef, uniqueAddr, 1)
@@ -168,7 +176,7 @@ func testSingletonGetInstance_messageType() {
 
 @Test
 func testSingletonInstanceResponse_creation() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let actorRef = TestActorRef("/user/singleton")
     let instance = SingletonInstance(actorRef, uniqueAddr, 1)
@@ -184,14 +192,17 @@ func testSingletonInstanceResponse_creation() {
 @Test
 func testSingletonInstanceResponse_withNone() {
     let response = SingletonInstanceResponse(None, SingletonStatus.Initializing)
-    @Expect(response.instance, None)
+    match (response.instance) {
+        case Some(_) => @Expect(false, true)
+        case None => @Expect(true, true)
+    }
     @Expect(response.status.isActive(), false)
 }
 
 @Test
 func testBecomeSingleton_messageType() {
     let actorRef = TestActorRef("/user/singleton")
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let msg = BecomeSingleton(actorRef, uniqueAddr)
 
@@ -200,7 +211,7 @@ func testBecomeSingleton_messageType() {
 
 @Test
 func testReleaseSingleton_messageType() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let msg = ReleaseSingleton(uniqueAddr)
 
@@ -209,7 +220,7 @@ func testReleaseSingleton_messageType() {
 
 @Test
 func testElectSingleton_messageType() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr1 = UniqueAddress(address, 1)
     let uniqueAddr2 = UniqueAddress(address, 2)
     let candidates = [uniqueAddr1, uniqueAddr2]
@@ -221,7 +232,7 @@ func testElectSingleton_messageType() {
 
 @Test
 func testElectionResult_messageType() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let result = ElectionResult(Some(uniqueAddr), 5)
 
@@ -236,7 +247,10 @@ func testElectionResult_messageType() {
 @Test
 func testElectionResult_noWinner() {
     let result = ElectionResult(None, 1)
-    @Expect(result.winner, None)
+    match (result.winner) {
+        case Some(_) => @Expect(false, true)
+        case None => @Expect(true, true)
+    }
     @Expect(result.version, 1)
 }
 
@@ -248,8 +262,16 @@ func testClusterSingletonManager_initialization() {
     let manager = ClusterSingletonManager(settings)
 
     @Expect(manager.name, "testSingleton")
-    @Expect(manager.getStatus(), SingletonStatus.Initializing)
-    @Expect(manager.getCurrentInstance(), None)
+    let status = manager.getStatus()
+    match (status) {
+        case SingletonStatus.Initializing => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
+    let instance = manager.getCurrentInstance()
+    match (instance) {
+        case Some(_) => @Expect(false, true)
+        case None => @Expect(true, true)
+    }
     @Expect(manager.getVersion(), 0)
 }
 
@@ -281,8 +303,16 @@ func testClusterSingletonProxy_initialization() {
     let proxy = ClusterSingletonProxy("/user/singletonManager", settings)
 
     @Expect(proxy.name, "SingletonProxy-proxyTest")
-    @Expect(proxy.getSingletonStatus(), SingletonStatus.Initializing)
-    @Expect(proxy.getSingletonRef(), None)
+    let status = proxy.getSingletonStatus()
+    match (status) {
+        case SingletonStatus.Initializing => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
+    let ref = proxy.getSingletonRef()
+    match (ref) {
+        case Some(_) => @Expect(false, true)
+        case None => @Expect(true, true)
+    }
     @Expect(proxy.getBufferSize(), 0)
 }
 
@@ -309,7 +339,11 @@ func testSingletonManagerFactory_createProxy() {
     let settings = ClusterSingletonSettings("factoryProxy")
     let proxy = SingletonManagerFactory.createProxy("/user/manager", settings)
 
-    @Expect(proxy.getSingletonStatus(), SingletonStatus.Initializing)
+    let status = proxy.getSingletonStatus()
+    match (status) {
+        case SingletonStatus.Initializing => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
 }
 
 @Test
@@ -322,7 +356,7 @@ func testSingletonManagerFactory_createSettings() {
 
 @Test
 func testMemberEvent_MemberUp() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let member = TestMember(uniqueAddr, HashSet<MemberRole>())
 
@@ -332,7 +366,7 @@ func testMemberEvent_MemberUp() {
 
 @Test
 func testMemberEvent_MemberLeft() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let member = TestMember(uniqueAddr, HashSet<MemberRole>())
 
@@ -342,7 +376,7 @@ func testMemberEvent_MemberLeft() {
 
 @Test
 func testMemberEvent_MemberDown() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
 
     let event = MemberEvent(uniqueAddr, MemberEventType.MemberDown)
@@ -351,7 +385,7 @@ func testMemberEvent_MemberDown() {
 
 @Test
 func testMemberEvent_MemberExited() {
-    let address = Address("cactor", "localhost", 2552)
+    let address = Address("cactor", "testSys", "localhost", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let member = TestMember(uniqueAddr, HashSet<MemberRole>())
 
@@ -365,10 +399,10 @@ func testMemberEvent_MemberExited() {
 func testEnvelope_creation() {
     let actorRef = TestActorRef("/user/sender")
     let msg = StringMessage("hello")
-    let envelope = Envelope(msg, actorRef)
+    let envelope = SingletonEnvelope(msg, actorRef)
 
     match (envelope.message) {
-        case s: StringMessage => @Expect(s.content, "hello")
+        case s: StringMessage => @Expect(s.getContent(), "hello")
         case _ => @Expect(false, true)
     }
 }
@@ -377,7 +411,7 @@ func testEnvelope_creation() {
 
 @Test
 func testAddress_creation() {
-    let address = Address("cactor", "node1.local", 2552)
+    let address = Address("cactor", "testSys", "node1.local", 2552)
     @Expect(address.protocol, "cactor")
     @Expect(address.system, "node1.local")
     @Expect(address.port, 2552)
@@ -385,7 +419,7 @@ func testAddress_creation() {
 
 @Test
 func testUniqueAddress_creation() {
-    let address = Address("cactor", "node1", 2552)
+    let address = Address("cactor", "testSys", "node1", 2552)
     let uniqueAddr = UniqueAddress(address, 12345)
 
     @Expect(uniqueAddr.address.protocol, "cactor")
@@ -394,7 +428,7 @@ func testUniqueAddress_creation() {
 
 @Test
 func testUniqueAddress_toString() {
-    let address = Address("cactor", "node1", 2552)
+    let address = Address("cactor", "testSys", "node1", 2552)
     let uniqueAddr = UniqueAddress(address, 1)
     let str = uniqueAddr.toString()
 
@@ -404,8 +438,8 @@ func testUniqueAddress_toString() {
 
 @Test
 func testUniqueAddress_equals() {
-    let address1 = Address("cactor", "node1", 2552)
-    let address2 = Address("cactor", "node1", 2552)
+    let address1 = Address("cactor", "testSys", "node1", 2552)
+    let address2 = Address("cactor", "testSys", "node1", 2552)
     let uniqueAddr1 = UniqueAddress(address1, 1)
     let uniqueAddr2 = UniqueAddress(address2, 1)
     let uniqueAddr3 = UniqueAddress(address2, 2)

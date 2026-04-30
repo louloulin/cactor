@@ -16,6 +16,26 @@ public enum CircuitBreakerState {
     | Closed      // 关闭状态，正常工作
     | Open        // 开启状态，快速失败
     | HalfOpen    // 半开状态，尝试恢复
+
+    public func toString(): String {
+        match (this) {
+            case Closed => "Closed"
+            case Open => "Open"
+            case HalfOpen => "HalfOpen"
+        }
+    }
+
+    public func equals(other: CircuitBreakerState): Bool {
+        match (this) {
+            case Closed => match (other) { case Closed => true case _ => false }
+            case Open => match (other) { case Open => true case _ => false }
+            case HalfOpen => match (other) { case HalfOpen => true case _ => false }
+        }
+    }
+
+    public operator func ==(other: CircuitBreakerState): Bool {
+        equals(other)
+    }
 }
 
 /**
