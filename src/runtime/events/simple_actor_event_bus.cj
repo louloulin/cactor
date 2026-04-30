@@ -189,6 +189,13 @@ public class SimpleActorEventBus {
 }
 
 /**
+ * 便利方法：创建Actor创建事件
+ */
+public func createActorCreatedEvent(actorRef: ActorRef): SimpleActorLifecycleEvent {
+    SimpleActorLifecycleEvent(actorRef, "CREATED", "Actor已创建")
+}
+
+/**
  * 便利方法：创建Actor启动事件
  */
 public func createActorStartedEvent(actorRef: ActorRef): SimpleActorLifecycleEvent {

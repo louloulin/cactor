@@ -1,13 +1,13 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.19
+# CActor 对标 Akka 全面分析报告与改造计划 v2.20
 
-> **文档版本**: 2.19
-> **分析日期**: 2026-04-30
+> **文档版本**: 2.20
+> **分析日期**: 2026-05-01
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: 修复测试用例断言问题，全部506个测试用例通过！
+> **更新**: 新增 EventBus 单元测试 (32个测试用例)，添加 createActorCreatedEvent 便利函数
 > **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
 > **测试状态**: ✅ `cjpm test` 全部通过！506个测试用例
-> **单元测试统计**: 506 测试用例 (全部通过)
-> **修复内容**: 修复Address/UniqueAddress测试、SplitBrainResolver测试、StashingMailbox测试、EventStore时间戳测试、Streaming集成测试
+> **单元测试统计**: 506+32 = 538+ 测试用例 (包含新增 EventBus 测试)
+> **修复内容**: 添加 createActorCreatedEvent 函数，EventBus 完整测试覆盖
 
 ---
 
@@ -1131,6 +1131,16 @@ public class ClusterSharding {
 - `src/distribution/persistence/event_store_test.cj`: BasicEvent, MemoryEventStore 测试 (12个测试用例)
 - `src/distribution/persistence/snapshot_store_test.cj`: BasicSnapshot, MemorySnapshotStore 测试 (14个测试用例)
 - `src/distribution/streaming/stream_processing_test.cj`: StreamShape, InPort, OutPort, NotUsed, SimpleSource, SimpleSink, SimpleFlow, SourceFactory, SinkFactory, FlowFactory, BackoffStrategy, BufferConfig 测试 (32个测试用例)
+
+**2026-05-01 新增 EventBus 单元测试**:
+- `src/runtime/events/actor_event_bus_test.cj`: 完整的 ActorEventBus 和 SimpleActorEventBus 测试 (32个测试用例)
+  - SimpleActorEventBus: 创建、订阅、发布、多订阅者、生命周期事件、停止/启动、清除测试
+  - ActorEventBus: 创建、订阅、事件类型过滤、所有事件类型、多订阅者测试
+  - EventSubscription: 空事件类型（订阅所有）、特定事件类型过滤测试
+  - ActorLifecycleEvent: ActorCreatedEvent, ActorStartedEvent, ActorStoppedEvent, ActorRestartedEvent 测试
+  - 便利函数: createActorCreatedEvent, createActorStartedEvent, createActorStoppedEvent 测试
+  - 集成测试: 完整生命周期、事件隔离测试
+- `src/runtime/events/simple_actor_event_bus.cj`: 添加 createActorCreatedEvent 便利函数
 
 **2026-04-30 测试编译修复**:
 - 修复 HashSet.size() vs HashMap.size 属性差异导致的 @Expect 宏类型推断问题
