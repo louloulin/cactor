@@ -1,13 +1,13 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.17
+# CActor 对标 Akka 全面分析报告与改造计划 v2.18
 
-> **文档版本**: 2.17
+> **文档版本**: 2.18
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: 新增persistence单元测试(26测试)！
+> **更新**: 新增streaming单元测试(32测试)！
 > **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
 > **测试状态**: ⚠️ 测试编译通过，运行时socket权限问题为环境限制
-> **单元测试统计**: 193+ 测试用例 (RemoteTransport 18, Cluster 131, Persistence 26, 其他)
-> **新实现**: Cluster单元测试、Failover框架、SplitBrainResolver、Sharding、RemoteTransport、EventStore、SnapshotStore单元测试
+> **单元测试统计**: 225+ 测试用例 (Streaming 32, Persistence 26, Remote 18, Cluster 131, 其他)
+> **新实现**: Cluster单元测试、Failover框架、SplitBrainResolver、Sharding、RemoteTransport、EventStore、SnapshotStore、StreamProcessing单元测试
 
 ---
 
@@ -1130,6 +1130,7 @@ public class ClusterSharding {
 - `src/distribution/remote/remote_transport_test.cj`: Address, ActorPath, RemoteEnvelope, SimpleRemoteMessageStream 测试 (18个测试用例)
 - `src/distribution/persistence/event_store_test.cj`: BasicEvent, MemoryEventStore 测试 (12个测试用例)
 - `src/distribution/persistence/snapshot_store_test.cj`: BasicSnapshot, MemorySnapshotStore 测试 (14个测试用例)
+- `src/distribution/streaming/stream_processing_test.cj`: StreamShape, InPort, OutPort, NotUsed, SimpleSource, SimpleSink, SimpleFlow, SourceFactory, SinkFactory, FlowFactory, BackoffStrategy, BufferConfig 测试 (32个测试用例)
 
 **2026-04-30 测试编译修复**:
 - 修复 HashSet.size() vs HashMap.size 属性差异导致的 @Expect 宏类型推断问题
