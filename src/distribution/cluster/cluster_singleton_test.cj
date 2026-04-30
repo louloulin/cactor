@@ -143,7 +143,7 @@ func testSingletonStatus_values() {
         SingletonStatus.Stopping,
         SingletonStatus.Terminated
     ]
-    @Expect(Int64(statuses.size), 5)
+    @Expect(statuses.size, 5)
 }
 
 @Test
@@ -227,7 +227,7 @@ func testElectSingleton_messageType() {
 
     let msg = ElectSingleton(candidates)
     @Expect(msg.messageType(), "ElectSingleton")
-    @Expect(Int64(msg.candidates.size), 2)
+    @Expect(msg.candidates.size, 2)
 }
 
 @Test
