@@ -1121,6 +1121,10 @@ public class ClusterSharding {
 - SplitBrainResolverTest: 7个测试用例
 - ClusterShardingTest: 8个测试用例
 
+**2026-04-30 新增单元测试文件**:
+- `src/distribution/cluster/split_brain_resolver_test.cj`: SBRConfig, SBRDecision, KeepMajorityResolver, KeepOldestResolver, StaticQuorumResolver, DownAllResolver 完整测试 (36个测试用例)
+- `src/distribution/cluster/cluster_sharding_test.cj`: HashShardResolver, CursorShardResolver, RoleShardResolver, ShardingSettings, PassivationStrategy, SimpleShard, EntityRefImpl, ShardCommand 测试 (33个测试用例)
+
 ### Phase 4: 持久化 ✅
 - [x] 事件溯源 ✅
 - [x] Journal 插件 ✅
