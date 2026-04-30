@@ -7,19 +7,56 @@ package cactor.core.message
 import std.collection.*
 import std.time.*
 
+/*
+ * Helper: check if two MessageResult values differ.
+ * Cangjie enums cannot use != directly.
+ */
+func messageResultNotEquals(a: MessageResult, b: MessageResult): Bool {
+    match (a) {
+        case MessageResult.Handled =>
+            match (b) {
+                case MessageResult.Handled => false
+                case _ => true
+            }
+        case MessageResult.Unhandled =>
+            match (b) {
+                case MessageResult.Unhandled => false
+                case _ => true
+            }
+        case MessageResult.Stop =>
+            match (b) {
+                case MessageResult.Stop => false
+                case _ => true
+            }
+        case MessageResult.Restart =>
+            match (b) {
+                case MessageResult.Restart => false
+                case _ => true
+            }
+        case MessageResult.Escalate =>
+            match (b) {
+                case MessageResult.Escalate => false
+                case _ => true
+            }
+    }
+}
+
 @Test
 func testMessageResult_values() {
-    @Expect(MessageResult.Handled.toString().size > 0, true)
-    @Expect(MessageResult.Unhandled.toString().size > 0, true)
-    @Expect(MessageResult.Stop.toString().size > 0, true)
-    @Expect(MessageResult.Restart.toString().size > 0, true)
-    @Expect(MessageResult.Escalate.toString().size > 0, true)
+    let handled = MessageResult.Handled
+    let unhandled = MessageResult.Unhandled
+    let stop = MessageResult.Stop
+    let restart = MessageResult.Restart
+    let escalate = MessageResult.Escalate
+
+    @Expect(messageResultNotEquals(handled, unhandled), true)
+    @Expect(messageResultNotEquals(stop, restart), true)
+    @Expect(messageResultNotEquals(escalate, handled), true)
 }
 
 @Test
 func testStopMessage_defaultReason() {
     let msg = StopMessage()
-
     @Expect(msg.messageType(), "StopMessage")
     @Expect(msg.getReason(), "Normal stop")
     @Expect(msg.priority() > 0, true)
@@ -28,7 +65,6 @@ func testStopMessage_defaultReason() {
 @Test
 func testStopMessage_customReason() {
     let msg = StopMessage("Custom stop reason")
-
     @Expect(msg.messageType(), "StopMessage")
     @Expect(msg.getReason(), "Custom stop reason")
 }
@@ -37,15 +73,13 @@ func testStopMessage_customReason() {
 func testRestartMessage() {
     let exception = Exception("Test exception")
     let msg = RestartMessage(exception)
-
     @Expect(msg.messageType(), "RestartMessage")
-    @Expect(msg.getCause() !== None, true)
+    @Expect(msg.getCause().message.size > 0, true)
 }
 
 @Test
 func testSuspendMessage() {
     let msg = SuspendMessage()
-
     @Expect(msg.messageType(), "SuspendMessage")
     @Expect(msg.priority() > 0, true)
 }
@@ -53,7 +87,6 @@ func testSuspendMessage() {
 @Test
 func testResumeMessage() {
     let msg = ResumeMessage()
-
     @Expect(msg.messageType(), "ResumeMessage")
     @Expect(msg.priority() > 0, true)
 }
@@ -61,7 +94,6 @@ func testResumeMessage() {
 @Test
 func testTerminatedMessage() {
     let msg = TerminatedMessage("/test/actor", "Normal termination")
-
     @Expect(msg.messageType(), "TerminatedMessage")
     @Expect(msg.getActor(), "/test/actor")
     @Expect(msg.getReason(), "Normal termination")
@@ -70,7 +102,6 @@ func testTerminatedMessage() {
 @Test
 func testStringMessage() {
     let msg = StringMessage("Hello, Actor!")
-
     @Expect(msg.messageType(), "StringMessage")
     @Expect(msg.getContent(), "Hello, Actor!")
 }
@@ -78,7 +109,6 @@ func testStringMessage() {
 @Test
 func testPingMessage() {
     let msg = PingMessage(42)
-
     @Expect(msg.messageType(), "PingMessage")
     @Expect(msg.getId(), 42)
     @Expect(msg.timestamp() > 0, true)
@@ -87,7 +117,6 @@ func testPingMessage() {
 @Test
 func testPongMessage() {
     let msg = PongMessage(42)
-
     @Expect(msg.messageType(), "PongMessage")
     @Expect(msg.getOriginalId(), 42)
     @Expect(msg.timestamp() > 0, true)
@@ -97,9 +126,8 @@ func testPongMessage() {
 func testEnvelope_creation() {
     let innerMsg = StringMessage("Test message")
     let envelope = Envelope(innerMsg, Some("/sender"))
-
-    @Expect(envelope.getMessage() === innerMsg, true)
-    @Expect(envelope.getSender() === Some("/sender"), true)
+    @Expect(envelope.getMessage().messageType(), "StringMessage")
+    @Expect(envelope.getSender() == Some("/sender"), true)
     @Expect(envelope.getTimestamp() > 0, true)
 }
 
@@ -107,20 +135,21 @@ func testEnvelope_creation() {
 func testEnvelope_noSender() {
     let innerMsg = StringMessage("Test message")
     let envelope = Envelope(innerMsg, None)
-
-    @Expect(envelope.getMessage() === innerMsg, true)
-    @Expect(envelope.getSender() === None, true)
+    @Expect(envelope.getMessage().messageType(), "StringMessage")
+    match (envelope.getSender()) {
+        case None => @Expect(true, true)
+        case Some(_) => @Expect(false, true)
+    }
 }
 
 @Test
 func testDeadLetter() {
     let innerMsg = StringMessage("Original message")
     let deadLetter = DeadLetter(innerMsg, "/sender", "/receiver")
-
     @Expect(deadLetter.messageType(), "DeadLetter")
     @Expect(deadLetter.getSender(), "/sender")
     @Expect(deadLetter.getRecipient(), "/receiver")
-    @Expect(deadLetter.getMessage() === innerMsg, true)
+    @Expect(deadLetter.getMessage().messageType(), "StringMessage")
     @Expect(deadLetter.priority() > 0, true)
 }
 
@@ -152,11 +181,8 @@ func testUserMessage_normalPriority() {
 func testEnvelope_ordering() {
     let msg1 = StringMessage("First")
     let msg2 = StringMessage("Second")
-
     let envelope1 = Envelope(msg1, Some("/sender1"))
     let envelope2 = Envelope(msg2, Some("/sender2"))
-
-    // 后创建的消息时间戳应该更大
     @Expect(envelope2.getTimestamp() >= envelope1.getTimestamp(), true)
 }
 
@@ -164,10 +190,8 @@ func testEnvelope_ordering() {
 func testPingPongMessage_timestamps() {
     let ping = PingMessage(1)
     let pong = PongMessage(1)
-
-    // 两者应该有不同的消息类型
-    @Expect(ping.messageType() !== pong.messageType(), true)
-    @Expect(ping.getId() === pong.getOriginalId(), true)
+    @Expect(ping.messageType() != pong.messageType(), true)
+    @Expect(ping.getId() == pong.getOriginalId(), true)
 }
 
 /*
@@ -177,7 +201,6 @@ func testPingPongMessage_timestamps() {
 @Test
 func testCustomMessage_implementation() {
     let msg = TestCustomMessage("test data", 42)
-
     @Expect(msg.messageType(), "TestCustomMessage")
     @Expect(msg.getData(), "test data")
     @Expect(msg.getValue(), 42)
@@ -196,38 +219,34 @@ func testCustomMessage_messageId() {
     @Expect(msg.messageId(), "custom-123")
 }
 
-// === PoisonPill / Kill / Identify / ActorIdentity 测试 ===
+// == PoisonPill / Kill / Identify / ActorIdentity 测试 ===
 
 @Test
 func testPoisonPill() {
     let msg = PoisonPill()
-
     @Expect(msg.messageType(), "PoisonPill")
-    @Expect(msg.priority() > 0, true)  // 系统消息高优先级
+    @Expect(msg.priority() > 0, true)
 }
 
 @Test
 func testKill() {
     let msg = Kill()
-
     @Expect(msg.messageType(), "Kill")
-    @Expect(msg.priority() > 0, true)  // 系统消息高优先级
+    @Expect(msg.priority() > 0, true)
 }
 
 @Test
 func testIdentify() {
     let correlationId = "test-correlation-123"
     let msg = Identify(correlationId)
-
     @Expect(msg.messageType(), "Identify")
     @Expect(msg.getCorrelationId(), correlationId)
-    @Expect(msg.priority() > 0, true)  // 系统消息高优先级
+    @Expect(msg.priority() > 0, true)
 }
 
 @Test
 func testIdentify_emptyCorrelationId() {
     let msg = Identify("")
-
     @Expect(msg.messageType(), "Identify")
     @Expect(msg.getCorrelationId(), "")
 }
@@ -236,25 +255,28 @@ func testIdentify_emptyCorrelationId() {
 func testActorIdentity_withRef() {
     let innerMsg = StringMessage("test")
     let identity = ActorIdentity("corr-1", Some(innerMsg))
-
     @Expect(identity.messageType(), "ActorIdentity")
     @Expect(identity.getCorrelationId(), "corr-1")
-    @Expect(identity.getActorRef() !== None, true)
+    match (identity.getActorRef()) {
+        case Some(_) => @Expect(true, true)
+        case None => @Expect(false, true)
+    }
 }
 
 @Test
 func testActorIdentity_withoutRef() {
     let identity = ActorIdentity("corr-2", None)
-
     @Expect(identity.messageType(), "ActorIdentity")
     @Expect(identity.getCorrelationId(), "corr-2")
-    @Expect(identity.getActorRef() === None, true)
+    match (identity.getActorRef()) {
+        case None => @Expect(true, true)
+        case Some(_) => @Expect(false, true)
+    }
 }
 
 @Test
 func testPoisonPill_isSystemMessage() {
     let msg = PoisonPill()
-    // PoisonPill 是系统消息，应该有高优先级
     @Expect(msg.priority() >= 1000, true)
 }
 

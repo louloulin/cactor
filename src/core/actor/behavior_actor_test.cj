@@ -8,12 +8,57 @@ import std.collection.*
 import std.time.*
 import cactor.core.message.*
 
+/*
+ * Mutable holder for tracking call state in lambdas.
+ * Cangjie does not allow lambdas to capture var locals;
+ * use a class with a var field instead.
+ */
+class BoolHolder {
+    public var value: Bool
+    public init() { this.value = false }
+    public init(v: Bool) { this.value = v }
+}
+
+/*
+ * Helper: check if two MessageResult values are the same using match.
+ * Cangjie enums cannot use == or != directly.
+ */
+func messageResultEquals(a: MessageResult, b: MessageResult): Bool {
+    match (a) {
+        case MessageResult.Handled =>
+            match (b) {
+                case MessageResult.Handled => true
+                case _ => false
+            }
+        case MessageResult.Unhandled =>
+            match (b) {
+                case MessageResult.Unhandled => true
+                case _ => false
+            }
+        case MessageResult.Stop =>
+            match (b) {
+                case MessageResult.Stop => true
+                case _ => false
+            }
+        case MessageResult.Restart =>
+            match (b) {
+                case MessageResult.Restart => true
+                case _ => false
+            }
+        case MessageResult.Escalate =>
+            match (b) {
+                case MessageResult.Escalate => true
+                case _ => false
+            }
+    }
+}
+
 @Test
 func testBehaviorActorImpl_initialization() {
     let behavior = FunctionalBehavior({ msg, ctx => MessageResult.Handled })
     let actor = BehaviorActorImpl("test-actor", behavior)
     @Expect(actor.name, "test-actor")
-    @Expect(actor.currentBehavior() !== None, true)
+    @Expect(actor.description.size > 0, true)
     @Expect(actor.getBehaviorStackSize(), 0)
     @Expect(actor.getReceivedCount(), 0)
 }
@@ -27,11 +72,17 @@ func testBehaviorActorImpl_becomeUnbecome() {
     actor.become(newBehavior)
 
     @Expect(actor.getBehaviorStackSize(), 1)
-    @Expect(actor.currentBehavior() === newBehavior, true)
+
+    let msg = TestMessage("probe")
+    let ctx = BATestActorContext()
+    let result = actor.receive(msg, ctx)
+    @Expect(messageResultEquals(result, MessageResult.Unhandled), true)
 
     actor.unbecome()
     @Expect(actor.getBehaviorStackSize(), 0)
-    @Expect(actor.currentBehavior() === initialBehavior, true)
+
+    let result2 = actor.receive(msg, ctx)
+    @Expect(messageResultEquals(result2, MessageResult.Handled), true)
 }
 
 @Test
@@ -40,20 +91,30 @@ func testBehaviorActorImpl_multipleBecomeUnbecome() {
     let actor = BehaviorActorImpl("test-actor", behavior1)
 
     let behavior2 = FunctionalBehavior({ msg, ctx => MessageResult.Unhandled })
-    let behavior3 = FunctionalBehavior({ msg, ctx => MessageResult.Handled })
+    let behavior3 = FunctionalBehavior({ msg, ctx => MessageResult.Escalate })
 
     actor.become(behavior2)
     actor.become(behavior3)
 
     @Expect(actor.getBehaviorStackSize(), 2)
 
+    let ctx = BATestActorContext()
+    let msg = TestMessage("probe")
+
+    let result1 = actor.receive(msg, ctx)
+    @Expect(messageResultEquals(result1, MessageResult.Escalate), true)
+
     actor.unbecome()
     @Expect(actor.getBehaviorStackSize(), 1)
-    @Expect(actor.currentBehavior() === behavior2, true)
+
+    let result2 = actor.receive(msg, ctx)
+    @Expect(messageResultEquals(result2, MessageResult.Unhandled), true)
 
     actor.unbecome()
     @Expect(actor.getBehaviorStackSize(), 0)
-    @Expect(actor.currentBehavior() === behavior1, true)
+
+    let result3 = actor.receive(msg, ctx)
+    @Expect(messageResultEquals(result3, MessageResult.Handled), true)
 }
 
 @Test
@@ -63,7 +124,11 @@ func testBehaviorActorImpl_unbecomeOnEmptyStack() {
 
     actor.unbecome()
     @Expect(actor.getBehaviorStackSize(), 0)
-    @Expect(actor.currentBehavior() === behavior, true)
+
+    let ctx = BATestActorContext()
+    let msg = TestMessage("probe")
+    let result = actor.receive(msg, ctx)
+    @Expect(messageResultEquals(result, MessageResult.Handled), true)
 }
 
 @Test
@@ -72,53 +137,56 @@ func testBehaviorActorImpl_receiveIncrementsCount() {
     let actor = BehaviorActorImpl("test-actor", behavior)
 
     let msg = TestMessage("test")
+    let ctx = BATestActorContext()
     @Expect(actor.getReceivedCount(), 0)
-    actor.receive(msg, ActorContextMock())
+    actor.receive(msg, ctx)
     @Expect(actor.getReceivedCount(), 1)
-    actor.receive(msg, ActorContextMock())
+    actor.receive(msg, ctx)
     @Expect(actor.getReceivedCount(), 2)
 }
 
 @Test
 func testFunctionalBehavior_handler() {
-    var handled = false
+    let handled = BoolHolder()
     let behavior = FunctionalBehavior({ msg, ctx =>
-        handled = true
+        handled.value = true
         MessageResult.Handled
     })
 
     let msg = TestMessage("test")
-    let result = behavior.receive(msg, ActorContextMock())
-    @Expect(handled, true)
-    @Expect(result === MessageResult.Handled, true)
+    let ctx = BATestActorContext()
+    let result = behavior.receive(msg, ctx)
+    @Expect(handled.value, true)
+    @Expect(messageResultEquals(result, MessageResult.Handled), true)
 }
 
 @Test
 func testBehaviorSupport_receiveAll() {
-    var received = false
+    let received = BoolHolder()
     let behavior = BehaviorSupport.receiveAll({ msg, ctx =>
-        received = true
+        received.value = true
         MessageResult.Handled
     })
 
     let msg = TestMessage("test")
-    let result = behavior.receive(msg, ActorContextMock())
-    @Expect(received, true)
-    @Expect(result === MessageResult.Handled, true)
+    let ctx = BATestActorContext()
+    let result = behavior.receive(msg, ctx)
+    @Expect(received.value, true)
+    @Expect(messageResultEquals(result, MessageResult.Handled), true)
 }
 
 @Test
 func testBehaviorSupport_anyOf() {
-    var firstCalled = false
-    var secondCalled = false
+    let firstCalled = BoolHolder()
+    let secondCalled = BoolHolder()
 
     let first = FunctionalBehavior({ msg, ctx =>
-        firstCalled = true
+        firstCalled.value = true
         MessageResult.Unhandled
     })
 
     let second = FunctionalBehavior({ msg, ctx =>
-        secondCalled = true
+        secondCalled.value = true
         MessageResult.Handled
     })
 
@@ -128,25 +196,26 @@ func testBehaviorSupport_anyOf() {
 
     let combined = BehaviorSupport.anyOf(behaviors)
     let msg = TestMessage("test")
-    let result = combined.receive(msg, ActorContextMock())
+    let ctx = BATestActorContext()
+    let result = combined.receive(msg, ctx)
 
-    @Expect(firstCalled, true)
-    @Expect(secondCalled, true)
-    @Expect(result === MessageResult.Handled, true)
+    @Expect(firstCalled.value, true)
+    @Expect(secondCalled.value, true)
+    @Expect(messageResultEquals(result, MessageResult.Handled), true)
 }
 
 @Test
 func testBehaviorSupport_anyOf_stopsOnFirstHandler() {
-    var firstCalled = false
-    var secondCalled = false
+    let firstCalled = BoolHolder()
+    let secondCalled = BoolHolder()
 
     let first = FunctionalBehavior({ msg, ctx =>
-        firstCalled = true
+        firstCalled.value = true
         MessageResult.Handled
     })
 
     let second = FunctionalBehavior({ msg, ctx =>
-        secondCalled = true
+        secondCalled.value = true
         MessageResult.Handled
     })
 
@@ -156,11 +225,12 @@ func testBehaviorSupport_anyOf_stopsOnFirstHandler() {
 
     let combined = BehaviorSupport.anyOf(behaviors)
     let msg = TestMessage("test")
-    let result = combined.receive(msg, ActorContextMock())
+    let ctx = BATestActorContext()
+    let result = combined.receive(msg, ctx)
 
-    @Expect(firstCalled, true)
-    @Expect(secondCalled, false)
-    @Expect(result === MessageResult.Handled, true)
+    @Expect(firstCalled.value, true)
+    @Expect(secondCalled.value, false)
+    @Expect(messageResultEquals(result, MessageResult.Handled), true)
 }
 
 @Test
@@ -207,7 +277,7 @@ func testReceiveTimeoutConfig_disabled() {
 func testReceiveTimeoutConfig_withTimeout() {
     let config = ReceiveTimeoutConfig.withTimeout(Duration.second * 30)
     @Expect(config.enabled, true)
-    @Expect(config.timeout === Duration.second * 30, true)
+    @Expect(config.timeout == Duration.second * 30, true)
     @Expect(config.repeatTimeout, true)
 }
 
@@ -215,7 +285,7 @@ func testReceiveTimeoutConfig_withTimeout() {
 func testReceiveTimeoutConfig_withTimeoutOnce() {
     let config = ReceiveTimeoutConfig.withTimeoutOnce(Duration.second * 60)
     @Expect(config.enabled, true)
-    @Expect(config.timeout === Duration.second * 60, true)
+    @Expect(config.timeout == Duration.second * 60, true)
     @Expect(config.repeatTimeout, false)
 }
 
@@ -231,89 +301,64 @@ public class TestMessage <: Message {
         this.content = content
     }
 
-    public func getType(): String { "TestMessage" }
-    public func getPayload(): String { "TestMessage(${content})" }
     public func messageType(): String { "TestMessage" }
 }
 
-// Mock ActorContext
-class ActorContextMock <: ActorContext {
-    public init() {}
+// Mock ActorContext - 实现 cactor.core.actor.ActorContext
+class BATestActorContext <: ActorContext {
+    private let selfRef: BATestActorRef
+    private let systemRef: BATestActorSystem
 
-    public func sender(): ActorRef { ActorRefMock() }
-    public func self(): ActorRef { ActorRefMock() }
-    public func parent(): ActorRef { ActorRefMock() }
-    public func children(): Array<ActorRef> { Array<ActorRef>(0) }
+    public init() {
+        this.systemRef = BATestActorSystem()
+        this.selfRef = BATestActorRef(systemRef)
+    }
+
+    public func sender(): ActorRef { selfRef }
+    public func self(): ActorRef { selfRef }
+    public func parent(): ActorRef { selfRef }
+    public func children(): Array<ActorRef> { emptyActorRefArray() }
     public func child(name: String): Option<ActorRef> { None }
-    public func actorOf(props: Props<Actor>, name: String): ActorRef { ActorRefMock() }
-    public func actorOf(props: Props<Actor>): ActorRef { ActorRefMock() }
+    public func actorOf(props: Props<Actor>, name: String): ActorRef { selfRef }
+    public func actorOf(props: Props<Actor>): ActorRef { selfRef }
     public func watch(actorRef: ActorRef): Unit {}
     public func unwatch(actorRef: ActorRef): Unit {}
-    public func system(): ActorSystem { ActorSystemMock() }
+    public func getActorSystem(): ActorSystem { systemRef }
     public func setReceiveTimeout(timeout: Duration): Unit {}
     public func receiveTimeout(): Duration { Duration.second * 0 }
     public func stop(): Unit {}
     public func stop(actorRef: ActorRef): Unit {}
 }
 
+// Helper to create an empty Array<ActorRef> without initializer
+func emptyActorRefArray(): Array<ActorRef> {
+    let list = ArrayList<ActorRef>()
+    list.toArray()
+}
+
 // Mock ActorRef
-class ActorRefMock <: ActorRef {
-    public init() {}
+class BATestActorRef <: ActorRef {
+    private let pathValue: ActorPath
 
-    public func tell(message: Message, senderOption: ActorRef): Unit {}
-    public func path(): String { "/mock" }
-    public func isLocal(): Bool { true }
+    public init(system: BATestActorSystem) {
+        this.pathValue = ActorPath(system.name(), "/test/mock")
+    }
+
+    public prop path: ActorPath {
+        get() { pathValue }
+    }
+
+    public func tell(message: Message): Unit {}
+    public func tell(message: Message, sender: Option<String>): Unit {}
+    public func equals(other: ActorRef): Bool { pathValue.toString() == other.path.toString() }
+    public func hashCode(): Int32 { 0 }
 }
 
-// Mock ActorSystem
-class ActorSystemMock <: ActorSystem {
+// Mock ActorSystem - implements cactor.core.actor.ActorSystem (empty interface)
+class BATestActorSystem <: ActorSystem {
+    private let systemName: String = "test-system"
+
     public init() {}
 
-    public func actorOf(props: Props<Actor>, name: String): ActorRef { ActorRefMock() }
-    public func actorOf(props: Props<Actor>): ActorRef { ActorRefMock() }
-    public func actorSelection(path: String): ActorSelection { ActorSelectionMock() }
-    public func terminate(): Unit {}
-    public func whenTerminated(): SimpleFuture<Unit> { SimpleFutureMock() }
-    public func eventStream(): EventBus { EventBusMock() }
-    public func log(): ActorLog { ActorLogMock() }
-    public func startTime(): Int64 { 0 }
-    public func isTerminated(): Bool { false }
-    public func name(): String { "mock-system" }
-}
-
-// Mock SimpleFuture
-class SimpleFutureMock <: SimpleFuture<Unit> {
-    public init() {}
-
-    public func get(timeout: Duration): Option<Unit> { Some(Unit) }
-    public func isDone(): Bool { true }
-}
-
-// Mock EventBus
-class EventBusMock <: EventBus {
-    public init() {}
-
-    public func publish(event: Any): Unit {}
-    public func subscribe(subscriber: ActorRef, eventType: String): Bool { false }
-    public func unsubscribe(subscriber: ActorRef, eventType: String): Bool { false }
-    public func subscriberCount(eventType: String): Int64 { 0 }
-}
-
-// Mock ActorLog
-class ActorLogMock <: ActorLog {
-    public init() {}
-
-    public func debug(message: String): Unit {}
-    public func info(message: String): Unit {}
-    public func warning(message: String): Unit {}
-    public func error(message: String): Unit {}
-    public func error(cause: Exception, message: String): Unit {}
-}
-
-// Mock ActorSelection
-class ActorSelectionMock <: ActorSelection {
-    public init() {}
-
-    public func tell(message: Message, senderOption: ActorRef): Unit {}
-    public func resolveOne(timeout: Duration): Option<ActorRef> { None }
+    public func name(): String { systemName }
 }
