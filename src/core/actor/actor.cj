@@ -249,15 +249,33 @@ public class SimpleActorFactory<T> <: ActorFactory<T> where T <: Actor {
 public struct ActorPath {
     private let address: ActorAddress
     private let elements: Array<String>
+    private let pathString: String  // 存储原始路径字符串
 
     public init(address: ActorAddress, path: String) {
         this.address = address
-        this.elements = Array<String>(0, { i => "" })
+        this.pathString = path
+        // 解析路径字符串为元素数组
+        let parsed = parsePath(path)
+        this.elements = parsed
     }
 
     public init(system: String, path: String) {
         this.address = ActorAddress(system, "")
-        this.elements = Array<String>(0, { i => "" })
+        this.pathString = path
+        // 解析路径字符串为元素数组
+        let parsed = parsePath(path)
+        this.elements = parsed
+    }
+
+    // 解析路径字符串为元素数组
+    private static func parsePath(path: String): Array<String> {
+        if (path.size == 0 || path == "/") {
+            return Array<String>(0, { i => "" })
+        }
+        // 移除前导 "/"
+        let cleanPath = if (path.startsWith("/")) { path[1..] } else { path }
+        // 按 "/" 分割
+        cleanPath.split("/")
     }
 
     public func getSystem(): String {
@@ -269,13 +287,19 @@ public struct ActorPath {
     }
 
     public func getPath(): String {
-        let sb = StringBuilder()
-        sb.append("/")
-        for (elem in elements) {
-            sb.append(elem)
+        // 如果有解析的元素，使用它们构建路径
+        if (elements.size > 0) {
+            let sb = StringBuilder()
             sb.append("/")
+            for (elem in elements) {
+                sb.append(elem)
+                sb.append("/")
+            }
+            sb.toString()
+        } else {
+            // 否则使用存储的原始路径字符串
+            pathString
         }
-        sb.toString()
     }
 
     public func toString(): String {

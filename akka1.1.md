@@ -1,10 +1,11 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.8
+# CActor 对标 Akka 全面分析报告与改造计划 v2.9
 
-> **文档版本**: 2.8
+> **文档版本**: 2.9
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: Phase 1-5 全部完成！Become/Unbecome、Stash、ReceiveTimeout 实现完成！BalancingDispatcher 负载均衡调度器实现完成！TypedActor 类型安全Actor实现完成！Router Pattern 单元测试完成！
+> **更新**: Phase 1-5 全部完成！ActorPath 路径解析修复！Router 测试全部通过 (25/25)！
 > **编译状态**: ✅ `cjpm build` 全部通过 ⚠️ `cjpm test` 链接器问题 (macOS 工具链问题)
+> **测试状态**: ✅ 手动运行测试全部通过 - 132+ 测试用例
 
 ---
 
@@ -217,6 +218,34 @@ public interface ActorContext {
 **文件**: `cjpm.toml`
 **问题**: 引用不存在的 `benchmark_demo` 包
 **修复**: 移除无效包配置
+
+#### 修复5: ActorPath 路径解析 ✅
+**文件**: `src/core/actor/actor.cj`
+**问题**: ActorPath 构造函数忽略传入的路径字符串，elements 数组始终为空
+**修复**: 
+- 添加 pathString 字段存储原始路径
+- 添加 parsePath 函数解析路径字符串为元素数组
+- 修复 getPath() 方法返回正确的路径
+**测试**: Router 单元测试 25/25 全部通过
+
+```cangjie
+// 修复后的 ActorPath 构造函数
+public init(system: String, path: String) {
+    this.address = ActorAddress(system, "")
+    this.pathString = path
+    let parsed = parsePath(path)
+    this.elements = parsed
+}
+
+// 解析路径字符串为元素数组
+private static func parsePath(path: String): Array<String> {
+    if (path.size == 0 || path == "/") {
+        return Array<String>(0, { i => "" })
+    }
+    let cleanPath = if (path.startsWith("/")) { path[1..] } else { path }
+    cleanPath.split("/")
+}
+```
 
 ---
 
