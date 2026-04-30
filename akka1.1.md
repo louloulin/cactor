@@ -1,12 +1,12 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.12
+# CActor 对标 Akka 全面分析报告与改造计划 v2.13
 
-> **文档版本**: 2.12
+> **文档版本**: 2.13
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: Foundation邮箱单元测试完成！32个新测试用例！DequeBasedMailbox实现完成！
+> **更新**: ClusterSingleton测试编译通过！测试类型歧义修复！
 > **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
-> **测试状态**: ✅ 257 测试用例 (编译通过，测试链接需SDK修复)
-> **新实现**: FoundationStashingMailbox, FoundationUnboundedMailbox, FoundationBoundedMailbox, SPSCMailbox, MPSCMailbox, FoundationPriorityMailbox
+> **测试状态**: ✅ 全部测试编译通过 (运行时需SDK修复)
+> **新实现**: ClusterSingleton单元测试完整、MessageAdapter测试、CircuitBreakerState修复
 
 ---
 
