@@ -1,12 +1,12 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.15
+# CActor 对标 Akka 全面分析报告与改造计划 v2.16
 
-> **文档版本**: 2.15
+> **文档版本**: 2.16
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: 新增failover_test.cj (24测试)！全部测试编译通过！
+> **更新**: 新增remote_transport_test.cj (18测试)！
 > **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
-> **测试状态**: ✅ 全部测试编译通过 (运行时socket权限问题为环境限制)
-> **新实现**: Cluster单元测试(131+测试)、Failover框架、SplitBrainResolver、Sharding
+> **测试状态**: ⚠️ 测试编译通过，运行时socket权限问题为环境限制
+> **新实现**: Cluster单元测试(131测试)、Failover框架、SplitBrainResolver、Sharding、RemoteTransport单元测试(18测试)
 
 ---
 
@@ -1126,6 +1126,7 @@ public class ClusterSharding {
 - `src/distribution/cluster/cluster_sharding_test.cj`: HashShardResolver, CursorShardResolver, RoleShardResolver, ShardingSettings, PassivationStrategy, SimpleShard, EntityRefImpl, ShardCommand 测试 (33个测试用例)
 - `src/distribution/cluster/cluster_singleton_test.cj`: ClusterSingletonSettings, SingletonInstance, SingletonStatus, ClusterSingletonManager, ClusterSingletonProxy, Address, UniqueAddress 测试 (38个测试用例)
 - `src/distribution/cluster/failover_test.cj`: NodeHealthInfo, FailoverStrategy, NodeState, Address, UniqueAddress 测试 (24个测试用例)
+- `src/distribution/remote/remote_transport_test.cj`: Address, ActorPath, RemoteEnvelope, SimpleRemoteMessageStream 测试 (18个测试用例)
 
 **2026-04-30 测试编译修复**:
 - 修复 HashSet.size() vs HashMap.size 属性差异导致的 @Expect 宏类型推断问题
