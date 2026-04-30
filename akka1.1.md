@@ -3,9 +3,10 @@
 > **文档版本**: 2.9
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: Phase 1-5 全部完成！ActorPath 路径解析修复！Router 测试全部通过 (25/25)！
-> **编译状态**: ✅ `cjpm build` 全部通过 ⚠️ `cjpm test` 链接器问题 (macOS 工具链问题)
-> **测试状态**: ✅ 手动运行测试全部通过 - 132+ 测试用例
+> **更新**: ActorPath 路径解析修复！Router 测试全部通过 (25/25)！所有测试通过 (182/182)！
+> **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
+> **测试状态**: ✅ 182 测试用例全部通过 (手动运行)
+> **已知问题**: `cjpm test` 链接器问题 - cjpm 使用 `-syslibroot '/'` 导致找不到系统库
 
 ---
 
@@ -246,6 +247,34 @@ private static func parsePath(path: String): Array<String> {
     cleanPath.split("/")
 }
 ```
+
+### 修复6: 测试运行 workaround ✅
+**问题**: cjpm test 链接器使用 `-syslibroot '/'` 导致找不到 macOS 系统库
+**解决**: 使用手动方式运行已编译的测试
+
+```bash
+# 编译 (需要设置 SDKROOT)
+SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk cjpm build
+
+# 运行测试 (使用正确的库路径)
+DYLD_LIBRARY_PATH=<sdk>/cangjie/runtime/lib/darwin_aarch64_llvm \
+  ./target/release/unittest_bin/<package>
+```
+
+**已验证通过的测试包**:
+| 包名 | 测试数 |
+|------|-------|
+| cactor.core.actor | 14 |
+| cactor.patterns.routing | 25 |
+| cactor.patterns.backpressure | 16 |
+| cactor.patterns.ask | 23 |
+| cactor.patterns.typed | 11 |
+| cactor.core.message | 31 |
+| cactor.runtime.dispatcher | 22 |
+| cactor.runtime.scheduler | 20 |
+| cactor.runtime.system | 3 |
+| cactor.foundation.serialization | 17 |
+| **总计** | **182** |
 
 ---
 
