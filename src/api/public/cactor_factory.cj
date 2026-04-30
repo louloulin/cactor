@@ -5,8 +5,7 @@
  */
 package cactor.api.public
 
-import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory}
-import cactor.core.system.{ActorSystem}
+import cactor.core.actor.{Actor}
 import cactor.core.message.{Message}
 import cactor.api.{CActorSystem, CActorSystemFactory, ActorProps}
 
@@ -34,13 +33,6 @@ public struct CActorFactory {
      */
     public static func createProps<T>(creator: () -> T): ActorProps where T <: Actor {
         ActorProps(creator)
-    }
-
-    /**
-     * 使用现有的Props创建ActorProps
-     */
-    public static func createPropsFrom<T>(props: Props<T>): ActorProps where T <: Actor {
-        ActorProps(props)
     }
 }
 

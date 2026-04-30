@@ -10,9 +10,9 @@ import std.sync.*
 import std.collection.*
 import cactor.core.actor.{Actor, ActorRef, Props, ActorPath}
 import cactor.core.message.{Message, MessageResult}
-import cactor.core.context.{ActorContext}
+import cactor.core.actor.{ActorContext}
+import cactor.core.system.{ActorSystem as FullActorSystem}
 import cactor.core.supervision.{SupervisionStrategy, DefaultSupervisionStrategy, SupervisionDirective, ActorFailure}
-import cactor.core.system.{ActorSystem}
 import cactor.core.guardian.{GuardianType}
 
 /**
@@ -20,12 +20,12 @@ import cactor.core.guardian.{GuardianType}
  * 管理用户创建的Actor
  */
 public class RuntimeUserGuardian <: BaseGuardianActor {
-    private let actorSystem: ActorSystem
+    private let actorSystem: FullActorSystem
     private let userActors: HashMap<String, ActorRef>
     private let defaultSupervisionStrategy: SupervisionStrategy
     private let actorPathPrefix: String
     
-    public init(system: ActorSystem) {
+    public init(system: FullActorSystem) {
         super(GuardianType.User, None<ActorRef>)  // 用户Guardian通常没有父Guardian
         this.actorSystem = system
         this.userActors = HashMap<String, ActorRef>()
@@ -305,7 +305,7 @@ public class SimpleUserActorRef <: ActorRef {
     }
 
     public func tell(message: Message, sender: Option<String>): Unit {
-        let context = SimpleUserActorContext(this, sender)
+        let context = SimpleUserActorContext(this)
         actor.receive(message, context)
     }
 
@@ -327,19 +327,66 @@ public class SimpleUserActorRef <: ActorRef {
  */
 public class SimpleUserActorContext <: ActorContext {
     private let selfRef: ActorRef
-    private let currentSender: Option<String>
+    private let currentSender: ActorRef
 
     public init(self: ActorRef) {
         this.selfRef = self
-        this.currentSender = None<String>
+        this.currentSender = self
     }
 
-    public init(self: ActorRef, sender: Option<String>) {
-        this.selfRef = self
-        this.currentSender = sender
-    }
-
-    public func sender(): Option<String> {
+    public func sender(): ActorRef {
         currentSender
+    }
+
+    public func self(): ActorRef {
+        selfRef
+    }
+
+    public func parent(): ActorRef {
+        selfRef
+    }
+
+    public func children(): Array<ActorRef> {
+        Array<ActorRef>()
+    }
+
+    public func child(name: String): Option<ActorRef> {
+        None
+    }
+
+    public func actorOf(props: Props<Actor>, name: String): ActorRef {
+        selfRef
+    }
+
+    public func actorOf(props: Props<Actor>): ActorRef {
+        selfRef
+    }
+
+    public func watch(actorRef: ActorRef): Unit {
+        ()
+    }
+
+    public func unwatch(actorRef: ActorRef): Unit {
+        ()
+    }
+
+    public func getActorSystem() {
+        throw Exception("SimpleUserActorContext.getActorSystem not implemented")
+    }
+
+    public func setReceiveTimeout(timeout: Duration): Unit {
+        ()
+    }
+
+    public func receiveTimeout(): Duration {
+        Duration.second * 0
+    }
+
+    public func stop(): Unit {
+        ()
+    }
+
+    public func stop(actorRef: ActorRef): Unit {
+        ()
     }
 }

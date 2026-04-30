@@ -101,13 +101,13 @@ public struct MessageTrace {
  */
 public class PerformanceProfiler {
     private let samples: ArrayList<PerformanceSample>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let maxSamples: Int64
     private let isEnabled: AtomicBool
     
     public init(maxSamples: Int64) {
         this.samples = ArrayList<PerformanceSample>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.maxSamples = maxSamples
         this.isEnabled = AtomicBool(false)
     }
@@ -236,14 +236,14 @@ public struct PerformanceReport {
  */
 public class MessageTracer {
     private let traces: ArrayList<MessageTrace>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let maxTraces: Int64
     private let isEnabled: AtomicBool
     private let messageIdCounter: AtomicInt64
     
     public init(maxTraces: Int64) {
         this.traces = ArrayList<MessageTrace>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.maxTraces = maxTraces
         this.isEnabled = AtomicBool(false)
         this.messageIdCounter = AtomicInt64(0)
@@ -323,14 +323,14 @@ public class SystemDiagnostics {
     private let profiler: PerformanceProfiler
     private let tracer: MessageTracer
     private let actorRegistry: HashMap<String, ActorSnapshot>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init() {
         this.logger = LoggerFactory.getLogger("cactor.debug")
         this.profiler = PerformanceProfiler(1000)
         this.tracer = MessageTracer(1000)
         this.actorRegistry = HashMap<String, ActorSnapshot>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func enableProfiling(): Unit {

@@ -268,14 +268,14 @@ public class MetricRegistry {
     private let gauges: ConcurrentHashMap<String, Gauge>
     private let histograms: ConcurrentHashMap<String, Histogram>
     private let timers: ConcurrentHashMap<String, Timer>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.counters = ConcurrentHashMap<String, Counter>()
         this.gauges = ConcurrentHashMap<String, Gauge>()
         this.histograms = ConcurrentHashMap<String, Histogram>()
         this.timers = ConcurrentHashMap<String, Timer>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func counter(name: String): Counter {
@@ -443,7 +443,7 @@ public class PerformanceMonitor {
 
     public func updateMailboxSize(size: Int64): Unit {
         if (enabled.load()) {
-            mailboxSizeGauge.add(Float64(size))
+            mailboxSizeGauge.set(Float64(size))
         }
     }
 

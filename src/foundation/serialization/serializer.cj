@@ -57,13 +57,13 @@ public class SerializerRegistry {
     private let serializers: HashMap<Int32, Serializer>
     private let manifestToId: HashMap<String, Int32>
     private let idToManifest: HashMap<Int32, String>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.serializers = HashMap<SerializerIdentifier, Serializer>()
         this.manifestToId = HashMap<String, SerializerIdentifier>()
         this.idToManifest = HashMap<SerializerIdentifier, String>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
 
         // 注册内置序列化器
         registerInternalSerializers()

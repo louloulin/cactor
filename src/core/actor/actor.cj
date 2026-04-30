@@ -24,7 +24,7 @@ public interface ActorContext {
     func actorOf(props: Props<Actor>): ActorRef
     func watch(actorRef: ActorRef): Unit
     func unwatch(actorRef: ActorRef): Unit
-    func system(): ActorSystem
+    func getActorSystem(): ActorSystem
     func setReceiveTimeout(timeout: Duration): Unit
     func receiveTimeout(): Duration
     func stop(): Unit
@@ -108,7 +108,10 @@ public interface Actor {
      * @param context Actor上下文
      * @return 消息处理结果
      */
-    func receive(message: Message, context: ActorContext): MessageResult
+    func receive(message: Message, context: ActorContext): MessageResult {
+        // 默认实现：未处理消息
+        MessageResult.Unhandled
+    }
 
     /**
      * Actor启动前的初始化操作
@@ -411,6 +414,15 @@ public struct Props<T> where T <: Actor {
     // 获取配置
     public func getDispatcher(): DispatcherSelector {
         dispatcher
+    }
+
+    public func getDispatcherName(): String {
+        match (dispatcher) {
+            case DefaultDispatcher => "default"
+            case FromConfig(path) => path
+            case PinnedDispatcher => "pinned"
+            case CallingThreadDispatcher => "calling-thread"
+        }
     }
 
     public func getMailbox(): MailboxSelector {

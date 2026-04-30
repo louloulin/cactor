@@ -8,7 +8,7 @@ package cactor.patterns.backpressure
 import std.sync.*
 import std.time.*
 import std.collection.*
-import cactor.foundation.queue.{Queue, LockFreeQueue}
+import cactor.foundation.queue.{Queue as CActorQueue, LockFreeQueue}
 import cactor.core.message.{Message, Envelope}
 import cactor.core.actor.ActorRef
 
@@ -146,14 +146,14 @@ public interface FlowController {
  */
 public class BasicBackpressureController <: FlowController {
     private let config: BackpressureConfig
-    private let buffer: Queue<Message>
+    private let buffer: CActorQueue<Message>
     private let totalMessages: AtomicInt64
     private let droppedMessages: AtomicInt64
     private let blockedMessages: AtomicInt64
     private let rejectedMessages: AtomicInt64
     private let throttledMessages: AtomicInt64
-    private let messageTimestamps: Queue<Int64>
-    private let mutex: ReentrantMutex
+    private let messageTimestamps: CActorQueue<Int64>
+    private let mutex: Mutex
     private let isRunning: AtomicBool
 
     public init(config: BackpressureConfig) {
@@ -165,7 +165,7 @@ public class BasicBackpressureController <: FlowController {
         this.rejectedMessages = AtomicInt64(0)
         this.throttledMessages = AtomicInt64(0)
         this.messageTimestamps = LockFreeQueue<Int64>(1000)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.isRunning = AtomicBool(true)
     }
 
@@ -351,7 +351,7 @@ public class BasicBackpressureController <: FlowController {
         isRunning.store(false)
     }
 
-    public func getBufferedMessages(): Queue<Message> {
+    public func getBufferedMessages(): CActorQueue<Message> {
         buffer
     }
 }

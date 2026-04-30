@@ -22,7 +22,7 @@ public class BatchingMailbox <: Mailbox {
     private let pendingBatch: ArrayList<Envelope>
     private let lastBatchTime: AtomicInt64
     private let closed: AtomicBool
-    private let batchMutex: ReentrantMutex
+    private let batchMutex: Mutex
     private let totalEnqueued: AtomicInt64
     private let totalBatches: AtomicInt64
 
@@ -31,7 +31,7 @@ public class BatchingMailbox <: Mailbox {
         this.batchTimeout = batchTimeout
         this.pendingBatch = ArrayList<Envelope>()
         this.closed = AtomicBool(false)
-        this.batchMutex = ReentrantMutex()
+        this.batchMutex = Mutex()
         this.totalEnqueued = AtomicInt64(0)
         this.totalBatches = AtomicInt64(0)
         this.lastBatchTime = AtomicInt64(DateTime.now().toUnixTimeStamp().toMilliseconds() * 1_000_000)

@@ -93,7 +93,7 @@ public class BatchProcessor<T> {
     private let config: BatchConfig
     private let stats: BatchStats
     private let messageQueue: ArrayList<T>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     // 简化实现，不使用条件变量
     private var isRunning: AtomicBool
     private var lastFlushTime: AtomicInt64
@@ -103,7 +103,7 @@ public class BatchProcessor<T> {
         this.config = config
         this.stats = BatchStats()
         this.messageQueue = ArrayList<T>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.isRunning = AtomicBool(false)
         this.lastFlushTime = AtomicInt64(getCurrentTimeMillis())
         this.processorFunc = processorFunc
@@ -246,7 +246,7 @@ public class BatchProcessor<T> {
         
         // 移除已提取的消息
         for (i in 0..batchSize) {
-            messageQueue.remove(0)
+            messageQueue.remove(0..1)
         }
         
         lastFlushTime.store(getCurrentTimeMillis())

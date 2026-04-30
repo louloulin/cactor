@@ -212,13 +212,13 @@ public interface LoggableActor <: Actor {
 public class SystemLogManager {
     private let systemLogger: Logger
     private let actorLoggers: HashMap<String, ActorLogger>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let metricsCollector: LogMetricsCollector
     
     public init() {
         this.systemLogger = LoggerFactory.getLogger("cactor.system")
         this.actorLoggers = HashMap<String, ActorLogger>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.metricsCollector = LogMetricsCollector()
     }
     
@@ -302,11 +302,11 @@ public struct LoggingConfig {
  */
 public class LogMetricsCollector {
     private let logCounts: HashMap<String, AtomicInt64>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init() {
         this.logCounts = HashMap<String, AtomicInt64>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         
         // 初始化计数器
         logCounts["TRACE"] = AtomicInt64(0)

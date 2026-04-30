@@ -417,7 +417,7 @@ public class TcpSocket {
      */
     public func read(bufferSize: Int64): Array<UInt8> {
         // 简化实现，返回空数组
-        return Array<UInt8>(Int64(0), item: UInt8(0))
+        return Array<UInt8>(Int64(0), { _ => UInt8(0) })
     }
 
     /**
@@ -539,7 +539,7 @@ public class TcpServer {
                 match (serverSocket.accept()) {
                     case Some(clientSocket) =>
                         let remoteAddr = NetworkAddress("unknown", 0)
-                        let localAddr = NetworkAddress(config.host, config.port)
+                        let localAddr = NetworkAddress(config.host, Int32(config.port))
                         let connId = generateConnectionId()
                         let connection = TcpConnection(connId, remoteAddr, localAddr, clientSocket)
 
@@ -618,7 +618,7 @@ public class TcpServer {
     }
 
     private func generateConnectionId(): String {
-        return "conn_${DateTime.now().toUnixTimeStamp()}_${Int64.random(1000, 9999)}"
+        return "conn_${DateTime.now().toUnixTimeStamp()}_${Int64(DateTime.now().toUnixTimeStamp().toMilliseconds() % 9000 + 1000)}"
     }
 }
 
@@ -764,7 +764,7 @@ public class TcpClient {
     }
 
     private func generateConnectionId(): String {
-        return "client_${DateTime.now().toUnixTimeStamp()}_${Int64.random(1000, 9999)}"
+        return "client_${DateTime.now().toUnixTimeStamp()}_${Int64(DateTime.now().toUnixTimeStamp().toMilliseconds() % 9000 + 1000)}"
     }
 }
 

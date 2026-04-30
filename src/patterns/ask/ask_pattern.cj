@@ -105,7 +105,7 @@ public class AskFuture<T> {
     private let startTime: Int64
     private var result: Option<Result<T>>
     private let completed: AtomicBool
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(requestId: String, timeout: Duration) {
         this.requestId = requestId
@@ -113,7 +113,7 @@ public class AskFuture<T> {
         this.startTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
         this.result = None
         this.completed = AtomicBool(false)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func complete(value: T): Unit {

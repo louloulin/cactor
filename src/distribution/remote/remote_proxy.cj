@@ -10,6 +10,7 @@ import std.sync.*
 import std.time.*
 import std.convert.*
 import cactor.foundation.network.*
+import cactor.core.message.Message
 
 /**
  * 远程调用配置
@@ -389,11 +390,11 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
  */
 public class AddressResolver {
     private let cache: HashMap<String, Address>
-    private let lock: ReentrantMutex
+    private let lock: Mutex
 
     public init() {
         this.cache = HashMap<String, Address>()
-        this.lock = ReentrantMutex()
+        this.lock = Mutex()
     }
 
     /**
@@ -486,12 +487,12 @@ public class CompletableFuture<T> {
     private var value: Option<T> = None
     private var error: Option<String> = None
     private var completed: Bool = false
-    private let lock: ReentrantMutex
-    private let condition: ReentrantMutex
+    private let lock: Mutex
+    private let condition: Mutex
 
     public init() {
-        this.lock = ReentrantMutex()
-        this.condition = ReentrantMutex()
+        this.lock = Mutex()
+        this.condition = Mutex()
     }
 
     public func complete(value: T): Unit {

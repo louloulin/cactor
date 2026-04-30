@@ -63,7 +63,7 @@ public struct UdpDatagram {
         this.remoteAddress = remoteAddress
         this.localAddress = localAddress
         this.timestamp = if (timestamp == 0) {
-            DateTime.now().toUnixTimeStamp()
+            DateTime.now().toUnixTimeStamp().toMilliseconds()
         } else {
             timestamp
         }
@@ -256,7 +256,7 @@ public class UdpTransport {
             }
 
             // 创建并绑定套接字
-            let address = NetworkAddress(config.host, config.port)
+            let address = NetworkAddress(config.host, Int32(config.port))
             if (!socket.bind(address)) {
                 return false
             }
@@ -325,7 +325,7 @@ public class UdpTransport {
                 }
             } catch (e: Exception) {
                 match (eventHandler) {
-                    case Some(handler) => handler.onError(NetworkAddress("unknown", 0), e.getMessage())
+                    case Some(handler) => handler.onError(NetworkAddress("unknown", 0), e.message)
                     case None => ()
                 }
                 ()
@@ -359,7 +359,7 @@ public class UdpTransport {
             return false
         } catch (e: Exception) {
             match (eventHandler) {
-                case Some(handler) => handler.onError(address, e.getMessage())
+                case Some(handler) => handler.onError(address, e.message)
                 case None => ()
             }
             return false
@@ -408,7 +408,7 @@ public class UdpTransport {
                         packetsReceived: stats.packetsReceived + if (received > 0) { 1 } else { 0 },
                         bytesSent: stats.bytesSent + sent,
                         bytesReceived: stats.bytesReceived + received,
-                        lastActivity: DateTime.now().toUnixTimeStamp(),
+                        lastActivity: DateTime.now().toUnixTimeStamp().toMilliseconds(),
                         isActive: true
                     )
                     endpoints.add(addrKey, updated)
@@ -419,7 +419,7 @@ public class UdpTransport {
                         packetsReceived: if (received > 0) { 1 } else { 0 },
                         bytesSent: sent,
                         bytesReceived: received,
-                        lastActivity: DateTime.now().toUnixTimeStamp(),
+                        lastActivity: DateTime.now().toUnixTimeStamp().toMilliseconds(),
                         isActive: true
                     )
                     endpoints.add(addrKey, stats)

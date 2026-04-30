@@ -120,7 +120,7 @@ public struct MemoryThreshold {
 public class HighPerfMemoryMonitor <: MemoryMonitor {
     private let memoryPool: NumaAwareMemoryPool
     private var isRunning: AtomicBool
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let history: CircularBuffer<MemorySnapshot>
     private var threshold: MemoryThreshold
     private let collector: MemoryStatsCollector
@@ -130,7 +130,7 @@ public class HighPerfMemoryMonitor <: MemoryMonitor {
     public init(memoryPool: NumaAwareMemoryPool, historySize: Int64) {
         this.memoryPool = memoryPool
         this.isRunning = AtomicBool(false)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.history = CircularBuffer<MemorySnapshot>(historySize)
         this.threshold = MemoryThreshold(0.9, 0.3, 1024 * 1024, true)
         this.collector = MemoryStatsCollector(memoryPool)
@@ -369,7 +369,7 @@ public class CircularBuffer<T> {
     private var tail: Int64
     private var size: Int64
     private let capacity: Int64
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(capacity: Int64) {
         this.buffer = Array<Option<T>>(capacity, { i => None<T> })
@@ -377,7 +377,7 @@ public class CircularBuffer<T> {
         this.tail = 0
         this.size = 0
         this.capacity = capacity
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func add(item: T): Unit {

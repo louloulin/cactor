@@ -12,6 +12,16 @@ import cactor.foundation.serialization.*
 import cactor.distribution.remote.*
 import cactor.distribution.cluster.*
 
+// 使用cluster包的Address类型
+let Address = cactor.distribution.cluster.Address
+
+// 简单的断言函数
+func assert(condition: Bool, message: String): Unit {
+    if (!condition) {
+        throw Exception("Assertion failed: ${message}")
+    }
+}
+
 /**
  * 远程传输测试
  */
@@ -223,7 +233,7 @@ public class ClusterProtocolTest {
 
     public func testClusterState(): Bool {
         println("测试: ClusterState")
-        let state = ClusterState()
+        let state = ClusterMembershipState()
 
         assert(state.memberCount() == 0, "初始成员数应为 0")
         assert(state.activeMemberCount() == 0, "初始活跃成员数应为 0")
@@ -410,20 +420,20 @@ public class SerializationTest {
         // 获取单例
         let instance1 = GlobalSerializationManager.getInstance()
         let instance2 = GlobalSerializationManager.getInstance()
-        assert(instance1 === instance2, "单例应返回相同实例")
+        assert(instance1 == instance2, "单例应返回相同实例")
 
         // 创建自定义管理器
         let customManager = SerializationManager()
         GlobalSerializationManager.setInstance(customManager)
 
         let instance3 = GlobalSerializationManager.getInstance()
-        assert(instance3 === customManager, "应返回自定义管理器")
+        assert(instance3 == customManager, "应返回自定义管理器")
 
         // 重置
         GlobalSerializationManager.reset()
 
         let instance4 = GlobalSerializationManager.getInstance()
-        assert(instance4 !== customManager, "重置后应返回新实例")
+        assert(instance4 != customManager, "重置后应返回新实例")
 
         true
     }
@@ -462,7 +472,7 @@ public class SerializationTest {
 /**
  * 主函数
  */
-public main(args: Array<String>): Unit {
+main(args: Array<String>): Unit {
     println("========================================")
     println("CActor 分布式层测试套件")
     println("========================================")

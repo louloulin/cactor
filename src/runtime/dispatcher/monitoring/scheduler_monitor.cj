@@ -127,13 +127,13 @@ public class ThroughputCalculator {
     private let windowSizeMs: Int64
     private let samples: ArrayList<Int64>
     private let timestamps: ArrayList<Int64>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(windowSizeMs: Int64) {
         this.windowSizeMs = windowSizeMs
         this.samples = ArrayList<Int64>()
         this.timestamps = ArrayList<Int64>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     /**

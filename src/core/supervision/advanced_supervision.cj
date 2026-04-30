@@ -308,7 +308,7 @@ public class AdvancedSupervisor <: Supervisor {
         
         // 限制历史记录大小
         while (failureHistory.size > Int64(maxHistorySize)) {
-            failureHistory.remove(0)
+            failureHistory.remove(0..1)
         }
     }
     

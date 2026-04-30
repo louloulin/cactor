@@ -292,14 +292,14 @@ public class ActorEventBus {
     private let eventCount: AtomicInt64
     private let subscriberCount: AtomicInt32
     private let isRunning: AtomicBool
-    private let busLock: ReentrantMutex
+    private let busLock: Mutex
     
     public init() {
         this.subscribers = ArrayList<EventSubscription>()
         this.eventCount = AtomicInt64(0)
         this.subscriberCount = AtomicInt32(0)
         this.isRunning = AtomicBool(true)
-        this.busLock = ReentrantMutex()
+        this.busLock = Mutex()
     }
     
     /**

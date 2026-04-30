@@ -18,7 +18,7 @@ public class FailureDetector {
     private let nodeStates: HashMap<String, NodeHealthInfo>
     private let heartbeatInterval: Duration
     private let failureThreshold: Duration
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let isRunning: AtomicBool
     private let clusterManager: SimpleClusterManager
     
@@ -29,7 +29,7 @@ public class FailureDetector {
         this.nodeStates = HashMap<String, NodeHealthInfo>()
         this.heartbeatInterval = heartbeatInterval
         this.failureThreshold = failureThreshold
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.isRunning = AtomicBool(false)
     }
     
@@ -195,13 +195,13 @@ public class FailoverManager {
     private let clusterManager: SimpleClusterManager
     private let failureDetector: FailureDetector
     private let strategy: FailoverStrategy
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let isActive: AtomicBool
     
     public init(clusterManager: SimpleClusterManager, strategy: FailoverStrategy) {
         this.clusterManager = clusterManager
         this.strategy = strategy
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.isActive = AtomicBool(false)
         
         // 创建故障检测器

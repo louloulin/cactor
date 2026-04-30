@@ -7,6 +7,7 @@ package cactor.core.system
 
 import std.time.*
 import std.sync.*
+import std.collection.*
 import cactor.core.actor.{Actor, ActorRef, Props}
 import cactor.core.message.{Message}
 // import cactor.pattern.ask.{AskFuture}
@@ -243,7 +244,7 @@ public class ActorCreatedEvent <: SystemEvent {
 
     public init(actorRef: ActorRef) {
         this.actorRef = actorRef
-        this.timestamp = DateTime.now().toUnixTimeStamp()
+        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
     public func eventType(): String {
@@ -260,7 +261,7 @@ public class ActorTerminatedEvent <: SystemEvent {
 
     public init(actorRef: ActorRef) {
         this.actorRef = actorRef
-        this.timestamp = DateTime.now().toUnixTimeStamp()
+        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
     public func eventType(): String {
@@ -273,11 +274,11 @@ public class ActorTerminatedEvent <: SystemEvent {
  */
 public class SimpleEventBus <: EventBus {
     private let subscribers: HashMap<String, ArrayList<ActorRef>>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.subscribers = HashMap<String, ArrayList<ActorRef>>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func publish(event: Any): Unit {
@@ -295,7 +296,7 @@ public class SimpleEventBus <: EventBus {
                         // 忽略发送异常
                     }
                 }
-            case None => // 没有订阅者
+            case None => ()
         }
     }
 
@@ -323,7 +324,7 @@ public class SimpleEventBus <: EventBus {
                 // 简化实现：移除第一个匹配的订阅者
                 var found = false
                 for (i in 0..list.size) {
-                    if (list[i] == subscriber) {
+                    if (list[i].path.toString() == subscriber.path.toString()) {
                         // 简化：只移除第一个
                         found = true
                         break
@@ -394,18 +395,18 @@ public class SimpleActorLog <: ActorLog {
  */
 public class SimpleTerminationFuture <: SimpleFuture<Unit> {
     private let completed: AtomicBool
-    private let mutex: ReentrantMutex
-    private let condition: ReentrantMutex
+    private let mutex: Mutex
+    private let condition: Mutex
 
     public init() {
         this.completed = AtomicBool(false)
-        this.mutex = ReentrantMutex()
-        this.condition = ReentrantMutex()
+        this.mutex = Mutex()
+        this.condition = Mutex()
     }
 
     public func get(): Unit {
         // 简化实现：等待完成
-        while (\!completed.load()) {
+        while (!completed.load()) {
             // 实际应该使用条件变量
         }
     }

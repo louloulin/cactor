@@ -55,7 +55,7 @@ public class ActorRegistry {
     private let registrationCount: AtomicInt64
 
     // 互斥锁
-    private let registryLock: ReentrantMutex
+    private let registryLock: Mutex
     
     public init() {
         this.pathToActor = HashMap<String, ActorRegistryEntry>()
@@ -65,7 +65,7 @@ public class ActorRegistry {
         this.childToParent = HashMap<String, String>()
         this.totalActors = AtomicInt64(0)
         this.registrationCount = AtomicInt64(0)
-        this.registryLock = ReentrantMutex()
+        this.registryLock = Mutex()
     }
     
     /**

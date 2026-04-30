@@ -6,7 +6,6 @@
 package cactor.runtime.mailbox
 
 import std.sync.*
-import std.collection.*
 import cactor.foundation.queue.{Queue, LockFreeQueue, SimpleQueue, QueueStats}
 import cactor.core.message.{Message, Envelope}
 
@@ -19,14 +18,14 @@ public class FoundationMailbox <: Mailbox {
     private let mailboxCapacity: Int64
     private let mailboxType: String
     private let stats: MailboxStats
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let closed: AtomicBool
 
     public init(capacity: Int64, useHighPerformance: Bool) {
         this.mailboxCapacity = capacity
         this.mailboxType = if (useHighPerformance) { "LockFree" } else { "Simple" }
         this.stats = MailboxStats()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.closed = AtomicBool(false)
         
         // 根据性能需求选择队列实现
@@ -46,7 +45,7 @@ public class FoundationMailbox <: Mailbox {
         this.mailboxCapacity = capacity
         this.mailboxType = "LockFree"
         this.stats = MailboxStats()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.closed = AtomicBool(false)
 
         let actualCapacity = FoundationMailbox.nextPowerOfTwo(capacity)

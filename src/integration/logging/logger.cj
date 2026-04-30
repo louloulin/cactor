@@ -88,10 +88,10 @@ public interface LogAppender {
  * 控制台日志输出器
  */
 public class ConsoleAppender <: LogAppender {
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init() {
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func append(record: LogRecord): Unit {
@@ -114,13 +114,13 @@ public class ConsoleAppender <: LogAppender {
  */
 public class FileAppender <: LogAppender {
     private let filename: String
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let buffer: ArrayList<String>
     private let maxBufferSize: Int64
     
     public init(filename: String, maxBufferSize: Int64) {
         this.filename = filename
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.buffer = ArrayList<String>()
         this.maxBufferSize = maxBufferSize
     }
@@ -161,14 +161,14 @@ public class FileAppender <: LogAppender {
 public class AsyncAppender <: LogAppender {
     private let targetAppender: LogAppender
     private let queue: ArrayList<LogRecord>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let isRunning: AtomicBool
     private let maxQueueSize: Int64
     
     public init(targetAppender: LogAppender, maxQueueSize: Int64) {
         this.targetAppender = targetAppender
         this.queue = ArrayList<LogRecord>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.isRunning = AtomicBool(true)
         this.maxQueueSize = maxQueueSize
         
@@ -221,7 +221,7 @@ public class AsyncAppender <: LogAppender {
         
         // 处理记录
         for (record in recordsToProcess) {
-            targetAppender.add(record)
+            targetAppender.append(record)
         }
     }
     
@@ -244,13 +244,13 @@ public class Logger {
     private let name: String
     private let level: LogLevel
     private let appenders: ArrayList<LogAppender>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(name: String, level: LogLevel) {
         this.name = name
         this.level = level
         this.appenders = ArrayList<LogAppender>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func addAppender(appender: LogAppender): Unit {
@@ -274,7 +274,7 @@ public class Logger {
             mutex.lock()
             for (appender in appenders) {
                 try {
-                    appender.add(record)
+                    appender.append(record)
                 } catch (e: Exception) {
                     println("日志输出器异常: ${e.message}")
                 }
@@ -334,7 +334,7 @@ public class Logger {
  */
 public class LoggerFactory {
     private static let loggers: HashMap<String, Logger> = HashMap<String, Logger>()
-    private static let mutex: ReentrantMutex = ReentrantMutex()
+    private static let mutex: Mutex = Mutex()
     private static var defaultLevel: LogLevel = LogLevel.INFO
     
     public static func getLogger(name: String): Logger {

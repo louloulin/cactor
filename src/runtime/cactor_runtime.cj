@@ -9,7 +9,7 @@ import std.sync.*
 import std.time.*
 import std.collection.*
 import cactor.core.actor.{Actor, ActorRef, Props}
-import cactor.core.system.{ActorSystem}
+import cactor.core.system.{ActorSystem as FullActorSystem}
 import cactor.core.guardian.{GuardianType}
 import cactor.runtime.guardian.{RuntimeSystemGuardian, RuntimeUserGuardian}
 import cactor.runtime.system.{HighPerformanceActorSystem, HighPerformanceActorSystemConfig, SystemStats}
@@ -41,7 +41,7 @@ import cactor.runtime.supervision.{SimpleSupervisionStrategy}
 public class CActorRuntime {
     // 核心组件
     private let systemName: String
-    private let actorSystem: ActorSystem
+    private let actorSystem: FullActorSystem
     private let systemGuardian: RuntimeSystemGuardian
     private let userGuardian: RuntimeUserGuardian
     
@@ -236,7 +236,7 @@ public class CActorRuntime {
     }
     
     // 私有辅助方法
-    private func createBaseActorSystem(name: String): ActorSystem {
+    private func createBaseActorSystem(name: String): FullActorSystem {
         // 创建基础ActorSystem实现
         // 这里应该使用Core层的基础实现
         SimpleActorSystem(name)
@@ -259,7 +259,7 @@ public class CActorRuntime {
     /**
      * 获取基础Actor系统
      */
-    public func getActorSystem(): ActorSystem {
+    public func getActorSystem(): FullActorSystem {
         actorSystem
     }
     

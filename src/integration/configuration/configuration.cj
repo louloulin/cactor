@@ -65,12 +65,12 @@ public enum ConfigValue {
  */
 public class ConfigurationManager {
     private let configs: HashMap<String, ConfigValue>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let changeListeners: ArrayList<ConfigChangeListener>
     
     public init() {
         this.configs = HashMap<String, ConfigValue>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.changeListeners = ArrayList<ConfigChangeListener>()
         
         // 加载默认配置
@@ -348,7 +348,7 @@ public class ClusterConfig {
  */
 public class GlobalConfigManager {
     private static var instance: Option<ConfigurationManager> = None
-    private static let mutex: ReentrantMutex = ReentrantMutex()
+    private static let mutex: Mutex = Mutex()
     
     public static func getInstance(): ConfigurationManager {
         mutex.lock()

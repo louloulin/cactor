@@ -21,7 +21,7 @@ public class EnhancedZeroCopyMessage {
     private let refCount: AtomicInt64
     private let sendTimestamp: AtomicInt64
     private let hopCount: AtomicInt64
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(messageType: UInt16, sourceActor: UInt64, targetActor: UInt64, 
                 sharedBuffer: SharedMemoryBuffer, payloadSize: UInt64) {
@@ -33,7 +33,7 @@ public class EnhancedZeroCopyMessage {
         this.refCount = AtomicInt64(1)
         this.sendTimestamp = AtomicInt64(0)
         this.hopCount = AtomicInt64(0)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     /**
@@ -137,11 +137,11 @@ public class EnhancedZeroCopyMessage {
  */
 public class EnhancedMessageFactory {
     private let memoryPool: MemoryPool
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(memoryPool: MemoryPool) {
         this.memoryPool = memoryPool
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     /**
@@ -237,7 +237,7 @@ public class HighPerformanceMessagePassing {
     private let size: AtomicInt64
     private let totalMessages: AtomicInt64
     private let zeroCopyCount: AtomicInt64
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(capacity: Int64, memoryPool: MemoryPool) {
         this.capacity = capacity
@@ -248,7 +248,7 @@ public class HighPerformanceMessagePassing {
         this.size = AtomicInt64(0)
         this.totalMessages = AtomicInt64(0)
         this.zeroCopyCount = AtomicInt64(0)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     /**

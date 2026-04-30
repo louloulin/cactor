@@ -123,7 +123,7 @@ public class BasicCircuitBreaker<T> <: CircuitBreaker<T> {
     private let lastFailureTime: AtomicInt64
     private let lastSuccessTime: AtomicInt64
     private let lastStateChangeTime: AtomicInt64
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(config: CircuitBreakerConfig) {
         this.config = config
@@ -134,7 +134,7 @@ public class BasicCircuitBreaker<T> <: CircuitBreaker<T> {
         this.lastFailureTime = AtomicInt64(0)
         this.lastSuccessTime = AtomicInt64(0)
         this.lastStateChangeTime = AtomicInt64(DateTime.now().toUnixTimeStamp().toMilliseconds())
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func execute(operation: () -> T): T {

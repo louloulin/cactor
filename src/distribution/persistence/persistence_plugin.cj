@@ -68,7 +68,7 @@ public class DefaultPersistencePlugin <: PersistencePlugin {
     private let eventStore: EventStore
     private let snapshotStore: SnapshotStore
     private let sequenceNumbers: HashMap<String, Int64>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(config: PersistenceConfig) {
         this.config = config
@@ -89,7 +89,7 @@ public class DefaultPersistencePlugin <: PersistencePlugin {
             SnapshotStoreFactory.createMemoryStore()
         }
         this.sequenceNumbers = HashMap<String, Int64>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func isEnabled(): Bool {

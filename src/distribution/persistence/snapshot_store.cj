@@ -51,11 +51,11 @@ public interface SnapshotStore {
 // 内存快照存储
 public class MemorySnapshotStore <: SnapshotStore {
     private let snapshots: HashMap<String, ArrayList<Snapshot>>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init() {
         this.snapshots = HashMap<String, ArrayList<Snapshot>>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func saveSnapshot(snapshot: Snapshot): Unit {
@@ -138,12 +138,12 @@ public class MemorySnapshotStore <: SnapshotStore {
 // 文件快照存储（简化实现）
 public class FileSnapshotStore <: SnapshotStore {
     private let basePath: String
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let snapshots: HashMap<String, ArrayList<Snapshot>>
 
     public init(basePath: String) {
         this.basePath = basePath
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.snapshots = HashMap<String, ArrayList<Snapshot>>()
         println("文件快照存储初始化: ${basePath}")
     }

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor - 基于仓颉NonBlockingQueue的邮箱
+ * CActor - 基于仓颉ConcurrentLinkedQueue的邮箱
  * 利用仓颉标准库的高性能并发队列实现
  */
 package cactor.runtime.mailbox.queue
@@ -11,15 +11,15 @@ import cactor.runtime.mailbox.Mailbox
 import cactor.core.message.Envelope
 
 /**
- * 基于仓颉NonBlockingQueue的邮箱
+ * 基于仓颉ConcurrentLinkedQueue的邮箱
  * 利用仓颉标准库的线程安全队列实现高性能邮箱
  */
 public class QueueMailbox <: Mailbox {
-    private let queue: NonBlockingQueue<Envelope>
+    private let queue: ConcurrentLinkedQueue<Envelope>
     private let closed: AtomicBool
 
     public init() {
-        this.queue = NonBlockingQueue<Envelope>()
+        this.queue = ConcurrentLinkedQueue<Envelope>()
         this.closed = AtomicBool(false)
     }
 
@@ -28,7 +28,7 @@ public class QueueMailbox <: Mailbox {
             return false  // 邮箱已关闭，拒绝新消息
         }
         
-        // NonBlockingQueue的enqueue总是返回true（根据文档）
+        // ConcurrentLinkedQueue的enqueue总是返回true（根据文档）
         return queue.enqueue(envelope)
     }
 
@@ -45,7 +45,7 @@ public class QueueMailbox <: Mailbox {
     }
 
     public func clear(): Unit {
-        // NonBlockingQueue没有clear方法，我们通过dequeue清空
+        // ConcurrentLinkedQueue没有clear方法，我们通过dequeue清空
         while (!isEmpty()) {
             queue.dequeue()
         }

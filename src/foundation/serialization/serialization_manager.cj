@@ -16,13 +16,13 @@ public open class SerializationManager {
     private let byteSerializer: ByteSerializer
     private let stringSerializer: StringSerializer
     private let intSerializer: IntSerializer
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.byteSerializer = ByteSerializer()
         this.stringSerializer = StringSerializer()
         this.intSerializer = IntSerializer()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     /**
@@ -227,7 +227,7 @@ public class SerializationStats {
  */
 public class GlobalSerializationManager {
     private static var instance: Option<SerializationManager> = None
-    private static let mutex: ReentrantMutex = ReentrantMutex()
+    private static let mutex: Mutex = Mutex()
 
     public static func getInstance(): SerializationManager {
         mutex.lock()

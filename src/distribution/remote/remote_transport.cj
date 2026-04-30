@@ -8,6 +8,8 @@ package cactor.distribution.remote
 import std.collection.*
 import std.sync.*
 import std.time.*
+import cactor.core.message.Message
+import cactor.core.actor.ActorRef
 
 /**
  * 远程地址 - 对标 Akka Address
@@ -153,7 +155,7 @@ public interface RemoteMessageStream {
  */
 public interface RemoteActorRef <: ActorRef {
     func address(): Address
-    func path(): ActorPath
+    func actorPath(): ActorPath
 }
 
 /**
@@ -162,12 +164,12 @@ public interface RemoteActorRef <: ActorRef {
 public class SimpleRemoteMessageStream <: RemoteMessageStream {
     private let queue: ArrayList<RemoteEnvelope>
     private var headIndex: Int64 = 0
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private var closed: Bool
 
     public init() {
         this.queue = ArrayList<RemoteEnvelope>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.closed = false
     }
 
@@ -179,7 +181,7 @@ public class SimpleRemoteMessageStream <: RemoteMessageStream {
 
     public func next(): Option<RemoteEnvelope> {
         mutex.lock()
-        let result = if (headIndex < queue.size) {
+        let result: Option<RemoteEnvelope> = if (headIndex < queue.size) {
             let item = queue[headIndex]
             headIndex += 1
             Some(item)
@@ -246,97 +248,4 @@ public class SimpleRemoteTransport <: RemoteTransport {
     public func isStarted(): Bool {
         started.load()
     }
-}
-
-/**
- * 网络地址适配器
- */
-public class NetworkAddress {
-    public let host: String
-    public let port: Int32
-
-    public init(host: String, port: Int32) {
-        this.host = host
-        this.port = port
-    }
-
-    public func toString(): String {
-        "${host}:${port}"
-    }
-}
-
-/**
- * 传输协议枚举
- */
-public enum TransportProtocol {
-    | TCP
-    | UDP
-}
-
-/**
- * 远程传输工厂
- */
-public class RemoteTransportFactory {
-    public static func createTransport(protocol: TransportProtocol, address: NetworkAddress): NetworkTransport {
-        SimpleNetworkTransport(address)
-    }
-}
-
-/**
- * 简单网络传输
- */
-public class SimpleNetworkTransport <: NetworkTransport {
-    private let localAddress: NetworkAddress
-
-    public init(address: NetworkAddress) {
-        this.localAddress = address
-    }
-
-    public func start(): Unit {
-        println("网络传输启动: ${localAddress.toString()}")
-    }
-
-    public func stop(): Unit {
-        println("网络传输停止")
-    }
-
-    public func send(address: NetworkAddress, data: Array<UInt8>): Unit {
-        // 简化实现
-    }
-
-    public func getLocalAddress(): NetworkAddress {
-        localAddress
-    }
-
-    public func setDataHandler(handler: (Array<UInt8>) -> Unit): Unit {
-        // 简化实现
-    }
-
-    public func isActive(): Bool {
-        true
-    }
-}
-
-/**
- * 消息接口（占位）
- */
-public interface Message {}
-
-/**
- * 字符串消息
- */
-public class StringMessage <: Message {
-    public let content: String
-
-    public init(content: String) {
-        this.content = content
-    }
-}
-
-/**
- * Actor引用接口（占位）
- */
-public interface ActorRef {
-    func tell(message: Message): Unit
-    func path(): String
 }

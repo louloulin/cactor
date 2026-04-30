@@ -6,6 +6,9 @@
 package cactor.distribution.streaming
 
 import std.collection.*
+import std.time.*
+import cactor.core.actor.{Actor, ActorContext}
+import cactor.core.message.{Message, MessageResult}
 
 /**
  * 流形状
@@ -88,7 +91,7 @@ public class SimpleSource <: Source {
         this.index = 0
     }
 
-    public func runWith(sink: Sink): Any {
+    public func runWith(_sink: Sink): Any {
         NotUsed.getInstance()
     }
 
@@ -231,4 +234,169 @@ public enum MergeStrategy {
     | Prefer
     | Strict
     | FanOut
+}
+
+/**
+ * StreamElement - 流处理元素类型
+ */
+public class StreamElement {
+    public let data: Any
+    public let timestamp: Int64
+
+    public init(data: Any) {
+        this.data = data
+        this.timestamp = 0
+    }
+
+    public init(data: Any, timestamp: Int64) {
+        this.data = data
+        this.timestamp = timestamp
+    }
+}
+
+/**
+ * StreamProcessor - 流处理器接口
+ */
+public interface StreamProcessor<Input, Output> {
+    func process(input: Input): Option<Output>
+}
+
+/**
+ * MapProcessor - 映射处理器
+ */
+public class MapProcessor <: StreamProcessor<StreamElement, StreamElement> {
+    private let mapFunc: (StreamElement) -> StreamElement
+
+    public init(mapFunc: (StreamElement) -> StreamElement) {
+        this.mapFunc = mapFunc
+    }
+
+    public func process(input: StreamElement): Option<StreamElement> {
+        Some(mapFunc(input))
+    }
+}
+
+/**
+ * FilterProcessor - 过滤处理器
+ */
+public class FilterProcessor <: StreamProcessor<StreamElement, StreamElement> {
+    private let filterFunc: (StreamElement) -> Bool
+
+    public init(filterFunc: (StreamElement) -> Bool) {
+        this.filterFunc = filterFunc
+    }
+
+    public func process(input: StreamElement): Option<StreamElement> {
+        if (filterFunc(input)) {
+            Some(input)
+        } else {
+            None
+        }
+    }
+}
+
+/**
+ * StreamControlMessage - 流控制消息
+ */
+public class StreamControlMessage <: Message {
+    private let command: String
+
+    public init(command: String) {
+        this.command = command
+    }
+
+    public func getCommand(): String {
+        command
+    }
+
+    public func getType(): String {
+        "StreamControl"
+    }
+
+    public func getPayload(): String {
+        "StreamControl(${command})"
+    }
+
+    public func messageType(): String {
+        "StreamControl"
+    }
+}
+
+/**
+ * StreamSourceActor - 流源Actor
+ */
+public class StreamSourceActor <: Actor {
+    private let actorName: String
+    private let interval: Duration
+
+    public init(name: String, interval: Duration) {
+        this.actorName = name
+        this.interval = interval
+    }
+
+    public prop name: String {
+        get() { actorName }
+    }
+
+    public prop description: String {
+        get() { "Stream source actor: ${actorName}" }
+    }
+
+    public func receive(_message: Message, _context: ActorContext): MessageResult {
+        MessageResult.Unhandled
+    }
+}
+
+/**
+ * StreamProcessorActor - 流处理Actor
+ */
+public class StreamProcessorActor <: Actor {
+    private let actorName: String
+    private let processor: StreamProcessor<StreamElement, StreamElement>
+
+    public init(name: String, processor: StreamProcessor<StreamElement, StreamElement>) {
+        this.actorName = name
+        this.processor = processor
+    }
+
+    public prop name: String {
+        get() { actorName }
+    }
+
+    public prop description: String {
+        get() { "Stream processor actor: ${actorName}" }
+    }
+
+    public func receive(_message: Message, _context: ActorContext): MessageResult {
+        MessageResult.Unhandled
+    }
+}
+
+/**
+ * StreamSinkActor - 流汇聚Actor
+ */
+public class StreamSinkActor <: Actor {
+    private let actorName: String
+    private var receivedCount: Int64 = 0
+
+    public init(name: String) {
+        this.actorName = name
+    }
+
+    public prop name: String {
+        get() { actorName }
+    }
+
+    public prop description: String {
+        get() { "Stream sink actor: ${actorName}" }
+    }
+
+    public func receive(_message: Message, _context: ActorContext): MessageResult {
+        receivedCount += 1
+        MessageResult.Handled
+    }
+
+    public func getReceivedCount(): Int64 {
+        receivedCount
+    }
 }

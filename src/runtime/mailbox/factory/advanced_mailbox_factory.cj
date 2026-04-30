@@ -261,7 +261,7 @@ public class DefaultAdvancedMailboxFactory <: AdvancedMailboxFactory {
     public func getCreationStats(): String {
         let stats = ArrayList<String>()
         for ((typeName, count) in creationStats) {
-            stats.append("${typeName}: ${count}")
+            stats.add("${typeName}: ${count}")
         }
         
         if (stats.isEmpty()) {
@@ -274,7 +274,7 @@ public class DefaultAdvancedMailboxFactory <: AdvancedMailboxFactory {
             if (i > 0) {
                 result.append(", ")
             }
-            result.add(stats[i])
+            result.append(stats[i])
         }
         result.toString()
     }

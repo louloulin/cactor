@@ -10,6 +10,7 @@ import std.sync.*
 import std.time.*
 import std.collection.*
 import cactor.core.message.*
+import cactor.core.actor.{Actor, ActorRef, Props}
 import cactor.core.context.{ActorContext}
 import cactor.foundation.memory.*
 
@@ -36,7 +37,7 @@ func getCurrentTimeNanos(): Int64 {
  * 池化Actor上下文 - Runtime层实现
  * 可重用的上下文对象，减少内存分配
  */
-public class PooledActorContext <: ActorContext {
+public class PooledActorContext {
     // 当前Actor引用 (可重置)
     private var currentSelf: Option<ContextActorRef>
 
@@ -117,13 +118,6 @@ public class PooledActorContext <: ActorContext {
         )
     }
     
-    // 实现ActorContext接口
-    public func sender(): Option<String> {
-        match (currentSender) {
-            case Some(senderRef) => Some(senderRef.path.toString())
-            case None => None<String>
-        }
-    }
 }
 
 /**

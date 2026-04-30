@@ -8,9 +8,8 @@ package cactor.runtime.actor
 
 import std.sync.*
 import std.time.*
-import cactor.core.actor.{Actor}
+import cactor.core.actor.{Actor, ActorContext}
 import cactor.core.message.*
-import cactor.core.context.*
 import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
 import cactor.runtime.context.{PooledActorContext, PooledActorContextPool}
 import cactor.foundation.memory.*

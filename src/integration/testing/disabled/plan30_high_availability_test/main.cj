@@ -36,7 +36,7 @@ public class SplitBrainResolverTest {
         unreachable.add(UniqueAddress(addr4, 4))
         unreachable.add(UniqueAddress(addr5, 5))
 
-        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress]())
+        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress>())
 
         assert(decision.survivors.size >= 3, "应有至少3个存活节点")
         assert(decision.victims.size == 2, "应有2个下线节点")
@@ -65,7 +65,7 @@ public class SplitBrainResolverTest {
         unreachable.add(UniqueAddress(addr4, 4))
         unreachable.add(UniqueAddress(addr5, 5))
 
-        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress]())
+        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress>())
 
         // 少数方应该全部下线
         assert(decision.survivors.size == 0, "少数方应无存活节点")
@@ -86,7 +86,7 @@ public class SplitBrainResolverTest {
         unreachable.add(UniqueAddress(addr2, 2))
         unreachable.add(UniqueAddress(addr3, 3))
 
-        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress]())
+        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress>())
 
         assert(decision.survivors.size == 1, "应有1个存活节点")
         let survivor = decision.survivors.iter().next()
@@ -120,7 +120,7 @@ public class SplitBrainResolverTest {
         let unreachable = HashSet<UniqueAddress>()
         unreachable.add(UniqueAddress(addr5, 5))
 
-        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress]())
+        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress>())
 
         assert(decision.survivors.size >= 3, "应达到 quorum")
         println("  决策: ${decision.toString()}")
@@ -138,7 +138,7 @@ public class SplitBrainResolverTest {
         let unreachable = HashSet<UniqueAddress>()
         unreachable.add(UniqueAddress(addr2, 2))
 
-        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress]())
+        let decision = resolver.resolve(allNodes, unreachable, HashSet<UniqueAddress>())
 
         assert(decision.survivors.size == 0, "不应有存活节点")
         assert(decision.victims.size == 2, "所有节点都应下线")
@@ -269,7 +269,7 @@ public class ClusterShardingTest {
 
     public func testShardingSettings(): Bool {
         println("测试: ShardingSettings")
-        let settings = ShardingSettings.getDefault("User", numberOfShards: 20)
+        let settings = ShardingSettings.getDefault("User", 20)
 
         assert(settings.typeName == "User", "类型名不匹配")
         assert(settings.numberOfShards == 20, "分片数不匹配")
@@ -280,7 +280,7 @@ public class ClusterShardingTest {
 
     public func testSimpleShard(): Bool {
         println("测试: SimpleShard")
-        let settings = ShardingSettings.getDefault("Test", numberOfShards: 5)
+        let settings = ShardingSettings.getDefault("Test", 5)
         let shard = SimpleShard("1", settings)
 
         // 添加实体
@@ -302,13 +302,13 @@ public class ClusterShardingTest {
 
     public func testSimpleShardRegion(): Bool {
         println("测试: SimpleShardRegion")
-        let settings = ShardingSettings.getDefault("User", numberOfShards: 10)
+        let settings = ShardingSettings.getDefault("User", 10)
         let addr = Address("cactor", "system", "localhost", 2552)
-        let path = ActorPath(addr, ["user"])
+        let path = ActorPath(addr.system, "/user")
         let region = SimpleShardRegion(settings, path)
 
         // 初始化
-        region.init()
+        region.initialize()
 
         // 获取实体引用
         let ref1 = region.entityRefFor("user-1")
@@ -432,7 +432,7 @@ public class ClusterShardingTest {
 /**
  * 主函数
  */
-public main(args: Array<String>): Unit {
+main(args: Array<String>): Unit {
     println("========================================")
     println("CActor Phase 3 高可用测试套件")
     println("========================================")

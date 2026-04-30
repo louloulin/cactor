@@ -68,7 +68,7 @@ public class MemberRole {
         this.name = name
     }
 
-    public func name(): String {
+    public func getName(): String {
         name
     }
 
@@ -76,8 +76,8 @@ public class MemberRole {
         name == other.name
     }
 
-    public func hashCode(): Int32 {
-        Int32(name.hashCode())
+    public func hashCode(): Int64 {
+        name.hashCode()
     }
 }
 
@@ -95,19 +95,19 @@ public interface Member {
      * 获取成员状态
      * @return 状态
      */
-    func status(): MemberStatus
+    func getStatus(): MemberStatus
 
     /**
      * 获取成员角色
      * @return 角色集合
      */
-    func roles(): Set<MemberRole>
+    func getRoles(): Set<MemberRole>
 
     /**
      * 获取成员唯一编号
      * @return 编号
      */
-    func uniqueAddress(): UniqueAddress
+    func getUniqueAddress(): UniqueAddress
 
     /**
      * 检查是否有特定角色
@@ -126,7 +126,7 @@ public interface Member {
 /**
  * 唯一地址 - 对标 Akka UniqueAddress
  */
-public struct UniqueAddress {
+public class UniqueAddress <: Hashable & Equatable<UniqueAddress> & ToString {
     public let address: Address
     public let uid: Int64
 
@@ -140,7 +140,15 @@ public struct UniqueAddress {
     }
 
     public func equals(other: UniqueAddress): Bool {
-        address == other.address && uid == other.uid
+        address.equals(other.address) && uid == other.uid
+    }
+
+    public operator func ==(other: UniqueAddress): Bool {
+        equals(other)
+    }
+
+    public func hashCode(): Int64 {
+        address.hashCode() ^ uid
     }
 }
 
@@ -162,25 +170,20 @@ public class MemberImpl <: Member {
         uniqueAddress.address
     }
 
-    public func status(): MemberStatus {
+    public func getStatus(): MemberStatus {
         status
     }
 
-    public func roles(): Set<MemberRole> {
+    public func getRoles(): Set<MemberRole> {
         roles
     }
 
-    public func uniqueAddress(): UniqueAddress {
+    public func getUniqueAddress(): UniqueAddress {
         uniqueAddress
     }
 
     public func hasRole(role: String): Bool {
-        for (r in roles) {
-            if (r.name() == role) {
-                return true
-            }
-        }
-        false
+        roles.contains(MemberRole(role))
     }
 
     public func priority(): Int64 {
@@ -197,7 +200,7 @@ public class MemberImpl <: Member {
 /**
  * 集群状态 - 对标 Akka ClusterState
  */
-public class ClusterState {
+public class ClusterMembershipState {
     public let members: HashMap<UniqueAddress, Member>
     public let leader: Option<UniqueAddress>
     public let seenBy: Set<UniqueAddress>
@@ -219,7 +222,8 @@ public class ClusterState {
     public func getMembersByStatus(status: MemberStatus): Array<Member> {
         let result = ArrayList<Member>()
         for ((_, member) in members) {
-            if (member.status() == status) {
+            let memberStatus = member.getStatus()
+            if (memberStatus.toInt64() == status.toInt64()) {
                 result.add(member)
             }
         }
@@ -233,7 +237,7 @@ public class ClusterState {
     public func activeMemberCount(): Int64 {
         var count = 0
         for ((_, member) in members) {
-            if (member.status().isActive()) {
+            if (member.getStatus().isActive()) {
                 count += 1
             }
         }
@@ -253,7 +257,10 @@ public class Reachability {
 
     public func isReachable(address: UniqueAddress): Bool {
         match (entries.get(address)) {
-            case Some(status) => status == ReachabilityStatus.Reachable
+            case Some(status) => match (status) {
+                case ReachabilityStatus.Reachable => true
+                case _ => false
+            }
             case None => true
         }
     }
@@ -276,9 +283,9 @@ public enum ReachabilityStatus {
  * Gossip状态 - 对标 Akka Gossip
  */
 public class Gossip {
-    public let version: Int64
-    public let members: HashMap<UniqueAddress, MemberState>
-    public let overview: GossipOverview
+    public var version: Int64
+    public var members: HashMap<UniqueAddress, MemberState>
+    public var overview: GossipOverview
 
     public init() {
         this.version = 0
@@ -338,31 +345,31 @@ public interface ClusterProtocol {
      * 加入集群
      * @param address 要加入的地址
      */
-    func join(address: Address): SimpleFuture[Unit]
+    func join(address: Address): SimpleFuture<Unit>
 
     /**
      * 离开集群
      * @param address 要离开的地址
      */
-    func leave(address: Address): SimpleFuture[Unit]
+    func leave(address: Address): SimpleFuture<Unit>
 
     /**
      * 下线节点
      * @param address 要下线的地址
      */
-    func down(address: Address): SimpleFuture[Unit]
+    func down(address: Address): SimpleFuture<Unit>
 
     /**
      * 获取当前成员集合
      * @return 成员集合
      */
-    func members(): Set[Member]
+    func members(): Set<Member>
 
     /**
      * 获取当前集群状态
      * @return 状态
      */
-    func state(): ClusterState
+    func state(): ClusterMembershipState
 
     /**
      * 获取集群事件流
@@ -393,20 +400,20 @@ public interface ClusterEventStream {
      * 发布事件
      * @param event 事件
      */
-    func publish(event: ClusterEvent): Unit
+    func publish(event: ClusterDomainEvent): Unit
 }
 
 /**
  * 集群事件 - 对标 Akka ClusterEvent
  */
-public interface ClusterEvent {
+public interface ClusterDomainEvent {
     func eventType(): String
 }
 
 /**
  * 成员加入事件
  */
-public class MemberJoined <: ClusterEvent {
+public class MemberJoined <: ClusterDomainEvent {
     public let member: Member
 
     public init(member: Member) {
@@ -421,7 +428,7 @@ public class MemberJoined <: ClusterEvent {
 /**
  * 成员上线事件
  */
-public class MemberUp <: ClusterEvent {
+public class MemberUp <: ClusterDomainEvent {
     public let member: Member
 
     public init(member: Member) {
@@ -436,7 +443,7 @@ public class MemberUp <: ClusterEvent {
 /**
  * 成员离开事件
  */
-public class MemberLeft <: ClusterEvent {
+public class MemberLeft <: ClusterDomainEvent {
     public let member: Member
 
     public init(member: Member) {
@@ -451,7 +458,7 @@ public class MemberLeft <: ClusterEvent {
 /**
  * 成员下线事件
  */
-public class MemberExited <: ClusterEvent {
+public class MemberExited <: ClusterDomainEvent {
     public let member: Member
 
     public init(member: Member) {
@@ -466,7 +473,7 @@ public class MemberExited <: ClusterEvent {
 /**
  * 成员移除事件
  */
-public class MemberRemoved <: ClusterEvent {
+public class MemberRemoved <: ClusterDomainEvent {
     public let member: Member
 
     public init(member: Member) {
@@ -481,10 +488,10 @@ public class MemberRemoved <: ClusterEvent {
 /**
  * Leader变更事件
  */
-public class LeaderChanged <: ClusterEvent {
-    public let leader: Option[Address]
+public class LeaderChanged <: ClusterDomainEvent {
+    public let leader: Option<Address>
 
-    public init(leader: Option[Address]) {
+    public init(leader: Option<Address>) {
         this.leader = leader
     }
 
@@ -503,7 +510,7 @@ public class Class {
         this.name = name
     }
 
-    public func name(): String {
+    public func getName(): String {
         name
     }
 }
@@ -548,6 +555,14 @@ public struct Address {
     public func toString(): String {
         "${protocol}://${system}@${host}:${port}"
     }
+
+    public func equals(other: Address): Bool {
+        protocol == other.protocol && system == other.system && host == other.host && port == other.port
+    }
+
+    public func hashCode(): Int64 {
+        protocol.hashCode() ^ system.hashCode() ^ host.hashCode() ^ Int64(port)
+    }
 }
 
 /**
@@ -556,23 +571,54 @@ public struct Address {
 public interface Set<T> {
     func add(item: T): Unit
     func contains(item: T): Bool
+    func size(): Int64
 }
 
 /**
  * HashSet实现
  */
-public class HashSet<T> <: Set<T> {
+public class HashSet<T> <: Set<T> where T <: Hashable & Equatable<T> {
     private let map: HashMap<T, Bool>
 
     public init() {
         this.map = HashMap<T, Bool>()
     }
 
+    public init(items: Array<T>) {
+        this.map = HashMap<T, Bool>()
+        for (item in items) {
+            map.add(item, true)
+        }
+    }
+
     public func add(item: T): Unit {
         map.add(item, true)
     }
 
+    public func size(): Int64 {
+        map.size
+    }
+
     public func contains(item: T): Bool {
         map.contains(item)
+    }
+
+    public func clear(): Unit {
+        map.clear()
+    }
+
+    public func remove(item: T): Bool {
+        match (map.remove(item)) {
+            case Some(v) => v
+            case None => false
+        }
+    }
+
+    public func toArray(): Array<T> {
+        let result = ArrayList<T>()
+        for ((key, _) in map) {
+            result.add(key)
+        }
+        result.toArray()
     }
 }

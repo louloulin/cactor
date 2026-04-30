@@ -5,7 +5,7 @@
  */
 package cactor.examples.configuration_usage_test
 
-import std.time.{Duration, DateTime}
+import std.time.*
 import cactor.core.actor.{Actor, ActorRef}
 import cactor.core.message.{Message, StringMessage, MessageResult}
 import cactor.core.context.{ActorContext}

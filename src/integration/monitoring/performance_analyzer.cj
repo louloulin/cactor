@@ -83,7 +83,7 @@ public class PerformanceCounter {
     private var min: Float64
     private var max: Float64
     private let values: ArrayList<Float64>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let maxSamples: Int64
 
     public init(maxSamples: Int64) {
@@ -92,7 +92,7 @@ public class PerformanceCounter {
         this.min = 999999999.0  // 大数值作为初始最小值
         this.max = -999999999.0  // 小数值作为初始最大值
         this.values = ArrayList<Float64>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.maxSamples = maxSamples
     }
 
@@ -168,7 +168,7 @@ public class ActorPerformanceMonitor {
     private var totalMessages: Int64
     private let actorPath: ActorPath
     private let startTime: Int64
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(actorPath: ActorPath) {
         this.messageProcessingTime = PerformanceCounter(1000)
@@ -177,7 +177,7 @@ public class ActorPerformanceMonitor {
         this.totalMessages = 0
         this.actorPath = actorPath
         this.startTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func recordMessageProcessed(processingTimeMs: Float64): Unit {

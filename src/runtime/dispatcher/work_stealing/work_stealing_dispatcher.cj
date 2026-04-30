@@ -52,13 +52,13 @@ public class WorkStealingQueue<T> {
     private let items: ArrayList<T>
     private let size: AtomicInt64
     private let maxSize: Int64
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(maxSize: Int64) {
         this.items = ArrayList<T>()
         this.size = AtomicInt64(0)
         this.maxSize = maxSize
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     /**
@@ -93,7 +93,7 @@ public class WorkStealingQueue<T> {
             }
             let lastIndex = items.size - 1
             let item = items[lastIndex]
-            items.remove(lastIndex)  // 从末尾移除（LIFO）
+            items.remove((lastIndex)..(lastIndex + 1))  // 从末尾移除（LIFO）
             size.fetchAdd(-1)
             Some(item)
         } finally {
@@ -111,7 +111,7 @@ public class WorkStealingQueue<T> {
                 return None
             }
             let item = items[0]
-            items.remove(0)  // 从开头移除（FIFO）
+            items.remove(0..1)  // 从开头移除（FIFO）
             size.fetchAdd(-1)
             Some(item)
         } finally {
@@ -134,14 +134,14 @@ public class WorkStealingQueue<T> {
 public class WorkerThread {
     private let workerId: Int32
     private let localQueue: WorkStealingQueue<ActorTask>
-    private let globalQueue: NonBlockingQueue<ActorTask>
+    private let globalQueue: ConcurrentLinkedQueue<ActorTask>
     private let otherWorkers: Array<WorkerThread>
     private let isRunning: AtomicBool
     private let tasksProcessed: AtomicInt64
     private let stealAttempts: AtomicInt64
     private let successfulSteals: AtomicInt64
 
-    public init(workerId: Int32, globalQueue: NonBlockingQueue<ActorTask>) {
+    public init(workerId: Int32, globalQueue: ConcurrentLinkedQueue<ActorTask>) {
         this.workerId = workerId
         this.localQueue = WorkStealingQueue<ActorTask>(1000)
         this.globalQueue = globalQueue
@@ -366,7 +366,7 @@ func getCurrentTimeNanos(): Int64 {
 public class WorkStealingDispatcher {
     private let workerCount: Int32
     private let workers: Array<WorkerThread>
-    private let globalQueue: NonBlockingQueue<ActorTask>
+    private let globalQueue: ConcurrentLinkedQueue<ActorTask>
     private let roundRobinCounter: AtomicInt64
     private let isStarted: AtomicBool
     private let totalTasksSubmitted: AtomicInt64
@@ -374,7 +374,7 @@ public class WorkStealingDispatcher {
 
     public init(workerCount: Int32) {
         this.workerCount = workerCount
-        this.globalQueue = NonBlockingQueue<ActorTask>()
+        this.globalQueue = ConcurrentLinkedQueue<ActorTask>()
         this.roundRobinCounter = AtomicInt64(0)
         this.isStarted = AtomicBool(false)
         this.totalTasksSubmitted = AtomicInt64(0)

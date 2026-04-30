@@ -5,24 +5,11 @@
  */
 package cactor.api.extensions
 
-import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory}
+import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory, MailboxSelector, DispatcherSelector, SupervisorStrategy, DefaultSupervisorStrategy}
 import cactor.core.system.{ActorSystem}
 import cactor.runtime.system.{SimpleActorSystem}
 import cactor.api.config.{MailboxConfig, DispatcherConfig, SupervisionConfig}
-
-/**
- * ActorSystem扩展 - 添加极简创建方法
- * 基于现有ActorSystem增强，提供更简洁的API
- */
-/**
- * ActorSystem扩展 - 添加便利方法
- * 注意：由于Cangjie的extend语法限制，我们将扩展方法移到静态工厂类中
- */
-
-/**
- * ActorSystem便利工厂方法
- * 改为普通函数避免静态方法链接问题
- */
+import std.time.*
 
 /**
  * 创建默认配置的ActorSystem
@@ -85,13 +72,19 @@ public struct ActorSystemExtensions {
      * 带邮箱配置的创建
      */
     public static func actorOfWithMailbox<T>(system: ActorSystem, creator: () -> T, name: String, mailboxConfig: MailboxConfig): ActorRef where T <: Actor {
+        let mailbox = match (mailboxConfig.getMailboxType()) {
+            case "unbounded" => MailboxSelector.Unbounded
+            case "bounded" => MailboxSelector.bounded(Int64(mailboxConfig.getCapacity()))
+            case "priority" => MailboxSelector.Priority("default")
+            case _ => MailboxSelector.defaultMailbox()
+        }
         let props = PropsFactory.create<Actor>({ =>
             let actor = creator()
             match (actor as Actor) {
                 case Some(a) => a
                 case None => throw Exception("Actor类型转换失败")
             }
-        }).withMailbox(mailboxConfig.getMailboxType())
+        }).withMailbox(mailbox)
         system.actorOf(props, name)
     }
 
@@ -99,13 +92,19 @@ public struct ActorSystemExtensions {
      * 带调度器配置的创建
      */
     public static func actorOfWithDispatcher<T>(system: ActorSystem, creator: () -> T, name: String, dispatcherConfig: DispatcherConfig): ActorRef where T <: Actor {
+        let dispatcher = match (dispatcherConfig.getDispatcherType()) {
+            case "default" => DispatcherSelector.DefaultDispatcher
+            case "pinned" => DispatcherSelector.PinnedDispatcher
+            case "calling-thread" => DispatcherSelector.CallingThreadDispatcher
+            case _ => DispatcherSelector.DefaultDispatcher
+        }
         let props = PropsFactory.create<Actor>({ =>
             let actor = creator()
             match (actor as Actor) {
                 case Some(a) => a
                 case None => throw Exception("Actor类型转换失败")
             }
-        }).withDispatcher(dispatcherConfig.getDispatcherType())
+        }).withDispatcher(dispatcher)
         system.actorOf(props, name)
     }
 
@@ -119,7 +118,7 @@ public struct ActorSystemExtensions {
                 case Some(a) => a
                 case None => throw Exception("Actor类型转换失败")
             }
-        }).withSupervisionStrategy(supervisionConfig.getStrategyType())
+        }).withSupervisorStrategy(supervisionConfig.getStrategy())
         system.actorOf(props, name)
     }
 
@@ -132,15 +131,27 @@ public struct ActorSystemExtensions {
                                            mailboxConfig: MailboxConfig,
                                            dispatcherConfig: DispatcherConfig,
                                            supervisionConfig: SupervisionConfig): ActorRef where T <: Actor {
+        let mailbox = match (mailboxConfig.getMailboxType()) {
+            case "unbounded" => MailboxSelector.Unbounded
+            case "bounded" => MailboxSelector.bounded(Int64(mailboxConfig.getCapacity()))
+            case "priority" => MailboxSelector.Priority("default")
+            case _ => MailboxSelector.defaultMailbox()
+        }
+        let dispatcher = match (dispatcherConfig.getDispatcherType()) {
+            case "default" => DispatcherSelector.DefaultDispatcher
+            case "pinned" => DispatcherSelector.PinnedDispatcher
+            case "calling-thread" => DispatcherSelector.CallingThreadDispatcher
+            case _ => DispatcherSelector.DefaultDispatcher
+        }
         let props = PropsFactory.create<Actor>({ =>
             let actor = creator()
             match (actor as Actor) {
                 case Some(a) => a
                 case None => throw Exception("Actor类型转换失败")
             }
-        }).withMailbox(mailboxConfig.getMailboxType())
-            .withDispatcher(dispatcherConfig.getDispatcherType())
-            .withSupervisionStrategy(supervisionConfig.getStrategyType())
+        }).withMailbox(mailbox)
+            .withDispatcher(dispatcher)
+            .withSupervisorStrategy(supervisionConfig.getStrategy())
         system.actorOf(props, name)
     }
 

@@ -76,11 +76,11 @@ public class WeightedRoundRobinRoutingStrategy <: RoutingStrategy {
     private let weights: Array<Int32>
     private let currentWeights: Array<AtomicInt32>
     private let totalWeight: Int32
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(weights: Array<Int32>) {
         this.weights = weights
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         
         // 计算总权重
         var total: Int32 = 0
@@ -140,11 +140,11 @@ public class WeightedRoundRobinRoutingStrategy <: RoutingStrategy {
  */
 public class LeastConnectionsRoutingStrategy <: RoutingStrategy {
     private let connectionCounts: HashMap<String, AtomicInt32>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init() {
         this.connectionCounts = HashMap<String, AtomicInt32>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef> {
@@ -216,11 +216,11 @@ public class LeastConnectionsRoutingStrategy <: RoutingStrategy {
  */
 public class FastestResponseRoutingStrategy <: RoutingStrategy {
     private let responseTimes: HashMap<String, ResponseTimeTracker>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init() {
         this.responseTimes = HashMap<String, ResponseTimeTracker>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef> {
@@ -299,7 +299,7 @@ public class ResponseTimeTracker {
         // 保留最近的响应时间
         recentTimes.add(responseTimeMs)
         if (recentTimes.size > Int64(maxRecentCount)) {
-            recentTimes.remove(0)
+            recentTimes.remove(0..1)
         }
     }
     
@@ -334,12 +334,12 @@ public class ResponseTimeTracker {
 public class FailoverRoutingStrategy <: RoutingStrategy {
     private let primaryIndex: Int32
     private let failedActors: HashSet<String>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(primaryIndex: Int32) {
         this.primaryIndex = primaryIndex
         this.failedActors = HashSet<String>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef> {
@@ -409,12 +409,12 @@ public class FailoverRoutingStrategy <: RoutingStrategy {
 public class ContentBasedRoutingStrategy <: RoutingStrategy {
     private let contentSelector: (Message) -> String
     private let routingTable: HashMap<String, Int32>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(contentSelector: (Message) -> String) {
         this.contentSelector = contentSelector
         this.routingTable = HashMap<String, Int32>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func selectRoutee(routees: Array<ActorRef>, message: Message): Option<ActorRef> {
@@ -476,14 +476,14 @@ public class ContentBasedRoutingStrategy <: RoutingStrategy {
 public class AdvancedRouter <: Router {
     private let strategy: RoutingStrategy
     private let routees: ArrayList<ActorRef>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let routingMetrics: RoutingMetrics
     private let healthChecker: RouterHealthChecker
 
     public init(strategy: RoutingStrategy) {
         this.strategy = strategy
         this.routees = ArrayList<ActorRef>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.routingMetrics = RoutingMetrics()
         this.healthChecker = RouterHealthChecker()
     }
@@ -553,7 +553,7 @@ public class AdvancedRouter <: Router {
                 }
             }
             if (index >= 0) {
-                routees.remove(index)
+                routees.remove(Int64(index)..Int64(index + 1))
                 healthChecker.removeActor(routee)
                 routingMetrics.recordRouteeRemoved()
             }
@@ -602,7 +602,7 @@ public class RoutingMetrics {
     private let routeesRemoved: AtomicInt64
     private let failureReasons: HashMap<String, AtomicInt64>
     private let startTime: Int64
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.totalRoutes = AtomicInt64(0)
@@ -612,7 +612,7 @@ public class RoutingMetrics {
         this.routeesRemoved = AtomicInt64(0)
         this.failureReasons = HashMap<String, AtomicInt64>()
         this.startTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func recordSuccessfulRoute(routeeCount: Int32): Unit {
@@ -693,12 +693,12 @@ public class RoutingMetrics {
  */
 public class RouterHealthChecker {
     private let actorHealth: HashMap<String, ActorHealthStatus>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let healthCheckInterval: Duration
 
     public init() {
         this.actorHealth = HashMap<String, ActorHealthStatus>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.healthCheckInterval = Duration.second * 30  // 30秒检查一次
     }
 

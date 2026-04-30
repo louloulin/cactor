@@ -172,13 +172,13 @@ public class LoadBalancer {
     private let workerStats: Array<WorkerLoadStats>
     private let roundRobinCounter: AtomicInt64
     private let random: Random
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(config: SchedulerConfig) {
         this.config = config
         this.roundRobinCounter = AtomicInt64(0)
         this.random = Random()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         
         // 初始化工作线程统计
         this.workerStats = Array<WorkerLoadStats>(

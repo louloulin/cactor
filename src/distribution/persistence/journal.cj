@@ -75,11 +75,11 @@ public struct JournalConfig {
  */
 public class InMemoryJournal <: Journal {
     private let entries: HashMap<String, ArrayList<JournalEntry>>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.entries = HashMap<String, ArrayList<JournalEntry>>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func write(persistenceId: String, event: PersistentEvent): Unit {
@@ -184,9 +184,9 @@ public class JournalEntry {
 }
 
 /**
- * Snapshot Store 接口 - 对标 Akka Snapshot Store
+ * Journal Snapshot Store 接口 - 对标 Akka Snapshot Store
  */
-public interface SnapshotStore {
+public interface JournalSnapshotStore {
     /**
      * 保存快照
      */
@@ -245,13 +245,13 @@ public struct SnapshotStoreConfig {
 /**
  * 内存 Snapshot Store 实现
  */
-public class InMemorySnapshotStore <: SnapshotStore {
+public class InMemorySnapshotStore <: JournalSnapshotStore {
     private let snapshots: HashMap<String, ArrayList<SnapshotEntry>>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.snapshots = HashMap<String, ArrayList<SnapshotEntry>>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func save(metadata: SnapshotMetadata, snapshot: Any): Unit {
@@ -380,9 +380,9 @@ public class SnapshotEntry {
 }
 
 /**
- * Persistence 插件
+ * Journal Persistence 插件
  */
-public interface PersistencePlugin {
+public interface JournalPersistencePlugin {
     /**
      * 获取插件 ID
      */
@@ -396,13 +396,13 @@ public interface PersistencePlugin {
     /**
      * 获取 Snapshot Store
      */
-    func snapshotStore(): SnapshotStore
+    func snapshotStore(): JournalSnapshotStore
 }
 
 /**
- * 默认 Persistence 插件
+ * 默认 Journal Persistence 插件
  */
-public class DefaultPersistencePlugin <: PersistencePlugin {
+public class JournalDefaultPersistencePlugin <: JournalPersistencePlugin {
     private let pluginIdValue: String
     private let journalInstance: InMemoryJournal
     private let snapshotStoreInstance: InMemorySnapshotStore
@@ -421,7 +421,7 @@ public class DefaultPersistencePlugin <: PersistencePlugin {
         journalInstance
     }
 
-    public func snapshotStore(): SnapshotStore {
+    public func snapshotStore(): JournalSnapshotStore {
         snapshotStoreInstance
     }
 }
@@ -430,21 +430,21 @@ public class DefaultPersistencePlugin <: PersistencePlugin {
  * Persistence 系统
  */
 public class PersistenceSystem {
-    private let plugins: HashMap<String, PersistencePlugin>
-    private let defaultPlugin: PersistencePlugin
-    private let mutex: ReentrantMutex
+    private let plugins: HashMap<String, JournalPersistencePlugin>
+    private let defaultPlugin: JournalPersistencePlugin
+    private let mutex: Mutex
 
     public init() {
-        this.plugins = HashMap<String, PersistencePlugin>()
-        this.defaultPlugin = DefaultPersistencePlugin()
-        this.mutex = ReentrantMutex()
+        this.plugins = HashMap<String, JournalPersistencePlugin>()
+        this.defaultPlugin = JournalDefaultPersistencePlugin()
+        this.mutex = Mutex()
         registerPlugin(defaultPlugin)
     }
 
     /**
      * 注册插件
      */
-    public func registerPlugin(plugin: PersistencePlugin): Unit {
+    public func registerPlugin(plugin: JournalPersistencePlugin): Unit {
         mutex.lock()
         plugins.add(plugin.getPluginId(), plugin)
         mutex.unlock()
@@ -466,7 +466,7 @@ public class PersistenceSystem {
     /**
      * 获取 Snapshot Store
      */
-    public func snapshotStore(pluginId!: String = "persistence.default"): SnapshotStore {
+    public func snapshotStore(pluginId!: String = "persistence.default"): JournalSnapshotStore {
         mutex.lock()
         let plugin = match (plugins.get(pluginId)) {
             case Some(p) => p
@@ -491,7 +491,7 @@ public class PersistenceSystem {
  */
 public class GlobalPersistenceSystem {
     private static var instance: Option<PersistenceSystem> = None
-    private static let mutex: ReentrantMutex = ReentrantMutex()
+    private static let mutex: Mutex = Mutex()
 
     public static func getInstance(): PersistenceSystem {
         mutex.lock()

@@ -7,6 +7,7 @@
 package cactor.core.context
 
 import std.time.*
+import std.collection.*
 import cactor.core.actor.{ActorRef, ActorPath, Props, Actor, ActorContext}
 import cactor.core.system.ActorSystem
 
@@ -94,7 +95,7 @@ public interface ActorContext {
      * 对应 Akka: context.system
      * @return Actor系统
      */
-    func system(): cactor.core.system.ActorSystem
+    func getActorSystem(): ActorSystem
 
     /**
      * 设置接收超时
@@ -131,20 +132,20 @@ public interface ActorContext {
 public class DefaultActorContext <: ActorContext {
     private let selfRef: ActorRef
     private let parentRef: ActorRef
-    private let system: cactor.core.system.ActorSystem
-    private let childrenMap: std.collection.HashMap<String, ActorRef>
+    private let system: ActorSystem
+    private let childrenMap: HashMap<String, ActorRef>
     private var currentSender: ActorRef
     private var receiveTimeoutDuration: Duration
-    private let watchedActors: std.collection.HashSet<ActorRef>
+    private let watchedActors: ArrayList<ActorRef>
 
-    public init(selfRef: ActorRef, parentRef: ActorRef, system: cactor.core.system.ActorSystem) {
+    public init(selfRef: ActorRef, parentRef: ActorRef, system: ActorSystem) {
         this.selfRef = selfRef
         this.parentRef = parentRef
         this.system = system
-        this.childrenMap = std.collection.HashMap<String, ActorRef>()
+        this.childrenMap = HashMap<String, ActorRef>()
         this.currentSender = selfRef  // 默认sender为自身
-        this.receiveTimeoutDuration = Duration.zero
-        this.watchedActors = std.collection.HashSet<ActorRef>()
+        this.receiveTimeoutDuration = Duration.second * 0
+        this.watchedActors = ArrayList<ActorRef>()
     }
 
     public func sender(): ActorRef {
@@ -160,11 +161,12 @@ public class DefaultActorContext <: ActorContext {
     }
 
     public func children(): Array<ActorRef> {
-        let result = Array<ActorRef>(Int64(childrenMap.size), { i =>
-            let entries = childrenMap.values()
-            entries[i]
-        })
-        result
+        let entries = childrenMap.values()
+        let result = ArrayList<ActorRef>()
+        for (ref in entries) {
+            result.add(ref)
+        }
+        result.toArray()
     }
 
     public func child(name: String): Option<ActorRef> {
@@ -186,14 +188,23 @@ public class DefaultActorContext <: ActorContext {
     }
 
     public func watch(actorRef: ActorRef): Unit {
-        watchedActors.insert(actorRef)
+        watchedActors.add(actorRef)
     }
 
     public func unwatch(actorRef: ActorRef): Unit {
-        watchedActors.remove(actorRef)
+        var foundIdx = -1
+        for (i in 0..watchedActors.size) {
+            if (watchedActors[i].path.toString() == actorRef.path.toString()) {
+                foundIdx = i
+                break
+            }
+        }
+        if (foundIdx >= 0) {
+            watchedActors.remove(Int64(foundIdx)..Int64(foundIdx + 1))
+        }
     }
 
-    public func system(): ActorSystem {
+    public func getActorSystem(): ActorSystem {
         system
     }
 
@@ -213,7 +224,7 @@ public class DefaultActorContext <: ActorContext {
         // 从childrenMap中移除
         let toRemove = ArrayList<String>()
         for ((name, ref) in childrenMap) {
-            if (ref == actorRef) {
+            if (ref.path.toString() == actorRef.path.toString()) {
                 toRemove.add(name)
             }
         }
@@ -228,7 +239,7 @@ public class DefaultActorContext <: ActorContext {
     }
 
     // 获取监视的Actor列表
-    public func getWatchedActors(): std.collection.HashSet<ActorRef> {
+    public func getWatchedActors(): ArrayList<ActorRef> {
         watchedActors
     }
 

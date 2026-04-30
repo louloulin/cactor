@@ -167,9 +167,9 @@ public class SimplePersistentActor <: PersistentActor {
     private var seqNr: Int64
     private var isReplaying: Bool
     private let journal: Journal
-    private let snapshotStore: SnapshotStore
+    private let snapshotStore: JournalSnapshotStore
 
-    public init(pid: String, journal: Journal, snapshotStore: SnapshotStore) {
+    public init(pid: String, journal: Journal, snapshotStore: JournalSnapshotStore) {
         this.pid = pid
         this.state = None
         this.seqNr = 0

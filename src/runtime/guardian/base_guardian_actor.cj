@@ -10,7 +10,7 @@ import std.time.*
 import std.collection.*
 import cactor.core.actor.{Actor, ActorRef, Props}
 import cactor.core.message.{Message, MessageResult}
-import cactor.core.context.{ActorContext}
+import cactor.core.actor.{ActorContext}
 import cactor.core.guardian.{GuardianActor, GuardianType, GuardianStats, GuardianHealthStatus}
 import cactor.core.supervision.{SupervisionStrategy, ActorFailure}
 import cactor.core.guardian.{CreateChildMessage, StopChildMessage, RestartChildMessage}

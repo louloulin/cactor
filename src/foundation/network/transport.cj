@@ -103,13 +103,13 @@ public class TcpTransport <: NetworkTransport {
     private let localAddress: NetworkAddress
     private let isRunning: AtomicBool
     private var dataHandler: Option<(Array<UInt8>) -> Unit>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(localAddress: NetworkAddress) {
         this.localAddress = localAddress
         this.isRunning = AtomicBool(false)
         this.dataHandler = None
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func start(): Unit {
@@ -194,13 +194,13 @@ public class UdpTransport <: NetworkTransport {
     private let localAddress: NetworkAddress
     private let isRunning: AtomicBool
     private var dataHandler: Option<(Array<UInt8>) -> Unit>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(localAddress: NetworkAddress) {
         this.localAddress = localAddress
         this.isRunning = AtomicBool(false)
         this.dataHandler = None
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func start(): Unit {

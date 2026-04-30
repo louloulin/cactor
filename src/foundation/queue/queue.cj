@@ -84,12 +84,12 @@ public struct QueueStats {
  */
 public class SimpleQueue<T> <: Queue<T> {
     private let items: ArrayList<T>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let maxCapacity: Int64
     
     public init(capacity: Int64) {
         this.items = ArrayList<T>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.maxCapacity = capacity
     }
     

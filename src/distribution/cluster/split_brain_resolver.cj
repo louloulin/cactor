@@ -103,22 +103,22 @@ public struct SBRConfig {
  */
 public class SBRDecision {
     public let strategy: SBRStrategy
-    public let survivors: HashSet<UniqueAddress]
-    public let victims: HashSet<UniqueAddress]
+    public let survivors: HashSet<UniqueAddress>
+    public let victims: HashSet<UniqueAddress>
     public let reason: String
     public let timestamp: Int64
 
     public init(
         strategy: SBRStrategy,
-        survivors: HashSet<UniqueAddress],
-        victims: HashSet<UniqueAddress],
+        survivors: HashSet<UniqueAddress>,
+        victims: HashSet<UniqueAddress>,
         reason: String
     ) {
         this.strategy = strategy
         this.survivors = survivors
         this.victims = victims
         this.reason = reason
-        this.timestamp = DateTime.now().toUnixTimeStamp()
+        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
     public func isSurvivor(address: UniqueAddress): Bool {
@@ -130,7 +130,7 @@ public class SBRDecision {
     }
 
     public func toString(): String {
-        "SBRDecision(${strategy}, survivors=${survivors.size}, victims=${victims.size}, reason=${reason})"
+        "SBRDecision(${strategy.toString()}, survivors=${survivors.size()}, victims=${victims.size()}, reason=${reason})"
     }
 }
 
@@ -147,8 +147,8 @@ public interface SplitBrainResolver {
      */
     func resolve(
         allNodes: HashSet<UniqueAddress>,
-        unreachableNodes: HashSet<UniqueAddress],
-        downedNodes: HashSet<UniqueAddress]
+        unreachableNodes: HashSet<UniqueAddress>,
+        downedNodes: HashSet<UniqueAddress>
     ): SBRDecision
 
     /**
@@ -171,11 +171,11 @@ public interface SplitBrainResolver {
  */
 public class KeepMajorityResolver <: SplitBrainResolver {
     private let config: SBRConfig
-    private let nodePriority: HashMap<UniqueAddress, Int64]
+    private let nodePriority: HashMap<UniqueAddress, Int64>
 
     public init(config: SBRConfig) {
         this.config = config
-        this.nodePriority = HashMap<UniqueAddress, Int64]()
+        this.nodePriority = HashMap<UniqueAddress, Int64>()
     }
 
     public func setNodePriority(address: UniqueAddress, priority: Int64): Unit {
@@ -184,19 +184,19 @@ public class KeepMajorityResolver <: SplitBrainResolver {
 
     public func resolve(
         allNodes: HashSet<UniqueAddress>,
-        unreachableNodes: HashSet<UniqueAddress],
-        downedNodes: HashSet<UniqueAddress]
+        unreachableNodes: HashSet<UniqueAddress>,
+        downedNodes: HashSet<UniqueAddress>
     ): SBRDecision {
         // 计算可达节点 (all - unreachable - downed)
-        let reachable = HashSet<UniqueAddress]()
-        for (node in allNodes) {
+        let reachable = HashSet<UniqueAddress>()
+        for (node in allNodes.toArray()) {
             if (!unreachableNodes.contains(node) && !downedNodes.contains(node)) {
                 reachable.add(node)
             }
         }
 
-        let reachableCount = reachable.size
-        let totalCount = allNodes.size
+        let reachableCount = reachable.size()
+        let totalCount = allNodes.size()
         let halfCount = totalCount / 2
 
         // 检查是否需要分裂
@@ -218,12 +218,12 @@ public class KeepMajorityResolver <: SplitBrainResolver {
                 let survivors = HashSet<UniqueAddress>()
                 survivors.add(highest)
                 let victims = HashSet<UniqueAddress>()
-                for (node in reachable) {
-                    if (node != highest) {
+                for (node in reachable.toArray()) {
+                    if (!node.equals(highest)) {
                         victims.add(node)
                     }
                 }
-                for (node in unreachableNodes) {
+                for (node in unreachableNodes.toArray()) {
                     victims.add(node)
                 }
                 return SBRDecision(
@@ -236,7 +236,7 @@ public class KeepMajorityResolver <: SplitBrainResolver {
         }
 
         // 少数方，所有节点都下线 (DownAll 行为)
-        let survivors = HashSet<UniqueAddress]()
+        let survivors = HashSet<UniqueAddress>()
         let victims = allNodes
         SBRDecision(
             config.strategy,
@@ -251,14 +251,14 @@ public class KeepMajorityResolver <: SplitBrainResolver {
     }
 
     public func shouldResolve(unreachableNodes: HashSet<UniqueAddress>): Bool {
-        unreachableNodes.size > 0
+        unreachableNodes.size() > 0
     }
 
     private func findHighestPriority(nodes: HashSet<UniqueAddress>): UniqueAddress {
         var highest: Option<UniqueAddress> = None
         var maxPriority: Int64 = -1
 
-        for (node in nodes) {
+        for (node in nodes.toArray()) {
             let priority = match (nodePriority.get(node)) {
                 case Some(p) => p
                 case None => node.uid  // 使用 uid 作为默认优先级
@@ -273,10 +273,11 @@ public class KeepMajorityResolver <: SplitBrainResolver {
             case Some(addr) => addr
             case None =>
                 // fallback: 返回任意节点
-                let iter = nodes.iter()
-                match (iter.next()) {
-                    case Some(node) => node
-                    case None => UniqueAddress(Address("", "", "", 0), 0)
+                let arr = nodes.toArray()
+                if (arr.size > 0) {
+                    arr[0]
+                } else {
+                    UniqueAddress(Address("", "", "", 0), 0)
                 }
         }
     }
@@ -302,7 +303,7 @@ public class KeepOldestResolver <: SplitBrainResolver {
         var oldest: Option<UniqueAddress> = None
         var minUid: Int64 = Int64.Max
 
-        for (node in allNodes) {
+        for (node in allNodes.toArray()) {
             if (node.uid < minUid) {
                 minUid = node.uid
                 oldest = Some(node)
@@ -318,8 +319,8 @@ public class KeepOldestResolver <: SplitBrainResolver {
                     survivors.add(oldestNode)
 
                     let victims = HashSet<UniqueAddress>()
-                    for (node in allNodes) {
-                        if (node != oldestNode) {
+                    for (node in allNodes.toArray()) {
+                        if (!node.equals(oldestNode)) {
                             victims.add(node)
                         }
                     }
@@ -353,7 +354,7 @@ public class KeepOldestResolver <: SplitBrainResolver {
     }
 
     public func shouldResolve(unreachableNodes: HashSet<UniqueAddress>): Bool {
-        unreachableNodes.size > 0
+        unreachableNodes.size() > 0
     }
 }
 
@@ -377,16 +378,16 @@ public class StaticQuorumResolver <: SplitBrainResolver {
     ): SBRDecision {
         // 计算可达节点数
         var reachableCount = 0
-        for (node in allNodes) {
+        for (node in allNodes.toArray()) {
             if (!unreachableNodes.contains(node) && !downedNodes.contains(node)) {
                 reachableCount += 1
             }
         }
 
-        if (reachableCount >= quorumSize) {
+        if (reachableCount >= Int64(quorumSize)) {
             // 达到 quorum，保留可达节点
             let survivors = HashSet<UniqueAddress>()
-            for (node in allNodes) {
+            for (node in allNodes.toArray()) {
                 if (!unreachableNodes.contains(node) && !downedNodes.contains(node)) {
                     survivors.add(node)
                 }
@@ -416,7 +417,7 @@ public class StaticQuorumResolver <: SplitBrainResolver {
     }
 
     public func shouldResolve(unreachableNodes: HashSet<UniqueAddress>): Bool {
-        unreachableNodes.size > 0
+        unreachableNodes.size() > 0
     }
 }
 
@@ -434,7 +435,7 @@ public class DownAllResolver <: SplitBrainResolver {
     public func resolve(
         allNodes: HashSet<UniqueAddress>,
         unreachableNodes: HashSet<UniqueAddress>,
-        downedNodes: HashSet<UniqueAddress]
+        downedNodes: HashSet<UniqueAddress>
     ): SBRDecision {
         // 关闭所有节点
         let survivors = HashSet<UniqueAddress>()
@@ -452,7 +453,7 @@ public class DownAllResolver <: SplitBrainResolver {
     }
 
     public func shouldResolve(unreachableNodes: HashSet<UniqueAddress>): Bool {
-        unreachableNodes.size > 0
+        unreachableNodes.size() > 0
     }
 }
 
@@ -481,8 +482,8 @@ public class KeepRefereeResolver <: SplitBrainResolver {
             // Referee 可达，保留 referee 和所有可达节点
             let survivors = HashSet<UniqueAddress>()
             survivors.add(referee)
-            for (node in allNodes) {
-                if (!unreachableNodes.contains(node) && !downedNodes.contains(node) && node != referee) {
+            for (node in allNodes.toArray()) {
+                if (!unreachableNodes.contains(node) && !downedNodes.contains(node) && !node.equals(referee)) {
                     survivors.add(node)
                 }
             }
@@ -505,9 +506,9 @@ public class KeepRefereeResolver <: SplitBrainResolver {
             )
         } else {
             // Referee 不可达但允许分裂，使用 KeepMajority
-            let totalCount = allNodes.size
+            let totalCount = allNodes.size()
             var reachableCount = 0
-            for (node in allNodes) {
+            for (node in allNodes.toArray()) {
                 if (!unreachableNodes.contains(node) && !downedNodes.contains(node)) {
                     reachableCount += 1
                 }
@@ -515,7 +516,7 @@ public class KeepRefereeResolver <: SplitBrainResolver {
 
             if (reachableCount > totalCount / 2) {
                 let survivors = HashSet<UniqueAddress>()
-                for (node in allNodes) {
+                for (node in allNodes.toArray()) {
                     if (!unreachableNodes.contains(node) && !downedNodes.contains(node)) {
                         survivors.add(node)
                     }
@@ -545,7 +546,7 @@ public class KeepRefereeResolver <: SplitBrainResolver {
     }
 
     public func shouldResolve(unreachableNodes: HashSet<UniqueAddress>): Bool {
-        unreachableNodes.size > 0
+        unreachableNodes.size() > 0
     }
 }
 
@@ -556,42 +557,44 @@ public class SBRResolverFactory {
     /**
      * 创建 KeepMajority Resolver
      */
-    public static func createKeepMajority(config!: SBRConfig = SBRConfig.getDefault()): SplitBrainResolver {
+    public static func createKeepMajority(): SplitBrainResolver {
+        KeepMajorityResolver(SBRConfig.getDefault())
+    }
+
+    public static func createKeepMajority(config: SBRConfig): SplitBrainResolver {
         KeepMajorityResolver(config)
     }
 
     /**
      * 创建 KeepOldest Resolver
      */
-    public static func createKeepOldest(config!: SBRConfig = SBRConfig.keepOldest()): SplitBrainResolver {
+    public static func createKeepOldest(): SplitBrainResolver {
+        KeepOldestResolver(SBRConfig.keepOldest())
+    }
+
+    public static func createKeepOldest(config: SBRConfig): SplitBrainResolver {
         KeepOldestResolver(config)
     }
 
     /**
      * 创建 StaticQuorum Resolver
      */
-    public static func createStaticQuorum(
-        quorumSize: Int32,
-        config!: SBRConfig = SBRConfig.staticQuorum(quorumSize)
-    ): SplitBrainResolver {
-        StaticQuorumResolver(config, quorumSize)
+    public static func createStaticQuorum(quorumSize: Int32): SplitBrainResolver {
+        StaticQuorumResolver(SBRConfig.staticQuorum(quorumSize), quorumSize)
     }
 
     /**
      * 创建 DownAll Resolver
      */
-    public static func createDownAll(config!: SBRConfig = SBRConfig.downAll()): SplitBrainResolver {
-        DownAllResolver(config)
+    public static func createDownAll(): SplitBrainResolver {
+        DownAllResolver(SBRConfig.downAll())
     }
 
     /**
      * 创建 KeepReferee Resolver
      */
-    public static func createKeepReferee(
-        referee: UniqueAddress,
-        config!: SBRConfig = SBRConfig.getDefault()
-    ): SplitBrainResolver {
-        KeepRefereeResolver(config, referee)
+    public static func createKeepReferee(referee: UniqueAddress): SplitBrainResolver {
+        KeepRefereeResolver(SBRConfig.getDefault(), referee)
     }
 
     /**
@@ -599,7 +602,7 @@ public class SBRResolverFactory {
      */
     public static func createByStrategy(
         strategy: SBRStrategy,
-        options: SBRCreateOptions = SBRCreateOptions()
+        options: SBRCreateOptions
     ): SplitBrainResolver {
         match (strategy) {
             case SBRStrategy.KeepMajority =>
@@ -607,7 +610,7 @@ public class SBRResolverFactory {
             case SBRStrategy.KeepOldest =>
                 createKeepOldest()
             case SBRStrategy.StaticQuorum =>
-                let quorum = if (options.quorumSize > 0) { options.quorumSize } else { 1 }
+                let quorum = if (options.quorumSize > 0) { options.quorumSize } else { Int32(1) }
                 createStaticQuorum(quorum)
             case SBRStrategy.DownAll =>
                 createDownAll()
@@ -653,12 +656,12 @@ public interface SBREvent {
  * SBR 触发事件
  */
 public class SBRSplitDetected <: SBREvent {
-    public let unreachableNodes: HashSet<UniqueAddress]
+    public let unreachableNodes: HashSet<UniqueAddress>
     public let timestamp: Int64
 
-    public init(unreachableNodes: HashSet<UniqueAddress]) {
+    public init(unreachableNodes: HashSet<UniqueAddress>) {
         this.unreachableNodes = unreachableNodes
-        this.timestamp = DateTime.now().toUnixTimeStamp()
+        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
     public func eventType(): String {
@@ -675,7 +678,7 @@ public class SBRDecisionMade <: SBREvent {
 
     public init(decision: SBRDecision) {
         this.decision = decision
-        this.timestamp = DateTime.now().toUnixTimeStamp()
+        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
     public func eventType(): String {
@@ -694,7 +697,7 @@ public class SBRNodeDown <: SBREvent {
     public init(node: UniqueAddress, reason: String) {
         this.node = node
         this.reason = reason
-        this.timestamp = DateTime.now().toUnixTimeStamp()
+        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
     public func eventType(): String {
@@ -713,16 +716,16 @@ public interface SBREventListener {
  * SBR 状态追踪器
  */
 public class SBRStateTracker {
-    private let unreachableSince: HashMap<UniqueAddress, Int64]
+    private let unreachableSince: HashMap<UniqueAddress, Int64>
     private let downedNodes: HashSet<UniqueAddress>
     private let listeners: ArrayList<SBREventListener>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.unreachableSince = HashMap<UniqueAddress, Int64>()
         this.downedNodes = HashSet<UniqueAddress>()
         this.listeners = ArrayList<SBREventListener>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     /**
@@ -731,8 +734,10 @@ public class SBRStateTracker {
     public func markUnreachable(node: UniqueAddress): Unit {
         mutex.lock()
         if (!unreachableSince.contains(node)) {
-            unreachableSince[node] = DateTime.now().toUnixTimeStamp()
-            publishEvent(SBRSplitDetected(HashSet<UniqueAddress>() + node))
+            unreachableSince[node] = DateTime.now().toUnixTimeStamp().toMilliseconds()
+            let unreachableSet = HashSet<UniqueAddress>()
+            unreachableSet.add(node)
+            publishEvent(SBRSplitDetected(unreachableSet))
         }
         mutex.unlock()
     }
@@ -776,7 +781,7 @@ public class SBRStateTracker {
     public func getDownedNodes(): HashSet<UniqueAddress> {
         mutex.lock()
         let result = HashSet<UniqueAddress>()
-        for (node in downedNodes) {
+        for (node in downedNodes.toArray()) {
             result.add(node)
         }
         mutex.unlock()
@@ -790,10 +795,10 @@ public class SBRStateTracker {
         mutex.lock()
         let since = match (unreachableSince.get(node)) {
             case Some(ts) => ts
-            case None => DateTime.now().toUnixTimeStamp()
+            case None => DateTime.now().toUnixTimeStamp().toMilliseconds()
         }
         mutex.unlock()
-        let now = DateTime.now().toUnixTimeStamp()
+        let now = DateTime.now().toUnixTimeStamp().toMilliseconds()
         Duration.millisecond * (now - since)
     }
 

@@ -68,14 +68,14 @@ public class ClusterNode {
     public let address: NetworkAddress
     public let roles: Array<String>
     private var state: NodeState
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(nodeId: NodeId, address: NetworkAddress, roles: Array<String>) {
         this.nodeId = nodeId
         this.address = address
         this.roles = roles
         this.state = NodeState.Joining(DateTime.now())
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func getState(): NodeState {
@@ -116,12 +116,12 @@ public class ClusterNode {
  */
 public class ClusterState {
     private let nodes: HashMap<String, ClusterNode>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let localNodeId: NodeId
     
     public init(localNodeId: NodeId) {
         this.nodes = HashMap<String, ClusterNode>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.localNodeId = localNodeId
     }
 
@@ -226,14 +226,14 @@ public class SimpleClusterManager {
     private let clusterState: ClusterState
     private let remoteManager: SimpleRemoteManager
     private let eventListeners: ArrayList<ClusterEventListener>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let isStarted: AtomicBool
     
     public init(localNodeId: NodeId, localAddress: NetworkAddress) {
         this.clusterState = ClusterState(localNodeId)
         this.remoteManager = SimpleRemoteManager(localAddress, TransportProtocol.TCP)
         this.eventListeners = ArrayList<ClusterEventListener>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.isStarted = AtomicBool(false)
         
         // 添加本地节点

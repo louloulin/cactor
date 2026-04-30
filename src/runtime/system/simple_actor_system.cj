@@ -8,10 +8,10 @@ package cactor.runtime.system
 import std.sync.*
 import std.collection.*
 import std.collection.concurrent.*
-import cactor.core.actor.{Actor, ActorRef, Props, ActorPath}
-import cactor.core.system.{ActorSystem, ActorSelection, SimpleFuture}
+import std.time.{DateTime}
+import cactor.core.actor.{Actor, ActorRef, Props, ActorPath, ActorContext, ActorSystem}
+import cactor.core.system.{ActorSystem as FullActorSystem, ActorSelection, SimpleFuture, EventBus, ActorLog, SimpleTerminationFuture, SystemEvent, SimpleActorLog}
 import cactor.core.message.{Message, MessageResult, Envelope}
-import cactor.core.context.{ActorContext}
 import cactor.runtime.mailbox.{Mailbox, FoundationMailbox}
 
 /**
@@ -37,17 +37,21 @@ public class CompletedSimpleFuture<T> <: SimpleFuture<T> {
  * Runtime层的Actor系统实现
  * 基于Runtime层组件构建的完整Actor系统
  */
-public class SimpleActorSystem <: ActorSystem {
+public class SimpleActorSystem <: FullActorSystem & ActorSystem {
     private let systemName: String
     private let terminated: AtomicBool
     private let actors: ConcurrentHashMap<String, ActorRef>
     private let actorCounter: AtomicInt64
+    private let startTimeValue: Int64
+    private let terminationFuture: SimpleTerminationFuture
 
     public init(name: String) {
         this.systemName = name
         this.terminated = AtomicBool(false)
         this.actors = ConcurrentHashMap<String, ActorRef>()
         this.actorCounter = AtomicInt64(0)
+        this.startTimeValue = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        this.terminationFuture = SimpleTerminationFuture()
     }
 
     public prop name: String {
@@ -129,6 +133,48 @@ public class SimpleActorSystem <: ActorSystem {
         let mailbox = FoundationMailbox(65535)
         return SimpleActorRef(name, actor, mailbox, this)
     }
+
+    public func eventStream(): EventBus {
+        SimpleEventBus()
+    }
+
+    public func log(): ActorLog {
+        SimpleActorLog(systemName, "/system")
+    }
+
+    public func whenTerminated(): SimpleFuture<Unit> {
+        terminationFuture
+    }
+
+    public func startTime(): Int64 {
+        startTimeValue
+    }
+}
+
+/**
+ * 简化的事件总线实现
+ */
+public class SimpleEventBus <: EventBus {
+    public func publish(event: Any): Unit {
+        // 使用类型名称而不是 ToString
+        let eventTypeName = match (event) {
+            case e: SystemEvent => e.eventType()
+            case _ => "Unknown"
+        }
+        println("发布事件: ${eventTypeName}")
+    }
+
+    public func subscribe(subscriber: ActorRef, eventType: String): Bool {
+        true
+    }
+
+    public func unsubscribe(subscriber: ActorRef, eventType: String): Bool {
+        true
+    }
+
+    public func subscriberCount(eventType: String): Int64 {
+        0
+    }
 }
 
 /**
@@ -185,7 +231,7 @@ public class SimpleActorRef <: ActorRef {
             match (mailbox.dequeue()) {
                 case Some(envelope) =>
                     try {
-                        let context = SimpleActorContext(this, envelope.getSender())
+                        let context = SimpleActorContext(this, envelope.getSender(), system)
                         let result = actor.receive(envelope.getMessage(), context)
 
                         match (result) {
@@ -229,24 +275,113 @@ public class SimpleActorRef <: ActorRef {
 }
 
 /**
+ * 死信ActorRef - 用于无法找到发送者时
+ */
+public class DeadLetterActorRef <: ActorRef {
+    private let pathValue: ActorPath
+
+    public init() {
+        this.pathValue = ActorPath("deadLetters", "/deadLetters")
+    }
+
+    public prop path: ActorPath {
+        get() { pathValue }
+    }
+
+    public func tell(message: Message): Unit {
+        // 死信：忽略消息
+    }
+
+    public func tell(message: Message, sender: Option<String>): Unit {
+        // 死信：忽略消息
+    }
+
+    public func equals(other: ActorRef): Bool {
+        match (other) {
+            case _: DeadLetterActorRef => true
+            case _ => false
+        }
+    }
+
+    public func hashCode(): Int32 {
+        0
+    }
+}
+
+/**
  * Runtime层的ActorContext实现
  */
 public class SimpleActorContext <: ActorContext {
     private let selfRef: ActorRef
-    private let currentSender: Option<String>
+    private let currentSender: ActorRef
+    private let systemRef: SimpleActorSystem
 
-    public init(self: ActorRef) {
+    public init(self: ActorRef, systemRef: SimpleActorSystem) {
         this.selfRef = self
-        this.currentSender = None<String>
+        this.currentSender = DeadLetterActorRef()
+        this.systemRef = systemRef
     }
 
-    public init(self: ActorRef, sender: Option<String>) {
+    public init(self: ActorRef, sender: Option<String>, systemRef: SimpleActorSystem) {
         this.selfRef = self
-        this.currentSender = sender
+        this.currentSender = DeadLetterActorRef()
+        this.systemRef = systemRef
     }
 
-    public func sender(): Option<String> {
+    public func sender(): ActorRef {
         currentSender
+    }
+
+    public func self(): ActorRef {
+        selfRef
+    }
+
+    public func parent(): ActorRef {
+        DeadLetterActorRef()
+    }
+
+    public func children(): Array<ActorRef> {
+        Array<ActorRef>()
+    }
+
+    public func child(name: String): Option<ActorRef> {
+        None
+    }
+
+    public func actorOf(props: Props<Actor>, name: String): ActorRef {
+        systemRef.actorOf(props, name)
+    }
+
+    public func actorOf(props: Props<Actor>): ActorRef {
+        systemRef.actorOf(props)
+    }
+
+    public func watch(actorRef: ActorRef): Unit {
+        // 空实现
+    }
+
+    public func unwatch(actorRef: ActorRef): Unit {
+        // 空实现
+    }
+
+    public func getActorSystem(): ActorSystem {
+        systemRef
+    }
+
+    public func setReceiveTimeout(timeout: Duration): Unit {
+        // 空实现
+    }
+
+    public func receiveTimeout(): Duration {
+        Duration.second * 0
+    }
+
+    public func stop(): Unit {
+        // 空实现
+    }
+
+    public func stop(actorRef: ActorRef): Unit {
+        // 空实现
     }
 }
 

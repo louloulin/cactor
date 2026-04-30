@@ -46,7 +46,7 @@ public class ZeroCopyMessageImpl {
     private let refCount: AtomicInt64
     private let isValidFlag: AtomicBool
     private let checksum: UInt32
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(messageType: UInt16, payloadSize: UInt64, sourceActor: UInt64,
                 targetActor: UInt64, payload: Option<Array<UInt8>>) {
@@ -58,7 +58,7 @@ public class ZeroCopyMessageImpl {
         this.payload = payload
         this.refCount = AtomicInt64(1)
         this.isValidFlag = AtomicBool(true)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
 
         // 然后计算需要调用方法的字段
         this.messageId = ZeroCopyMessageImpl.generateMessageIdStatic()

@@ -7,7 +7,7 @@ package cactor.api.config
 
 import cactor.runtime.mailbox.*
 import cactor.runtime.dispatcher.*
-import cactor.core.supervision.*
+import cactor.core.actor.{SupervisorStrategy, DefaultSupervisorStrategy}
 import std.time.*
 import std.collection.*
 
@@ -251,5 +251,12 @@ public struct SupervisionConfig {
      */
     public func getOptions(): HashMap<String, String> {
         options
+    }
+
+    /**
+     * 获取监督策略
+     */
+    public func getStrategy(): SupervisorStrategy {
+        DefaultSupervisorStrategy(maxRetries, backoffDuration)
     }
 }

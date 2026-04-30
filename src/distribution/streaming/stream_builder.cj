@@ -6,7 +6,7 @@
 package cactor.distribution.streaming
 
 import cactor.core.actor.{Actor}
-import cactor.core.message.{Message, StringMessage}
+import cactor.core.message.{StringMessage}
 import cactor.core.system.{ActorSystem}
 import std.collection.*
 import std.time.*

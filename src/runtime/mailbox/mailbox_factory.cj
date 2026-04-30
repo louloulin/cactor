@@ -355,12 +355,12 @@ public class MailboxFactory {
 public class SimpleMailbox <: Mailbox {
     private let messages: ArrayList<Envelope>
     private let capacity: Int64
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(capacity: Int64) {
         this.messages = ArrayList<Envelope>()
         this.capacity = capacity
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func enqueue(envelope: Envelope): Bool {

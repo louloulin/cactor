@@ -11,7 +11,6 @@ import std.time.*
 import std.collection.*
 import cactor.core.actor.{Actor, ActorRef, Props, ActorPath, ActorFactory, SimpleActorFactory}
 import cactor.core.message.{Message, MessageResult}
-import cactor.core.context.{ActorContext}
 import cactor.core.supervision.{SupervisionStrategy, ActorFailure, SupervisionDirective}
 
 /**

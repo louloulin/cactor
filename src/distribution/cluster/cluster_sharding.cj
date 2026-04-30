@@ -9,6 +9,7 @@ package cactor.distribution.cluster
 import std.collection.*
 import std.sync.*
 import std.time.*
+import cactor.core.actor.{ActorPath}
 
 /**
  * 分片策略接口 - 对标 Akka ShardRegionResolver
@@ -47,11 +48,11 @@ public class HashShardResolver <: ShardResolver {
  */
 public class CursorShardResolver <: ShardResolver {
     private var cursor: Int64 = 0
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init() {
         this.cursor = 0
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func shardId(entityId: String, numberOfShards: Int64): String {
@@ -98,8 +99,8 @@ public struct ShardingSettings {
     public let numberOfShards: Int64      // 分片数量
     public let rememberEntities: Bool      // 是否记住实体位置
     public let rememberEntitiesStartAfter: Duration  // 启动延迟
-    public val passivationStrategy: PassivationStrategy  // 老化策略
-    public val shardResolver: ShardResolver  // 分片解析器
+    public let passivationStrategy: PassivationStrategy  // 老化策略
+    public let shardResolver: ShardResolver  // 分片解析器
 
     public init(
         typeName: String,
@@ -122,7 +123,7 @@ public struct ShardingSettings {
     /**
      * 创建默认设置
      */
-    public static func getDefault(typeName: String, numberOfShards: Int64 = 10): ShardingSettings {
+    public static func getDefault(typeName: String, numberOfShards: Int64): ShardingSettings {
         ShardingSettings(typeName, numberOfShards: numberOfShards)
     }
 }
@@ -164,7 +165,7 @@ public interface EntityRef {
     /**
      * 发送消息并等待回复
      */
-    func ask(message: Message, timeout: Duration): Option[Message]
+    func ask(message: Message, timeout: Duration): Option<Message>
 }
 
 /**
@@ -190,7 +191,7 @@ public class EntityRefImpl <: EntityRef {
         println("EntityRef.tell: entity=${entityId}, shard=${shardId}")
     }
 
-    public func ask(message: Message, timeout: Duration): Option[Message] {
+    public func ask(message: Message, timeout: Duration): Option<Message> {
         tell(message)
         None  // 简化实现
     }
@@ -221,9 +222,9 @@ public class ShardEnvelope {
  * 分片命令 - 内部使用
  */
 public enum ShardCommand {
-    | Add(entityId: String, entityRef: EntityRef)
-    | Remove(entityId: String)
-    | Passivate(entityId: String)
+    | Add(String, EntityRef)
+    | Remove(String)
+    | Passivate(String)
     | GetEntityIds
     | GetStats
 }
@@ -306,22 +307,22 @@ public interface Shard {
  * 简化分片实现
  */
 public class SimpleShard <: Shard {
-    private let shardId: String
+    private let shardIdValue: String
     private let settings: ShardingSettings
     private let entities: HashMap<String, EntityRefImpl>
-    private let mutex: ReentrantMutex
-    private var entityCount: Int64
+    private let mutex: Mutex
+    private var entityCountValue: Int64
 
     public init(shardId: String, settings: ShardingSettings) {
-        this.shardId = shardId
+        this.shardIdValue = shardId
         this.settings = settings
         this.entities = HashMap<String, EntityRefImpl>()
-        this.mutex = ReentrantMutex()
-        this.entityCount = 0
+        this.mutex = Mutex()
+        this.entityCountValue = 0
     }
 
     public func shardId(): String {
-        shardId
+        shardIdValue
     }
 
     public func shardIdForEntity(entityId: String): String {
@@ -337,11 +338,11 @@ public class SimpleShard <: Shard {
             case Some(ref) => ref
             case None =>
                 mutex.lock()
-                let ref = EntityRefImpl(settings.typeName, entityId, shardId, ActorPath(Address("", "", "", 0), Array<String>()))
+                let ref = EntityRefImpl(settings.typeName, entityId, shardIdValue, ActorPath("local", ""))
                 entities.add(entityId, ref)
-                entityCount += 1
+                entityCountValue += 1
                 mutex.unlock()
-                println("Shard ${shardId}: Added entity ${entityId}")
+                println("Shard ${shardIdValue}: Added entity ${entityId}")
                 ref
         }
     }
@@ -349,14 +350,14 @@ public class SimpleShard <: Shard {
     public func removeEntity(entityId: String): Unit {
         mutex.lock()
         entities.remove(entityId)
-        entityCount -= 1
+        entityCountValue -= 1
         mutex.unlock()
-        println("Shard ${shardId}: Removed entity ${entityId}")
+        println("Shard ${shardIdValue}: Removed entity ${entityId}")
     }
 
     public func entityCount(): Int64 {
         mutex.lock()
-        let count = entityCount
+        let count = entityCountValue
         mutex.unlock()
         count
     }
@@ -389,7 +390,7 @@ public interface ShardRegion {
     /**
      * 初始化分片区域
      */
-    func init(): Unit
+    func start(): Unit
 
     /**
      * 关闭分片区域
@@ -406,7 +407,7 @@ public class SimpleShardRegion <: ShardRegion {
     private let entitiesByShard: HashMap<String, HashSet<String>>
     private let shardRegionPath: ActorPath
     private let started: AtomicBool
-    private val mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(settings: ShardingSettings, path: ActorPath) {
         this.settings = settings
@@ -414,7 +415,7 @@ public class SimpleShardRegion <: ShardRegion {
         this.entitiesByShard = HashMap<String, HashSet<String>>()
         this.shardRegionPath = path
         this.started = AtomicBool(false)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func path(): ActorPath {
@@ -452,7 +453,11 @@ public class SimpleShardRegion <: ShardRegion {
         entityRef
     }
 
-    public func init(): Unit {
+    public func start(): Unit {
+        initialize()
+    }
+
+    public func initialize(): Unit {
         if (started.compareAndSwap(false, true)) {
             println("ShardRegion initialized for type: ${settings.typeName}")
             println("Number of shards: ${settings.numberOfShards}")
@@ -520,16 +525,16 @@ public class SimpleShardRegion <: ShardRegion {
 public class ClusterSharding {
     private let settings: ShardingSettings
     private let regions: HashMap<String, SimpleShardRegion>
-    private let shardCoordinator: Option<ShardCoordinator]
-    private val started: AtomicBool
-    private val mutex: ReentrantMutex
+    private let shardCoordinator: Option<ShardCoordinator>
+    private let started: AtomicBool
+    private let mutex: Mutex
 
     public init(settings: ShardingSettings) {
         this.settings = settings
         this.regions = HashMap<String, SimpleShardRegion>()
         this.shardCoordinator = None
         this.started = AtomicBool(false)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     /**
@@ -540,10 +545,10 @@ public class ClusterSharding {
             mutex.lock()
             if (!started.load()) {
                 let addr = Address("cactor", "sharding", "localhost", 0)
-                let path = ActorPath(addr, [settings.typeName])
+                let path = ActorPath(addr.system, settings.typeName)
                 let region = SimpleShardRegion(settings, path)
                 regions.add(settings.typeName, region)
-                region.init()
+                region.initialize()
                 started.store(true)
                 println("ClusterSharding started for type: ${settings.typeName}")
             }
@@ -559,7 +564,7 @@ public class ClusterSharding {
     /**
      * 获取指定类型的分片区域
      */
-    public func shardRegion(typeName: String): Option[SimpleShardRegion] {
+    public func shardRegion(typeName: String): Option<SimpleShardRegion> {
         regions.get(typeName)
     }
 
@@ -581,7 +586,7 @@ public class ClusterSharding {
     /**
      * 获取所有分片统计
      */
-    public func getStats(typeName: String): Option[ShardingStats] {
+    public func getStats(typeName: String): Option<ShardingStats> {
         match (regions.get(typeName)) {
             case Some(region) => Some(region.getStats())
             case None => None
@@ -606,24 +611,24 @@ public interface ShardCoordinator {
     /**
      * 获取分片位置
      */
-    func getShardLocation(shardId: String): Option[Address]
+    func getShardLocation(shardId: String): Option<Address>
 
     /**
      * 获取所有分配
      */
-    func getAllAllocations(): HashMap<String, Address]
+    func getAllAllocations(): HashMap<String, Address>
 }
 
 /**
  * 简化分片协调器
  */
 public class SimpleShardCoordinator <: ShardCoordinator {
-    private let allocations: HashMap<String, Address]
-    private let mutex: ReentrantMutex
+    private let allocations: HashMap<String, Address>
+    private let mutex: Mutex
 
     public init() {
         this.allocations = HashMap<String, Address>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func allocateShard(shardId: String, nodeAddress: Address): Unit {
@@ -638,14 +643,14 @@ public class SimpleShardCoordinator <: ShardCoordinator {
         mutex.unlock()
     }
 
-    public func getShardLocation(shardId: String): Option<Address] {
+    public func getShardLocation(shardId: String): Option<Address> {
         mutex.lock()
         let result = allocations.get(shardId)
         mutex.unlock()
         result
     }
 
-    public func getAllAllocations(): HashMap<String, Address] {
+    public func getAllAllocations(): HashMap<String, Address> {
         mutex.lock()
         let result = HashMap<String, Address>()
         for ((k, v) in allocations) {
@@ -668,7 +673,7 @@ public class ClusterShardingFactory {
         numberOfShards!: Int64 = 10,
         rememberEntities!: Bool = false
     ): ClusterSharding {
-        let settings = ShardingSettings.getDefault(typeName, numberOfShards: numberOfShards)
+        let settings = ShardingSettings.getDefault(typeName, numberOfShards)
         ClusterSharding(settings)
     }
 
@@ -705,10 +710,10 @@ public class ClusterShardingFactory {
  * 分片系统事件
  */
 public enum ShardingEvent {
-    | ShardStarted(shardId: String, entityIds: Array<String>)
-    | ShardStoped(shardId: String)
-    | EntityStarted(entityId: String, shardId: String)
-    | EntityPassivated(entityId: String, shardId: String)
+    | ShardStarted(String, Array<String>)
+    | ShardStoped(String)
+    | EntityStarted(String, String)
+    | EntityPassivated(String, String)
 
     public func toString(): String {
         match (this) {

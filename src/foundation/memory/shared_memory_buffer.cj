@@ -17,14 +17,14 @@ public class SharedMemoryBuffer {
     private let size: UInt64
     private let refCount: AtomicInt64
     private let isValidFlag: AtomicBool
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(size: UInt64) {
         this.size = size
         this.data = Array<UInt8>(Int64(size), { _ => UInt8(0) })
         this.refCount = AtomicInt64(1)
         this.isValidFlag = AtomicBool(true)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public init(data: Array<UInt8>) {
@@ -32,7 +32,7 @@ public class SharedMemoryBuffer {
         this.data = data
         this.refCount = AtomicInt64(1)
         this.isValidFlag = AtomicBool(true)
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     /**

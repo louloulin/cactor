@@ -4,6 +4,7 @@ version = "7.0.0"
 description = "High-performance Actor system for Cangjie - CActor 7.0 with 6-layer architecture"
 cjc-version = "1.0.3"
 output-type = "dynamic"
+compile-option = "-Woff deprecated  -Woff unused --cfg \"ohos=false\""
 
 # === Foundation Layer ===
 [package.package-configuration."cactor.foundation.memory"]
@@ -53,6 +54,9 @@ output-type = "dynamic"
 [package.package-configuration."cactor.runtime.system"]
 output-type = "dynamic"
 
+[package.package-configuration."cactor.runtime.guardian"]
+output-type = "dynamic"
+
 # === API Layer ===
 [package.package-configuration."cactor.api"]
 output-type = "static"
@@ -81,37 +85,3 @@ output-type = "dynamic"
 
 [package.package-configuration."cactor.distribution.streaming"]
 output-type = "dynamic"
-
-# === Integration Tests ===
-[package.package-configuration."cactor.integration.testing.plan10_comprehensive_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.simple_plan10_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.plan10_cactor_runtime_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.plan10_api_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.examples.advanced_mailbox_examples"]
-output-type = "executable"
-
-[package.package-configuration."cactor.examples.advanced_dispatcher_examples"]
-output-type = "executable"
-
-[package.package-configuration."cactor.examples.configuration_usage_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.simple_benchmark_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.plan20_distribution_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.plan30_high_availability_test"]
-output-type = "executable"
-
-[package.package-configuration."cactor.integration.testing.plan40_persistence_test"]
-output-type = "executable"

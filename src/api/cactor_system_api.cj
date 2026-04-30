@@ -6,9 +6,10 @@
  */
 package cactor.api
 
-import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory}
-import cactor.core.config.{MailboxConfig as CoreMailboxConfig, DispatcherConfig as CoreDispatcherConfig, SupervisionConfig as CoreSupervisionConfig}
+import cactor.core.actor.{Actor, ActorRef, Props, PropsFactory, MailboxSelector, DispatcherSelector}
+import cactor.core.config.{MailboxConfig as CoreMailboxConfig, DispatcherConfig as CoreDispatcherConfig, SupervisionConfig as CoreSupervisionConfig, MailboxType, DispatcherType}
 import cactor.runtime.{CActorRuntime, CActorRuntimeConfig}
+import std.time.*
 
 /**
  * CActorSystem - 参考Akka设计的统一Actor系统API
@@ -79,7 +80,13 @@ public class CActorSystem {
      * 使用邮箱配置创建Actor - 类似Akka的withMailbox
      */
     public func actorOfWithMailbox(creator: () -> Actor, name: String, mailboxConfig: CoreMailboxConfig): ActorRef {
-        let props = PropsFactory.create(creator).withMailbox(mailboxConfig.name)
+        let selector = match (mailboxConfig.mailboxType) {
+            case MailboxType.Unbounded => MailboxSelector.DefaultMailbox
+            case MailboxType.Bounded => MailboxSelector.Bounded(mailboxConfig.capacity, mailboxConfig.pushTimeout)
+            case MailboxType.Priority => MailboxSelector.Priority("default")
+            case _ => MailboxSelector.DefaultMailbox
+        }
+        let props = PropsFactory.create(creator).withMailbox(selector)
         runtime.actorOf(props, name)
     }
 
@@ -87,7 +94,12 @@ public class CActorSystem {
      * 使用调度器配置创建Actor - 类似Akka的withDispatcher
      */
     public func actorOfWithDispatcher(creator: () -> Actor, name: String, dispatcherConfig: CoreDispatcherConfig): ActorRef {
-        let props = PropsFactory.create(creator).withDispatcher(dispatcherConfig.name)
+        let selector = match (dispatcherConfig.dispatcherType) {
+            case DispatcherType.PinnedDispatcher => DispatcherSelector.PinnedDispatcher
+            case DispatcherType.CallingThread => DispatcherSelector.CallingThreadDispatcher
+            case _ => DispatcherSelector.DefaultDispatcher
+        }
+        let props = PropsFactory.create(creator).withDispatcher(selector)
         runtime.actorOf(props, name)
     }
 
@@ -99,10 +111,20 @@ public class CActorSystem {
                                  mailboxConfig: CoreMailboxConfig,
                                  dispatcherConfig: CoreDispatcherConfig,
                                  supervisionConfig: CoreSupervisionConfig): ActorRef {
+        let mailboxSelector = match (mailboxConfig.mailboxType) {
+            case MailboxType.Unbounded => MailboxSelector.DefaultMailbox
+            case MailboxType.Bounded => MailboxSelector.Bounded(mailboxConfig.capacity, mailboxConfig.pushTimeout)
+            case MailboxType.Priority => MailboxSelector.Priority("default")
+            case _ => MailboxSelector.DefaultMailbox
+        }
+        let dispatcherSelector = match (dispatcherConfig.dispatcherType) {
+            case DispatcherType.PinnedDispatcher => DispatcherSelector.PinnedDispatcher
+            case DispatcherType.CallingThread => DispatcherSelector.CallingThreadDispatcher
+            case _ => DispatcherSelector.DefaultDispatcher
+        }
         let props = PropsFactory.create(creator)
-            .withMailbox(mailboxConfig.name)
-            .withDispatcher(dispatcherConfig.name)
-            .withSupervisionStrategy(supervisionConfig.name)
+            .withMailbox(mailboxSelector)
+            .withDispatcher(dispatcherSelector)
         runtime.actorOf(props, name)
     }
 

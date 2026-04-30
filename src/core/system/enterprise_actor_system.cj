@@ -318,38 +318,6 @@ public interface ActorSystemMetrics {
 }
 
 /**
- * 事件总线接口
- */
-public interface EventBus {
-    /**
-     * 发布事件
-     * @param event 要发布的事件
-     */
-    func publish(event: Event): Unit
-    
-    /**
-     * 订阅主题
-     * @param subscriber 订阅者
-     * @param topic 主题
-     */
-    func subscribe(subscriber: ActorRef, topic: String): Unit
-    
-    /**
-     * 取消订阅
-     * @param subscriber 订阅者
-     * @param topic 主题
-     */
-    func unsubscribe(subscriber: ActorRef, topic: String): Unit
-    
-    /**
-     * 获取订阅者数量
-     * @param topic 主题
-     * @return 订阅者数量
-     */
-    func getSubscriberCount(topic: String): Int64
-}
-
-/**
  * 事件基础接口
  */
 public interface Event {

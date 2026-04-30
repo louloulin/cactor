@@ -55,11 +55,11 @@ public interface EventStore {
 // 内存事件存储
 public class MemoryEventStore <: EventStore {
     private let events: HashMap<String, ArrayList<Event>>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init() {
         this.events = HashMap<String, ArrayList<Event>>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
     
     public func saveEvent(event: Event): Unit {
@@ -134,11 +134,11 @@ public class MemoryEventStore <: EventStore {
 // 文件事件存储
 public class FileEventStore <: EventStore {
     private let basePath: String
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     
     public init(basePath: String) {
         this.basePath = basePath
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         // 确保目录存在
         try {
             Directory.create(basePath, recursive: true)

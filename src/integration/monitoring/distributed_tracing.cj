@@ -94,7 +94,7 @@ public class Span {
     public var finishTime: Int64
     private let tags: HashMap<String, String>
     private let logs: ArrayList<SpanLog>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
 
     public init(traceId: TraceId, spanId: SpanId, parentSpanId: Option<SpanId>, operationName: String, startTime: Int64) {
         this.traceId = traceId
@@ -105,7 +105,7 @@ public class Span {
         this.finishTime = 0
         this.tags = HashMap<String, String>()
         this.logs = ArrayList<SpanLog>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
     }
 
     public func setTag(key: String, value: String): Unit {
@@ -197,12 +197,12 @@ public interface SpanCollector {
 // 内存Span收集器
 public class MemorySpanCollector <: SpanCollector {
     private let spans: ArrayList<Span>
-    private let mutex: ReentrantMutex
+    private let mutex: Mutex
     private let maxSpans: Int64
     
     public init(maxSpans: Int64) {
         this.spans = ArrayList<Span>()
-        this.mutex = ReentrantMutex()
+        this.mutex = Mutex()
         this.maxSpans = maxSpans
     }
     

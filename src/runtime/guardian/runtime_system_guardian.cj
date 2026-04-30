@@ -10,9 +10,9 @@ import std.sync.*
 import std.collection.*
 import cactor.core.actor.{Actor, ActorRef, Props, ActorPath, SimpleActorFactory}
 import cactor.core.message.{Message, MessageResult}
-import cactor.core.context.{ActorContext}
+import cactor.core.actor.{ActorContext}
+import cactor.core.system.{ActorSystem as FullActorSystem}
 import cactor.core.supervision.{SupervisionStrategy, DefaultSupervisionStrategy}
-import cactor.core.system.{ActorSystem}
 import cactor.core.guardian.{GuardianType}
 
 /**
@@ -20,12 +20,12 @@ import cactor.core.guardian.{GuardianType}
  * 管理系统级Actor和用户Guardian
  */
 public class RuntimeSystemGuardian <: BaseGuardianActor {
-    private let actorSystem: ActorSystem
+    private let actorSystem: FullActorSystem
     private var userGuardian: Option<ActorRef>
     private let systemActors: HashMap<String, ActorRef>
     private let defaultSupervisionStrategy: SupervisionStrategy
     
-    public init(system: ActorSystem) {
+    public init(system: FullActorSystem) {
         super(GuardianType.System, None<ActorRef>)
         this.actorSystem = system
         this.userGuardian = None<ActorRef>
@@ -213,7 +213,7 @@ public class SimpleSystemActorRef <: ActorRef {
     }
     
     public func tell(message: Message, sender: Option<String>): Unit {
-        let context = SimpleSystemActorContext(this, sender)
+        let context = SimpleSystemActorContext(this)
         actor.receive(message, context)
     }
     
@@ -235,20 +235,69 @@ public class SimpleSystemActorRef <: ActorRef {
  */
 public class SimpleSystemActorContext <: ActorContext {
     private let selfRef: ActorRef
-    private let currentSender: Option<String>
-    
+    private let currentSender: ActorRef
+
     public init(self: ActorRef) {
         this.selfRef = self
-        this.currentSender = None<String>
+        this.currentSender = self
     }
-    
-    public init(self: ActorRef, sender: Option<String>) {
-        this.selfRef = self
-        this.currentSender = sender
-    }
-    
-    public func sender(): Option<String> {
+
+    public func sender(): ActorRef {
         currentSender
+    }
+
+    public func self(): ActorRef {
+        selfRef
+    }
+
+    public func parent(): ActorRef {
+        selfRef
+    }
+
+    public func children(): Array<ActorRef> {
+        Array<ActorRef>()
+    }
+
+    public func child(name: String): Option<ActorRef> {
+        None
+    }
+
+    public func actorOf(props: Props<Actor>, name: String): ActorRef {
+        selfRef
+    }
+
+    public func actorOf(props: Props<Actor>): ActorRef {
+        selfRef
+    }
+
+    public func watch(actorRef: ActorRef): Unit {
+        ()
+    }
+
+    public func unwatch(actorRef: ActorRef): Unit {
+        ()
+    }
+
+    public func getActorSystem() {
+        // Simplified - returns a dummy system
+        // This should be fixed with proper system reference
+        throw Exception("SimpleSystemActorContext.getActorSystem not implemented")
+    }
+
+    public func setReceiveTimeout(timeout: Duration): Unit {
+        ()
+    }
+
+    public func receiveTimeout(): Duration {
+        Duration.second * 0
+    }
+
+    public func stop(): Unit {
+        ()
+    }
+
+    public func stop(actorRef: ActorRef): Unit {
+        ()
     }
 }
 
@@ -256,7 +305,7 @@ public class SimpleSystemActorContext <: ActorContext {
  * 创建用户Guardian Actor的工厂函数
  * 避免循环依赖
  */
-func createUserGuardianActor(system: ActorSystem): Actor {
+func createUserGuardianActor(system: FullActorSystem): Actor {
     // 暂时返回一个简化的Guardian实现
     // 实际应该返回RuntimeUserGuardian，但为了避免循环依赖，使用简化实现
     SimpleUserGuardianActor(system)
@@ -267,9 +316,9 @@ func createUserGuardianActor(system: ActorSystem): Actor {
  * 避免循环依赖
  */
 class SimpleUserGuardianActor <: Actor {
-    private let actorSystem: ActorSystem
+    private let actorSystem: FullActorSystem
 
-    public init(system: ActorSystem) {
+    public init(system: FullActorSystem) {
         this.actorSystem = system
     }
 

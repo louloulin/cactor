@@ -39,7 +39,7 @@ public interface ObjectPool<T> {
  * 针对仓颉的垃圾回收器优化
  */
 public class CangjieFriendlyObjectPool<T> <: ObjectPool<T> {
-    private let pool: NonBlockingQueue<T>
+    private let pool: ConcurrentLinkedQueue<T>
     private let factory: () -> T
     private let resetFunction: (T) -> Unit
     private let maxPoolSize: Int64
@@ -48,7 +48,7 @@ public class CangjieFriendlyObjectPool<T> <: ObjectPool<T> {
     private let totalReleased: AtomicInt64
 
     public init(factory: () -> T, resetFunction: (T) -> Unit, maxSize: Int64) {
-        this.pool = NonBlockingQueue<T>()
+        this.pool = ConcurrentLinkedQueue<T>()
         this.factory = factory
         this.resetFunction = resetFunction
         this.maxPoolSize = maxSize
