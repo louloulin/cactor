@@ -1,10 +1,10 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.5
+# CActor 对标 Akka 全面分析报告与改造计划 v2.6
 
-> **文档版本**: 2.5
+> **文档版本**: 2.6
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: Phase 1-5 全部完成！Become/Unbecome、Stash、ReceiveTimeout 实现完成！BalancingDispatcher 负载均衡调度器实现完成！
-> **编译状态**: ✅ `cjpm build` 全部通过 ✅ `cjpm test` 全部通过 - 150/150 测试通过！
+> **更新**: Phase 1-5 全部完成！Become/Unbecome、Stash、ReceiveTimeout 实现完成！BalancingDispatcher 负载均衡调度器实现完成！TypedActor 类型安全Actor实现完成！
+> **编译状态**: ✅ `cjpm build` 全部通过 ✅ `cjpm test` 全部通过 - 161/161 测试通过！
 
 ---
 
@@ -2028,7 +2028,7 @@ public class BalancingDispatcher <: AdvancedMessageDispatcher {
 | 验证项 | 状态 | 说明 |
 |--------|------|------|
 | `cjpm build` | ✅ 成功 | BalancingDispatcher 编译通过 |
-| `cjpm test` | ✅ 成功 | **150/150 测试通过，0 失败，0 错误** |
+| `cjpm test` | ✅ 成功 | **161/161 测试通过，0 失败，0 错误** |
 
 ### 4.5 差距更新
 
@@ -2039,3 +2039,109 @@ public class BalancingDispatcher <: AdvancedMessageDispatcher {
 ---
 
 *本文档 v2.5 - BalancingDispatcher 实现完成！150/150 测试通过！*
+
+---
+
+## 四、v2.6 TypedActor 类型安全的Actor实现 (2026-04-30)
+
+### 4.1 TypedActor 实现 ✅
+
+**文件**: `src/patterns/typed/typed_actor.cj`
+**功能**: 类型安全的Actor实现，对标 Akka Typed Actor
+
+```cangjie
+// TypedActorRef - 类型安全的Actor引用接口
+public interface TypedActorRef<T> {
+    func tell(message: T): Unit
+    func underlyingRef(): ActorRef
+    func path(): ActorPath
+}
+
+// TypedActorRefImpl - TypedActorRef实现
+public class TypedActorRefImpl<Command> <: TypedActorRef<Command> {
+    private let ref: ActorRef
+    private let protocolName: String
+    public func tell(message: Command): Unit
+}
+
+// ActorBehaviorHandler - 行为处理器接口
+public interface ActorBehaviorHandler {
+    func handleMessage(message: Message): Unit
+    func currentState(): String
+}
+
+// TypedActorImpl - TypedActor实现
+public class TypedActorImpl<Command> <: Actor & ActorProtocol<Command> {
+    private let actorName: String
+    private let behaviorHandler: ActorBehaviorHandler
+    private let protoName: String
+    private var messageCount: Int64
+
+    public func receive(message: Message, context: ActorContext): MessageResult
+    public func protocolName(): String
+    public func getMessageCount(): Int64
+}
+
+// TypedActor - 工厂类
+public class TypedActor {
+    public func of<Command>(
+        protocolName: String,
+        behavior: ActorBehaviorHandler,
+        name: String
+    ): TypedActorRef<Command>
+}
+```
+
+### 4.2 TypedActor 使用示例
+
+```cangjie
+// 1. 定义行为处理器
+class EchoHandler <: ActorBehaviorHandler {
+    public func handleMessage(message: Message): Unit {
+        // 处理消息
+    }
+    public func currentState(): String { "running" }
+}
+
+// 2. 创建TypedActor
+let factory = TypedActor(system)
+let typedRef = factory.of<Message>("EchoProtocol", EchoHandler(), "echoActor")
+
+// 3. 发送类型化消息
+typedRef.tell(EchoCommand("hello"))
+```
+
+### 4.3 新增单元测试 ✅
+
+**文件**: `src/patterns/typed/typed_actor_test.cj`
+**测试用例** (11 个):
+```cangjie
+@Test func testTypedEnvelope_creation()
+@Test func testTypedEnvelope_messageType()
+@Test func testTypedActorRefImpl_creation()
+@Test func testTypedActorRefImpl_underlyingRef()
+@Test func testActorBehaviorHandler_handle()
+@Test func testActorBehaviorHandler_currentState()
+@Test func testActorProtocol_protocolName()
+@Test func testTypedActorImpl_receive_withTypedEnvelope()
+@Test func testTypedActorImpl_receive_withNonTypedEnvelope()
+@Test func testTypedActorImpl_nameAndDescription()
+@Test func testTypedActorImpl_messageCount()
+```
+
+### 4.4 v2.6 验证结果
+
+| 验证项 | 状态 | 说明 |
+|--------|------|------|
+| `cjpm build` | ✅ 成功 | TypedActor 编译通过 |
+| `cjpm test` | ✅ 成功 | **161/161 测试通过，0 失败，0 错误** |
+
+### 4.5 差距更新
+
+| 功能 | 之前状态 | 当前状态 |
+|------|---------|---------|
+| **TypedActor** | 仅基础Actor接口 | ✅ 已实现类型安全抽象 |
+
+---
+
+*本文档 v2.6 - TypedActor 类型安全Actor实现完成！161/161 测试通过！*

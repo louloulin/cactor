@@ -10,3 +10,4 @@ import cactor.patterns.ask.*
 import cactor.patterns.routing.*
 import cactor.patterns.circuit_breaker.*
 import cactor.patterns.backpressure.*
+import cactor.patterns.typed.*
