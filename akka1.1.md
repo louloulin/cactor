@@ -1,12 +1,12 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.9
+# CActor 对标 Akka 全面分析报告与改造计划 v2.10
 
-> **文档版本**: 2.9
+> **文档版本**: 2.10
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: ActorPath 路径解析修复！Router 测试全部通过 (25/25)！所有测试通过 (182/182)！
+> **更新**: MessageAdapter 消息适配器实现完成！225 测试全部通过！
 > **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
-> **测试状态**: ✅ 182 测试用例全部通过 (手动运行)
-> **已知问题**: `cjpm test` 链接器问题 - cjpm 使用 `-syslibroot '/'` 导致找不到系统库
+> **测试状态**: ✅ 225 测试用例全部通过 (手动运行)
+> **新实现**: MessageAdapterRegistry, TypedMessage, MessageTypeTag
 
 ---
 
@@ -248,6 +248,35 @@ private static func parsePath(path: String): Array<String> {
 }
 ```
 
+### 实现7: MessageAdapter 消息适配器 ✅
+**文件**: `src/core/message/message_adapter.cj`
+**功能**: 完整的消息类型适配器，对标 Akka MessageAdapter
+
+```cangjie
+// 消息适配器函数类型
+public type MessageAdapter<Source, Target> = (Source) -> Target
+
+// 消息适配器注册信息
+public class MessageAdapterRegistration<Source, Target> {
+    public let adapter: MessageAdapter<Source, Target>
+    public let manifest: String
+    public let targetManifest: String
+}
+
+// 消息适配器管理器
+public interface MessageAdapterRegistry {
+    func register<Source, Target>(adapter, manifest, targetManifest): Unit
+    func adapt(message: Message): Message
+    func adapterCount(): Int64
+}
+
+// TypedMessage - 带有类型信息的包装消息
+public class TypedMessage<T> <: Message {
+    public let payload: T
+    public let typeTag: String
+}
+```
+
 ### 修复6: 测试运行 workaround ✅
 **问题**: cjpm test 链接器使用 `-syslibroot '/'` 导致找不到 macOS 系统库
 **解决**: 使用手动方式运行已编译的测试
@@ -267,6 +296,16 @@ DYLD_LIBRARY_PATH=<sdk>/cangjie/runtime/lib/darwin_aarch64_llvm \
 | cactor.core.actor | 14 |
 | cactor.patterns.routing | 25 |
 | cactor.patterns.backpressure | 16 |
+| cactor.patterns.ask | 23 |
+| cactor.patterns.typed | 11 |
+| cactor.core.message | 31 |
+| cactor.core.context | 6 |
+| cactor.core.supervision | 37 |
+| cactor.foundation.serialization | 17 |
+| cactor.runtime.dispatcher | 22 |
+| cactor.runtime.scheduler | 20 |
+| cactor.runtime.system | 3 |
+| **总计** | **225** |
 | cactor.patterns.ask | 23 |
 | cactor.patterns.typed | 11 |
 | cactor.core.message | 31 |
@@ -331,10 +370,10 @@ public interface ActorContext {
 |------|------|--------|------|
 | **消息类型** | 强类型（case class/trait） | Message 接口 | 中 |
 | **系统消息** | 内置 DeathWatch/Supervision | 框架存在 | 中 |
-| **PoisonPill** | 内置停止消息 | 未实现 | 大 |
+| **PoisonPill** | 内置停止消息 | ✅ 已实现 | 无 |
 | **Ask Pattern** | ? 运算符支持 | AskPatternManager 完整 | 小 |
 | **Sender** | sender() 方法 | 已有 | 小 |
-| **messageAdapter** | 类型适配器 | 未实现 | 大 |
+| **messageAdapter** | 类型适配器 | ✅ 已实现 (MessageAdapterRegistry) | 无 |
 
 ### 3.4 监督策略对比
 
