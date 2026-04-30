@@ -280,6 +280,89 @@ public struct DeadLetter <: SystemMessage {
 }
 
 /**
+ * PoisonPill 消息
+ * 当Actor收到此消息后，会在处理完当前消息后停止自身
+ * 对标 Akka: PoisonPill
+ *
+ * 用法: actorRef.tell(PoisonPill())
+ * Actor收到后会在当前消息处理完成后自动停止
+ */
+public struct PoisonPill <: SystemMessage {
+    public init() {}
+
+    public func messageType(): String {
+        "PoisonPill"
+    }
+}
+
+/**
+ * Kill 消息
+ * 强制终止Actor，不执行正常的停止流程
+ * 对标 Akka: Kill
+ *
+ * 注意: 与 PoisonPill 不同，Kill 是强制终止，
+ * Actor不会收到 preStop/postStop 生命周期回调
+ */
+public struct Kill <: SystemMessage {
+    public init() {}
+
+    public func messageType(): String {
+        "Kill"
+    }
+}
+
+/**
+ * Identify 消息
+ * 用于请求Actor自我标识
+ * 对标 Akka: Identify
+ *
+ * 发送 Identify 消息给 ActorSelection 可以确认Actor是否存在
+ * Actor会回复 ActorIdentity 消息
+ */
+public struct Identify <: SystemMessage {
+    private let correlationId: String
+
+    public init(correlationId: String) {
+        this.correlationId = correlationId
+    }
+
+    public func messageType(): String {
+        "Identify"
+    }
+
+    public func getCorrelationId(): String {
+        correlationId
+    }
+}
+
+/**
+ * ActorIdentity 消息
+ * 作为对 Identify 消息的回复
+ * 对标 Akka: ActorIdentity
+ */
+public struct ActorIdentity <: SystemMessage {
+    private let correlationId: String
+    private let actorRef: Option<Any>  // 使用 Any 避免循环依赖
+
+    public init(correlationId: String, actorRef: Option<Any>) {
+        this.correlationId = correlationId
+        this.actorRef = actorRef
+    }
+
+    public func messageType(): String {
+        "ActorIdentity"
+    }
+
+    public func getCorrelationId(): String {
+        correlationId
+    }
+
+    public func getActorRef(): Option<Any> {
+        actorRef
+    }
+}
+
+/**
  * 消息信封
  * 包装消息和发送者信息
  */

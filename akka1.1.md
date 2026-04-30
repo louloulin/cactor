@@ -1769,3 +1769,102 @@ func testJsonSerializer_*()                              // JSON 序列化器测
 ---
 
 *本文档 v2.2 - 新增 110 个单元测试，覆盖 7 个核心模块！*
+
+---
+
+## 四、v2.3 PoisonPill/Kill/Identify 消息实现 (2026-04-30)
+
+### 4.1 PoisonPill 消息 ✅
+
+**文件**: `src/core/message/message.cj`
+**功能**: 优雅停止消息，对标 Akka PoisonPill
+
+```cangjie
+public struct PoisonPill <: SystemMessage {
+    public init() {}
+    public func messageType(): String { "PoisonPill" }
+}
+```
+
+**用途**: Actor收到 PoisonPill 后会在当前消息处理完成后自动停止
+```cangjie
+actorRef.tell(PoisonPill())
+```
+
+### 4.2 Kill 消息 ✅
+
+**文件**: `src/core/message/message.cj`
+**功能**: 强制终止消息，对标 Akka Kill
+
+```cangjie
+public struct Kill <: SystemMessage {
+    public init() {}
+    public func messageType(): String { "Kill" }
+}
+```
+
+**用途**: 强制终止Actor，不执行正常停止流程
+- 与 PoisonPill 不同，Kill 不会触发 preStop/postStop 生命周期回调
+
+### 4.3 Identify/ActorIdentity 消息 ✅
+
+**文件**: `src/core/message/message.cj`
+**功能**: Actor 标识消息对，对标 Akka Identify/ActorIdentity
+
+```cangjie
+// 请求标识
+public struct Identify <: SystemMessage {
+    private let correlationId: String
+    public func getCorrelationId(): String
+}
+
+// 标识回复
+public struct ActorIdentity <: SystemMessage {
+    private let correlationId: String
+    private let actorRef: Option<Any>
+    public func getCorrelationId(): String
+    public func getActorRef(): Option<Any>
+}
+```
+
+**用途**: 发送 Identify 消息给 ActorSelection 可以确认 Actor 是否存在
+```cangjie
+selection.tell(Identify("request-123"))
+// 收到回复：ActorIdentity("request-123", Some(actorRef))
+```
+
+### 4.4 新增单元测试 ✅
+
+**文件**: `src/core/message/message_test.cj`
+**新增测试用例**:
+```cangjie
+@Test func testPoisonPill()                    // PoisonPill 创建和类型测试
+@Test func testKill()                          // Kill 创建和类型测试
+@Test func testIdentify()                      // Identify 创建和 correlationId 测试
+@Test func testIdentify_emptyCorrelationId()   // 空 correlationId 测试
+@Test func testActorIdentity_withRef()         // 带引用的 ActorIdentity 测试
+@Test func testActorIdentity_withoutRef()      // 无引用的 ActorIdentity 测试
+@Test func testPoisonPill_isSystemMessage()    // 系统消息优先级验证
+@Test func testKill_isSystemMessage()           // 系统消息优先级验证
+@Test func testIdentify_isSystemMessage()       // 系统消息优先级验证
+```
+
+### 4.5 v2.3 编译验证
+
+| 验证项 | 状态 | 说明 |
+|--------|------|------|
+| `cjpm check` | ✅ 成功 | 所有模块编译通过 |
+
+### 4.6 差距更新
+
+| 功能 | 之前状态 | 当前状态 |
+|------|---------|---------|
+| **PoisonPill** | 未实现 | ✅ 已实现 |
+| **Kill** | 未实现 | ✅ 已实现 |
+| **Identify/ActorIdentity** | 未实现 | ✅ 已实现 |
+| **BackoffSupervisor** | 未实现 | ✅ 已存在（advanced_supervision.cj）|
+| **CircuitBreaker** | 未实现 | ✅ 已存在（advanced_supervision.cj）|
+
+---
+
+*本文档 v2.3 - PoisonPill/Kill/Identify 消息实现完成！新增 9 个测试用例！*

@@ -196,6 +196,80 @@ func testCustomMessage_messageId() {
     @Expect(msg.messageId(), "custom-123")
 }
 
+// === PoisonPill / Kill / Identify / ActorIdentity 测试 ===
+
+@Test
+func testPoisonPill() {
+    let msg = PoisonPill()
+
+    @Expect(msg.messageType(), "PoisonPill")
+    @Expect(msg.priority() > 0, true)  // 系统消息高优先级
+}
+
+@Test
+func testKill() {
+    let msg = Kill()
+
+    @Expect(msg.messageType(), "Kill")
+    @Expect(msg.priority() > 0, true)  // 系统消息高优先级
+}
+
+@Test
+func testIdentify() {
+    let correlationId = "test-correlation-123"
+    let msg = Identify(correlationId)
+
+    @Expect(msg.messageType(), "Identify")
+    @Expect(msg.getCorrelationId(), correlationId)
+    @Expect(msg.priority() > 0, true)  // 系统消息高优先级
+}
+
+@Test
+func testIdentify_emptyCorrelationId() {
+    let msg = Identify("")
+
+    @Expect(msg.messageType(), "Identify")
+    @Expect(msg.getCorrelationId(), "")
+}
+
+@Test
+func testActorIdentity_withRef() {
+    let innerMsg = StringMessage("test")
+    let identity = ActorIdentity("corr-1", Some(innerMsg))
+
+    @Expect(identity.messageType(), "ActorIdentity")
+    @Expect(identity.getCorrelationId(), "corr-1")
+    @Expect(identity.getActorRef() !== None, true)
+}
+
+@Test
+func testActorIdentity_withoutRef() {
+    let identity = ActorIdentity("corr-2", None)
+
+    @Expect(identity.messageType(), "ActorIdentity")
+    @Expect(identity.getCorrelationId(), "corr-2")
+    @Expect(identity.getActorRef() === None, true)
+}
+
+@Test
+func testPoisonPill_isSystemMessage() {
+    let msg = PoisonPill()
+    // PoisonPill 是系统消息，应该有高优先级
+    @Expect(msg.priority() >= 1000, true)
+}
+
+@Test
+func testKill_isSystemMessage() {
+    let msg = Kill()
+    @Expect(msg.priority() >= 1000, true)
+}
+
+@Test
+func testIdentify_isSystemMessage() {
+    let msg = Identify("test")
+    @Expect(msg.priority() >= 1000, true)
+}
+
 class TestCustomMessage <: Message {
     private let data: String
     private let value: Int64
