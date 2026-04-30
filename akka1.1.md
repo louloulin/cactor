@@ -1640,3 +1640,132 @@ ld64.lld: error: undefined symbol: __dyld_get_image_header
 - ✅ 所有单元测试文件格式正确
 
 代码质量已通过编译验证，链接问题不影响代码正确性。
+
+---
+
+## 四、v2.2 新增单元测试 (2026-04-30)
+
+### 4.1 SupervisionStrategy 单元测试 ✅
+
+**文件**: `src/core/supervision/supervision_strategy_test.cj`
+**功能**: 完整的监督策略测试
+
+**测试用例**:
+```cangjie
+@Test
+func testSupervisionDirective_values()                    // 枚举值测试
+@Test
+func testActorFailure_creation()                          // 失败信息创建测试
+@Test
+func testRetryInfo_initialState()                        // 重试信息初始状态
+@Test
+func testRetryInfo_recordRetry()                         // 记录重试测试
+@Test
+func testRetryInfo_shouldRetry_withinLimit()             // 重试限制测试
+@Test
+func testRetryInfo_reset()                               // 重置测试
+@Test
+func testOneForOneStrategy_initialization()              // OneForOne 初始化
+@Test
+func testOneForOneStrategy_decide_resume()              // Resume 决策测试
+@Test
+func testOneForOneStrategy_decide_stop()                // Stop 决策测试
+@Test
+func testOneForOneStrategy_decide_escalate()            // Escalate 决策测试
+@Test
+func testOneForOneStrategy_resetRetryInfo()              // 重置重试信息
+@Test
+func testOneForAllStrategy_initialization()              // OneForAll 初始化
+@Test
+func testOneForAllStrategy_decide()                      // OneForAll 决策测试
+@Test
+func testOneForAllStrategy_resetRetryInfo()              // OneForAll 重置
+@Test
+func testDefaultSupervisionStrategy_*()                  // 默认策略工厂测试
+@Test
+func testBasicSupervisor_*()                             // 监督者功能测试
+```
+
+### 4.2 Message 单元测试 ✅
+
+**文件**: `src/core/message/message_test.cj`
+**功能**: 完整的消息类型测试
+
+**测试用例**:
+```cangjie
+@Test
+func testMessageResult_values()                          // 消息结果枚举测试
+@Test
+func testStopMessage_*()                                 // 停止消息测试
+@Test
+func testRestartMessage()                               // 重启消息测试
+@Test
+func testSuspendMessage()                               // 暂停消息测试
+@Test
+func testResumeMessage()                                // 恢复消息测试
+@Test
+func testTerminatedMessage()                            // 终止消息测试
+@Test
+func testStringMessage()                                // 字符串消息测试
+@Test
+func testPingMessage()                                  // Ping 消息测试
+@Test
+func testPongMessage()                                  // Pong 消息测试
+@Test
+func testEnvelope_*()                                   // 消息信封测试
+@Test
+func testDeadLetter()                                   // 死信消息测试
+@Test
+func testCustomMessage_*()                              // 自定义消息测试
+```
+
+### 4.3 Serializer 单元测试 ✅
+
+**文件**: `src/foundation/serialization/serializer_test.cj`
+**功能**: 完整的序列化器测试
+
+**测试用例**:
+```cangjie
+@Test
+func testSerializerRegistry_initialization()             // 注册表初始化
+@Test
+func testSerializerRegistry_register()                  // 注册序列化器
+@Test
+func testSerializerRegistry_getByManifest()             // 按 Manifest 获取
+@Test
+func testSerializerRegistry_getByIdentifier()           // 按标识符获取
+@Test
+func testSerializerRegistry_roundTrip()                // 序列化往返测试
+@Test
+func testByteSerializer_*()                            // 字节序列化器测试
+@Test
+func testStringSerializer_*()                           // 字符串序列化器测试
+@Test
+func testIntSerializer_*()                              // 整数序列化器测试
+@Test
+func testJsonSerializer_*()                              // JSON 序列化器测试
+```
+
+### 4.4 v2.2 测试统计
+
+| 测试文件 | 测试用例数 | 模块 |
+|---------|-----------|------|
+| `behavior_actor_test.cj` | 14 | Core/Actor |
+| `actor_context_test.cj` | 9 | Core/Context |
+| `actor_selection_test.cj` | 7 | Runtime/System |
+| `timer_scheduler_test.cj` | 22 | Runtime/Scheduler |
+| `supervision_strategy_test.cj` | 24 | Core/Supervision |
+| `message_test.cj` | 19 | Core/Message |
+| `serializer_test.cj` | 15 | Foundation/Serialization |
+| **总计** | **110** | 7 个模块 |
+
+### 4.5 v2.2 编译验证
+
+| 验证项 | 状态 | 说明 |
+|--------|------|------|
+| `cjpm check` | ✅ 成功 | 所有模块编译通过（包含 7 个新测试文件）|
+| `cjpm build` | ⚠️ 链接器问题 | macOS ld64.lld 工具链问题 |
+
+---
+
+*本文档 v2.2 - 新增 110 个单元测试，覆盖 7 个核心模块！*
