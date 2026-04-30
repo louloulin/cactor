@@ -241,7 +241,8 @@ func testShardingStats_creation() {
 
     let stats = ShardingStats(regions, 10, 1, 0.1)
 
-    @Expect(stats.regions.size(), 1)
+    let regionsCount = stats.regions.size
+    @Expect(regionsCount, 1)
     @Expect(stats.totalShards, 10)
     @Expect(stats.totalEntities, 1)
 }
@@ -261,7 +262,8 @@ func testShardingStats_avgEntities() {
 
     let stats = ShardingStats(regions, 3, 6, 2.0)
 
-    @Expect(stats.regions.size(), 3)
+    let regionsCount = stats.regions.size
+    @Expect(regionsCount, 3)
     @Expect(stats.totalShards, 3)
     @Expect(stats.totalEntities, 6)
     @Expect(stats.avgEntitiesPerShard, 2.0)

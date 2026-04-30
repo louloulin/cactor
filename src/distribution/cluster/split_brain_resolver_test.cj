@@ -145,8 +145,10 @@ func testSBRDecision_creation() {
         case SBRStrategy.KeepMajority => @Expect(true, true)
         case _ => @Expect(false, true)
     }
-    @Expect(decision.survivors.size(), 1)
-    @Expect(decision.victims.size(), 1)
+    let survivorsCount = decision.survivors.size()
+    let victimsCount = decision.victims.size()
+    @Expect(survivorsCount, 1)
+    @Expect(victimsCount, 1)
     @Expect(decision.reason, "test reason")
     @Expect(decision.timestamp > 0, true)
 }
@@ -220,8 +222,10 @@ func testKeepMajorityResolver_majority() {
         case SBRStrategy.KeepMajority => @Expect(true, true)
         case _ => @Expect(false, true)
     }
-    @Expect(decision.survivors.size(), 2)
-    @Expect(decision.victims.size(), 1)
+    let survivorsCount = decision.survivors.size()
+    let victimsCount = decision.victims.size()
+    @Expect(survivorsCount, 2)
+    @Expect(victimsCount, 1)
     @Expect(decision.isSurvivor(addr1), true)
     @Expect(decision.isSurvivor(addr2), true)
     @Expect(decision.isSurvivor(addr3), false)
@@ -248,8 +252,10 @@ func testKeepMajorityResolver_minority() {
     let decision = resolver.resolve(all, unreachable, downed)
 
     // Minority (1/3), should down all
-    @Expect(decision.survivors.size(), 0)
-    @Expect(decision.victims.size(), 3)
+    let survivorsCount = decision.survivors.size()
+    let victimsCount = decision.victims.size()
+    @Expect(survivorsCount, 0)
+    @Expect(victimsCount, 3)
 }
 
 @Test
@@ -307,7 +313,8 @@ func testKeepOldestResolver_oldestSurvives() {
         case SBRStrategy.KeepOldest => @Expect(true, true)
         case _ => @Expect(false, true)
     }
-    @Expect(decision.survivors.size(), 1)
+    let survivorsCount = decision.survivors.size()
+    @Expect(survivorsCount, 1)
     @Expect(decision.isSurvivor(addr1), true)  // Oldest survives
     @Expect(decision.isSurvivor(addr2), false)
     @Expect(decision.isSurvivor(addr3), false)
@@ -332,7 +339,8 @@ func testKeepOldestResolver_allUnreachable() {
     let decision = resolver.resolve(all, unreachable, downed)
 
     // Oldest survives even when all unreachable
-    @Expect(decision.survivors.size(), 1)
+    let survivorsCount = decision.survivors.size()
+    @Expect(survivorsCount, 1)
     @Expect(decision.isSurvivor(addr1), true)  // Oldest
 }
 
@@ -365,7 +373,8 @@ func testStaticQuorumResolver_quorumMet() {
         case _ => @Expect(false, true)
     }
     // 3 reachable >= quorum(2), so majority survives
-    @Expect(decision.survivors.size(), 3)
+    let survivorsCount = decision.survivors.size()
+    @Expect(survivorsCount, 3)
 }
 
 @Test
@@ -418,8 +427,10 @@ func testDownAllResolver_alwaysDownAll() {
         case SBRStrategy.DownAll => @Expect(true, true)
         case _ => @Expect(false, true)
     }
-    @Expect(decision.survivors.size(), 0)
-    @Expect(decision.victims.size(), 2)
+    let survivorsCount = decision.survivors.size()
+    let victimsCount = decision.victims.size()
+    @Expect(survivorsCount, 0)
+    @Expect(victimsCount, 2)
 }
 
 // === Integration Tests ===
@@ -450,7 +461,8 @@ func testSBRConfig_withDownedNodes() {
 
     // 3 reachable nodes (4 total - 1 downed), majority is 3/4 > 1.5, so 2 is enough
     // Actually, majority is > half: 4/2 = 2, so 3 >= 3 is majority
-    @Expect(decision.survivors.size(), 3)
+    let survivorsCount = decision.survivors.size()
+    @Expect(survivorsCount, 3)
 }
 
 @Test
@@ -467,8 +479,10 @@ func testSBRDecision_withMultipleSurvivors() {
 
     let decision = SBRDecision(SBRStrategy.KeepMajority, survivors, victims, "test")
 
-    @Expect(decision.survivors.size(), 3)
-    @Expect(decision.victims.size(), 0)
+    let survivorsCount = decision.survivors.size()
+    let victimsCount = decision.victims.size()
+    @Expect(survivorsCount, 3)
+    @Expect(victimsCount, 0)
     @Expect(decision.isSurvivor(addr1), true)
     @Expect(decision.isSurvivor(addr2), true)
     @Expect(decision.isSurvivor(addr3), true)
