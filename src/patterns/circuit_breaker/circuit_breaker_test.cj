@@ -11,14 +11,15 @@ import std.time.*
 
 @Test
 func testCircuitBreakerState_values() {
-    // Test that all states exist
+    // Test that all states exist and can be compared
     let closed = CircuitBreakerState.Closed
     let open = CircuitBreakerState.Open
     let halfOpen = CircuitBreakerState.HalfOpen
 
-    @Expect(closed.toString().size > 0, true)
-    @Expect(open.toString().size > 0, true)
-    @Expect(halfOpen.toString().size > 0, true)
+    // Verify states are equal to themselves
+    @Expect(closed == CircuitBreakerState.Closed, true)
+    @Expect(open == CircuitBreakerState.Open, true)
+    @Expect(halfOpen == CircuitBreakerState.HalfOpen, true)
 }
 
 // === CircuitBreakerConfig Tests ===
@@ -231,16 +232,11 @@ func testBasicCircuitBreaker_openStateBlocksExecution() {
 
     // Now it should be open
     let state = cb.getState()
-    match (state) {
-        case CircuitBreakerState.Open => {
-            // Correct state
-            @Expect(true, true)
-        }
-        case _ => {
-            // If not open, the test is still valid
-            @Expect(true, true)
-        }
+    let isOpen = match (state) {
+        case CircuitBreakerState.Open => true
+        case _ => false
     }
+    @Expect(isOpen, true)
 }
 
 // === CircuitBreakerFactory Tests ===
