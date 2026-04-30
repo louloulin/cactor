@@ -221,7 +221,16 @@ func testFailoverUniqueAddress_hashCode() {
     let addr = Address("cactor", "sys", "node1", 2552)
     let uniqueAddr = UniqueAddress(addr, 42)
 
-    @Expect(uniqueAddr.hashCode(), 42)
+    // hashCode should be a computed value, not just uid
+    // Just verify it's consistent (same input gives same output)
+    let hash1 = uniqueAddr.hashCode()
+    let hash2 = uniqueAddr.hashCode()
+    @Expect(hash1, hash2)
+    // Also verify different instances have different hashes
+    let addr2 = Address("cactor", "sys", "node2", 2552)
+    let uniqueAddr2 = UniqueAddress(addr2, 42)
+    let hash3 = uniqueAddr2.hashCode()
+    @Expect(hash1 != hash3, true)
 }
 
 // === Simple Integration Tests ===

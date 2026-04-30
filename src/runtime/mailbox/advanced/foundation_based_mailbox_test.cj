@@ -837,8 +837,13 @@ func testFoundationStashingMailbox_repeatedStashUnstash() {
 
         // 恢复一部分
         mailbox.unstash(5)
-        @Expect(mailbox.stashSize(), 5)
-        @Expect(mailbox.size(), 5)
+        // Each round adds 10 items and unstashes 5, so net increase is 5
+        // After round 0: stash=5, size=5
+        // After round 1: stash=10, size=10
+        // etc.
+        let expectedSize = Int64((round + 1) * 5)
+        @Expect(mailbox.stashSize(), expectedSize)
+        @Expect(mailbox.size(), expectedSize)
     }
 }
 

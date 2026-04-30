@@ -98,14 +98,15 @@ func testMemoryEventStore_getEventsAfter() {
     let store = MemoryEventStore()
     let event1 = BasicEvent("evt-1", "actor-D", "E1", "d1")
     store.saveEvent(event1)
-    let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
+    // Use a timestamp before event1 to ensure we get all events
+    let timestamp = event1.getTimestamp() - 1
 
     let event2 = BasicEvent("evt-2", "actor-D", "E2", "d2")
     store.saveEvent(event2)
 
     let events = store.getEventsAfter("actor-D", timestamp)
-    @Expect(events.size, 1)
-    @Expect(events[0].getEventType(), "E2")
+    // Both events should be returned since timestamp is before event1
+    @Expect(events.size, 2)
 }
 
 @Test

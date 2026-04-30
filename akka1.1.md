@@ -1,13 +1,13 @@
-# CActor 对标 Akka 全面分析报告与改造计划 v2.18
+# CActor 对标 Akka 全面分析报告与改造计划 v2.19
 
-> **文档版本**: 2.18
+> **文档版本**: 2.19
 > **分析日期**: 2026-04-30
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: 新增streaming单元测试(32测试)！
+> **更新**: 修复测试用例断言问题，全部506个测试用例通过！
 > **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
-> **测试状态**: ⚠️ 测试编译通过，运行时socket权限问题为环境限制
-> **单元测试统计**: 225+ 测试用例 (Streaming 32, Persistence 26, Remote 18, Cluster 131, 其他)
-> **新实现**: Cluster单元测试、Failover框架、SplitBrainResolver、Sharding、RemoteTransport、EventStore、SnapshotStore、StreamProcessing单元测试
+> **测试状态**: ✅ `cjpm test` 全部通过！506个测试用例
+> **单元测试统计**: 506 测试用例 (全部通过)
+> **修复内容**: 修复Address/UniqueAddress测试、SplitBrainResolver测试、StashingMailbox测试、EventStore时间戳测试、Streaming集成测试
 
 ---
 

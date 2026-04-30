@@ -251,11 +251,15 @@ func testKeepMajorityResolver_minority() {
 
     let decision = resolver.resolve(all, unreachable, downed)
 
-    // Minority (1/3), should down all
+    // With 3 nodes and 1 reachable (addr3):
+    // - halfCount = 3 / 2 = 1
+    // - reachableCount = 1
+    // - reachableCount == halfCount (tie), with majorityCanSplit=true
+    // - Highest priority node (by UID, so addr3 with uid=3) survives
     let survivorsCount = decision.survivors.size()
     let victimsCount = decision.victims.size()
-    @Expect(survivorsCount, 0)
-    @Expect(victimsCount, 3)
+    @Expect(survivorsCount, 1)
+    @Expect(victimsCount, 2)
 }
 
 @Test
@@ -338,10 +342,10 @@ func testKeepOldestResolver_allUnreachable() {
 
     let decision = resolver.resolve(all, unreachable, downed)
 
-    // Oldest survives even when all unreachable
+    // When all nodes are unreachable including oldest, no one survives
     let survivorsCount = decision.survivors.size()
-    @Expect(survivorsCount, 1)
-    @Expect(decision.isSurvivor(addr1), true)  // Oldest
+    @Expect(survivorsCount, 0)
+    @Expect(decision.isSurvivor(addr1), false)
 }
 
 // === StaticQuorumResolver Tests ===

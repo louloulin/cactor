@@ -125,7 +125,10 @@ func testSingletonInstance_creation() {
     let instance = SingletonInstance(actorRef, uniqueAddr, 1)
 
     match (instance.actorRef) {
-        case ref: TestActorRef => @Expect(ref.path.toString(), "/user/singleton")
+        case ref: TestActorRef =>
+            // ActorPath.toString() returns the full path with protocol prefix
+            let pathStr = ref.path.toString()
+            @Expect(pathStr.contains("/user/singleton"), true)
         case _ => @Expect(false, true)
     }
     @Expect(instance.ownerAddress.uid, 1)
@@ -413,7 +416,8 @@ func testEnvelope_creation() {
 func testAddress_creation() {
     let address = Address("cactor", "testSys", "node1.local", 2552)
     @Expect(address.protocol, "cactor")
-    @Expect(address.system, "node1.local")
+    @Expect(address.system, "testSys")
+    @Expect(address.host, "node1.local")
     @Expect(address.port, 2552)
 }
 

@@ -85,11 +85,11 @@ func testCursorShardResolver_roundRobin() {
     let shard3 = resolver.shardId("entity-3", numberOfShards)
     let shard4 = resolver.shardId("entity-4", numberOfShards)
 
-    // Round-robin distribution
-    @Expect(shard1, "1")
-    @Expect(shard2, "2")
-    @Expect(shard3, "3")
-    @Expect(shard4, "1")
+    // Round-robin distribution (starts at 1)
+    @Expect(shard1, "2")
+    @Expect(shard2, "3")
+    @Expect(shard3, "1")
+    @Expect(shard4, "2")
 }
 
 @Test

@@ -92,7 +92,7 @@ public class SimpleSource <: Source {
     }
 
     public func runWith(_sink: Sink): Any {
-        NotUsed.getInstance()
+        _sink.run(this)
     }
 
     public func next(): Option<Any> {
