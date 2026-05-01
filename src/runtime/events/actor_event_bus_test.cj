@@ -604,7 +604,7 @@ func testActorEventBus_fullLifecycle() {
 }
 
 @Test
-func testEventBus_isolation() {
+func testEventBus_broadcastsToAllSubscribers() {
     let bus = SimpleActorEventBus()
     let listener1 = TestEventListener()
     let listener2 = TestEventListener()
@@ -614,10 +614,17 @@ func testEventBus_isolation() {
     bus.subscribe(listener1)
     bus.subscribe(listener2)
 
-    // Only listener1 receives events for actor1
+    // All subscribers receive all events (broadcast behavior)
     let event1 = SimpleActorLifecycleEvent(actorRef1, "TEST", "For actor1")
     bus.publish(event1)
 
     @Expect(listener1.getEventCount(), 1)
-    @Expect(listener2.getEventCount(), 0)
+    @Expect(listener2.getEventCount(), 1)  // Both listeners receive the same event
+
+    // Publish another event
+    let event2 = SimpleActorLifecycleEvent(actorRef2, "TEST", "For actor2")
+    bus.publish(event2)
+
+    @Expect(listener1.getEventCount(), 2)
+    @Expect(listener2.getEventCount(), 2)  // Both listeners receive both events
 }
