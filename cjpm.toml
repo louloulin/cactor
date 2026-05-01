@@ -2,9 +2,9 @@
 name = "cactor"
 version = "7.0.0"
 description = "High-performance Actor system for Cangjie - CActor 7.0 with 6-layer architecture"
-cjc-version = "1.0.3"
-output-type = "dynamic"
-compile-option = "-Woff deprecated  -Woff unused --cfg \"ohos=false\""
+cjc-version = "1.0.0"
+output-type = "static"
+compile-option = "-Woff deprecated -Woff unused --cfg \"ohos=false\""
 
 # === Foundation Layer ===
 [package.package-configuration."cactor.foundation.memory"]
@@ -40,22 +40,22 @@ output-type = "static"
 
 # === Runtime Layer ===
 [package.package-configuration."cactor.runtime.mailbox"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.runtime.dispatcher"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.runtime.scheduler"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.runtime.execution"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.runtime.system"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.runtime.guardian"]
-output-type = "dynamic"
+output-type = "static"
 
 # === API Layer ===
 [package.package-configuration."cactor.api"]
@@ -72,16 +72,16 @@ output-type = "static"
 
 # === Distribution Layer ===
 [package.package-configuration."cactor.distribution"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.distribution.remote"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.distribution.cluster"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.distribution.persistence"]
-output-type = "dynamic"
+output-type = "static"
 
 [package.package-configuration."cactor.distribution.streaming"]
-output-type = "dynamic"
+output-type = "static"

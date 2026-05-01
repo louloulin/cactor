@@ -1,9 +1,9 @@
 # CActor 对标 Akka 全面分析报告与改造计划 v2.21
 
-> **文档版本**: 2.21
+> **文档版本**: 2.22
 > **分析日期**: 2026-05-01
 > **目标**: 对标 Akka 2.6/2.7，分析 CActor 差距，制定改造计划
-> **更新**: EventBus 测试全部通过 (39个测试)，全项目545个测试全部通过
+> **更新**: 验证 545 测试全部通过，更新功能实现状态
 > **编译状态**: ✅ `cjpm build` 通过 (需设置 SDKROOT)
 > **测试状态**: ✅ 全部测试通过！545个测试用例
 > **单元测试统计**: 545 测试用例 (全部通过)
@@ -330,8 +330,8 @@ DYLD_LIBRARY_PATH=<sdk>/cangjie/runtime/lib/darwin_aarch64_llvm \
 | **ActorContext** | 完整上下文（子Actor、监督者、配置） | ~~仅 sender()~~ | **已修复** |
 | **Props** | 类型安全的配置泛型 | 字符串配置 | 中 |
 | **Lifecycle** | preStart/postStop/preRestart | 7个生命周期钩子 | 小 |
-| **ReceiveTimeout** | 接收超时机制 | 未实现 | 大 |
-| **Become/Unbecome** | 行为切换 | 未实现 | 大 |
+| **ReceiveTimeout** | 接收超时机制 | ✅ 已实现 (TimerScheduler) | 小 |
+| **Become/Unbecome** | 行为切换 | ✅ 已实现 (BehaviorActor) | 小 |
 | **Stash** | 消息暂存 | 框架存在 | 中 |
 
 ### 3.2 ActorContext 详细差距
@@ -394,7 +394,7 @@ public interface ActorContext {
 | **默认调度器** | ForkJoinPool | WorkStealingDispatcher | 小 |
 | **PinnedDispatcher** | 线程绑定 | 框架存在 | 中 |
 | **CallingThreadDispatcher** | 调用线程 | 框架存在 | 中 |
-| **BalancingDispatcher** | 负载均衡 | 未实现 | 大 |
+| **BalancingDispatcher** | 负载均衡 | ✅ 已实现 (BalancingDispatcher + 22 tests) | 小 |
 | **有色调度器** | CPU绑定/IO绑定 | 未实现 | 大 |
 | **线程池配置** | 完整配置 | 框架存在 | 中 |
 | **自定义调度器** | 完整支持 | 框架存在 | 中 |
@@ -417,7 +417,7 @@ public interface ActorContext {
 | **Cluster Sharding** | 完整（跨节点分片） | 框架存在 | **极大** |
 | **Cluster Singleton** | 单例节点 | ✅ 完整 (38个测试) | ✅ 已完成 |
 | **Distributed Data** | CRDT支持 | 未实现 | **极大** |
-| **Split Brain Resolver** | 多种策略 | 未实现 | **极大** |
+| **Split Brain Resolver** | 多种策略 | ✅ 已实现 (KeepMajority/KeepOldest/StaticQuorum/DownAll + 36 tests) | 小 |
 | **Cluster Client** | 客户端集群通信 | 未实现 | 大 |
 | **Multi-DC** | 多数据中心 | 未实现 | 大 |
 | **Membership** | 完整成员管理 | 框架存在 | 大 |
@@ -2602,4 +2602,51 @@ Initializing → Active → Migrating → Active
 
 ---
 
-*本文档 v2.9 - Cluster Singleton 集群单例实现完成！*
+## 四、v2.10 进度验证与功能状态更新 (2026-05-01)
+
+### 4.1 测试验证结果
+
+| 验证项 | 状态 | 说明 |
+|--------|------|------|
+| EventBus (39 tests) | ✅ 39/39 通过 | 广播行为验证正确 |
+| 全部包测试 | ✅ **545/545 通过** | 19 个测试包全部通过 |
+
+**测试分布**:
+| 包名 | 测试数 |
+|------|-------|
+| cactor.runtime.events | 39 |
+| cactor.distribution.cluster | 116+ |
+| cactor.patterns.* | 100+ |
+| cactor.core.* | 100+ |
+| cactor.foundation.* | 17+ |
+| cactor.runtime.dispatcher/scheduler | 44+ |
+
+### 4.2 功能实现状态确认
+
+以下功能已确认实现，更新文档状态：
+
+| 功能 | Akka1.1.md 原状态 | 验证后状态 | 证据 |
+|------|------------------|-----------|------|
+| **ReceiveTimeout** | 未实现 | ✅ 已实现 | `timer_scheduler.cj` + 22 tests |
+| **Become/Unbecome** | 未实现 | ✅ 已实现 | `behavior_actor.cj` + 14 tests |
+| **BalancingDispatcher** | 未实现 | ✅ 已实现 | `balancing_dispatcher.cj` + 22 tests |
+| **SplitBrainResolver** | 未实现 | ✅ 已实现 | 4种策略 + 36 tests |
+| **Cluster Singleton** | 未实现 | ✅ 已实现 | `cluster_singleton.cj` + 38 tests |
+| **ActorContext** | 仅 sender() | ✅ 完整实现 | 9个测试全部通过 |
+| **EventBus** | 框架 | ✅ 完整实现 | 39个测试全部通过 |
+| **TimerScheduler** | 框架 | ✅ 完整实现 | 22个测试全部通过 |
+
+### 4.3 剩余未实现功能清单
+
+| 功能 | 层级 | 优先级 | 说明 |
+|------|------|--------|------|
+| Distributed Data (CRDT) | Distribution | P3 | 极大工作量 |
+| Multi-DC Support | Distribution | P3 | 多数据中心 |
+| PersistenceFSM | Distribution | P2 | 状态机持久化 |
+| PersistenceQuery | Distribution | P2 | 查询接口 |
+| Cluster Client | Distribution | P2 | 集群客户端 |
+| Java/Kotlin Interop | API | P3 | 跨语言互操作 |
+
+---
+
+*本文档 v2.10 - 进度验证完成！545 测试全部通过，功能状态已更新！*

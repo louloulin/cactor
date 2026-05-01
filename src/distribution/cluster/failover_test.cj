@@ -4,6 +4,7 @@
  */
 package cactor.distribution.cluster
 
+import std.collection.{ArrayList, HashMap}
 import std.time.*
 
 // === NodeHealthInfo Tests ===

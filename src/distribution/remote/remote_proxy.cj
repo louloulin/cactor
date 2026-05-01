@@ -11,6 +11,7 @@ import std.time.*
 import std.convert.*
 import cactor.foundation.network.*
 import cactor.core.message.Message
+import cactor.core.actor.{ActorPath, ActorAddress}
 
 /**
  * 远程调用配置
@@ -349,13 +350,10 @@ public class RemoteActorProxyImpl <: RemoteActorProxy {
      */
     private func sendEnvelope(envelope: RemoteEnvelope): Unit {
         let data = this.messageSerializer.serialize(envelope)
-        let address = this.addressResolver.resolve(envelope.recipient.address)
-        match (address) {
-            case Some(addr) =>
-                let netAddr = NetworkAddress(addr.host, addr.port)
-                this.transport.send(netAddr, data)
-            case None => ()
-        }
+        let addr = envelope.recipient.getAddress()
+        // 直接使用 Address 的 host 和 port 构建 NetworkAddress
+        let netAddr = NetworkAddress(addr.host, addr.port)
+        this.transport.send(netAddr, data)
     }
 
     /**
@@ -610,8 +608,21 @@ public class ActorPathParser {
             }
         }
 
-        let address = Address(protocolStr, system, host, port)
-        ActorPath(address, elements.toArray())
+        let address = ActorAddress(system, host, port)
+        // 构建路径字符串
+        let pathStr = if (elements.size > 0) {
+            var result = ""
+            for (i in 0..elements.size) {
+                if (i > 0) {
+                    result = "${result}/"
+                }
+                result = "${result}${elements[i]}"
+            }
+            "/${result}"
+        } else {
+            "/"
+        }
+        ActorPath(address, pathStr)
     }
 
     /**
@@ -623,7 +634,15 @@ public class ActorPathParser {
         port: Int32,
         path: Array<String>
     ): ActorPath {
-        let address = Address("cactor", system, host, port)
-        ActorPath(address, path)
+        let address = ActorAddress(system, host, port)
+        // 构建路径字符串
+        var pathStr = ""
+        for (i in 0..path.size) {
+            if (i > 0) {
+                pathStr = "${pathStr}/"
+            }
+            pathStr = "${pathStr}${path[i]}"
+        }
+        ActorPath(address, "/${pathStr}")
     }
 }

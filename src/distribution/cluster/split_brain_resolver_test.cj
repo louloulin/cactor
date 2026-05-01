@@ -4,7 +4,11 @@
  */
 package cactor.distribution.cluster
 
+import std.collection.{ArrayList, HashMap}
 import std.time.*
+
+// Use HashSet from cluster_protocol.cj (same package)
+// HashSet is not imported from std.collection to avoid conflicts
 
 // === Test Helper ===
 

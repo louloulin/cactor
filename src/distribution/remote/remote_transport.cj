@@ -9,16 +9,17 @@ import std.collection.*
 import std.sync.*
 import std.time.*
 import cactor.core.message.Message
-import cactor.core.actor.ActorRef
+import cactor.core.actor.{ActorRef, ActorPath, ActorAddress}
 
 /**
  * 远程地址 - 对标 Akka Address
+ * 用于网络通信，包含协议、系统名、主机和端口
  */
 public struct Address {
     public let protocol: String  // "cactor"
     public let system: String    // Actor系统名称
     public let host: String     // 主机名/IP
-    public let port: Int32      // 端口
+    public let port: Int32       // 端口
 
     public init(protocol: String, system: String, host: String, port: Int32) {
         this.protocol = protocol
@@ -78,19 +79,19 @@ public class RemoteEnvelope {
 }
 
 /**
- * Actor路径 - 远程版本
+ * 远程Actor路径
  */
-public class ActorPath {
-    public let address: Address
+public class RemoteActorPath {
+    public let address: ActorAddress
     public let elements: Array<String>
 
-    public init(address: Address, elements: Array<String>) {
+    public init(address: ActorAddress, elements: Array<String>) {
         this.address = address
         this.elements = elements
     }
 
-    public static func parse(path: String): ActorPath {
-        ActorPath(Address("cactor", "system", "localhost", 0), Array<String>())
+    public static func parse(path: String): RemoteActorPath {
+        RemoteActorPath(ActorAddress("system", "localhost"), Array<String>())
     }
 
     public func toString(): String {
@@ -103,15 +104,15 @@ public class ActorPath {
         sb.toString()
     }
 
-    public func parent(): ActorPath {
+    public func parent(): RemoteActorPath {
         if (elements.size <= 1) {
-            return ActorPath(address, Array<String>())
+            return RemoteActorPath(address, Array<String>())
         }
         let newElements = Array<String>(Int64(elements.size - 1), { i => elements[Int64(i)] })
-        ActorPath(address, newElements)
+        RemoteActorPath(address, newElements)
     }
 
-    public func child(name: String): ActorPath {
+    public func child(name: String): RemoteActorPath {
         let newElements = Array<String>(Int64(elements.size + 1), { i =>
             if (Int64(i) < Int64(elements.size)) {
                 elements[Int64(i)]
@@ -119,7 +120,7 @@ public class ActorPath {
                 name
             }
         })
-        ActorPath(address, newElements)
+        RemoteActorPath(address, newElements)
     }
 
     public func name(): String {
@@ -151,9 +152,9 @@ public interface RemoteMessageStream {
 }
 
 /**
- * 远程Actor引用
+ * 远程Actor引用接口
  */
-public interface RemoteActorRef <: ActorRef {
+public interface IRemoteActorRef <: ActorRef {
     func address(): Address
     func actorPath(): ActorPath
 }

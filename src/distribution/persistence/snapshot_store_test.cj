@@ -4,6 +4,7 @@
  */
 package cactor.distribution.persistence
 
+import std.collection.*
 import std.time.*
 
 // === BasicSnapshot Tests ===
