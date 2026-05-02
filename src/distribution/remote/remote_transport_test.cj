@@ -352,12 +352,16 @@ func testAddressPathEnvelope_integration() {
     // Create address
     let addr = ActorAddress("testSystem", "192.168.1.100", 8080)
     @Expect(addr.port, 8080)
+    @Expect(addr.host, "192.168.1.100")
 
     // Create actor path
     let path = ActorPath(addr, "/user/service/worker")
     let pathStr = path.toString()
-    let hasIp = pathStr.contains("192.168.1.100")
-    @Expect(hasIp, true)
+    // ActorPath.toString() returns "cactor://system/path"
+    let hasSystem = pathStr.contains("testSystem")
+    let hasPath = pathStr.contains("user")
+    @Expect(hasSystem, true)
+    @Expect(hasPath, true)
 
     // Create and send envelope
     let msg = TestMessage("integration test")

@@ -343,8 +343,15 @@ func testEventData_anyType() {
     let event2 = DomainEvent("Number", 42, 2)
     let event3 = DomainEvent("Array", Array<String>(3, { i => "item${i}" }), 3)
 
-    @Expect(event1.eventData() == "string-data", true)
-    @Expect(event2.eventData() == 42, true)
+    // 使用 match 处理 Any 类型
+    match (event1.eventData()) {
+        case s: String => @Expect(s == "string-data", true)
+        case _ => @Expect(false, true)
+    }
+    match (event2.eventData()) {
+        case n: Int64 => @Expect(n == 42, true)
+        case _ => @Expect(false, true)
+    }
 }
 
 @Test
@@ -358,8 +365,10 @@ func testSnapshot_metadataPreservation() {
     let snapshot = handler.provideSnapshot(999)
     match (snapshot) {
         case Some(state) =>
-            @Expect(state, "preserved-state")
-            // 注意：这里的元数据是简化实现
+            match (state) {
+                case s: String => @Expect(s == "preserved-state", true)
+                case _ => @Expect(false, true)
+            }
         case None =>
             @Expect(true, false)
     }

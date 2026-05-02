@@ -311,21 +311,28 @@ public struct ActorPath {
         if (elements.size <= 1) {
             return None
         }
-        let parentElements = Array<String>(Int64(elements.size - 1), { i => elements[i] })
-        // 返回简化实现
-        None
+        // 构建父路径字符串
+        let sb = StringBuilder()
+        for (i in 0..Int64(elements.size - 1)) {
+            sb.append("/")
+            sb.append(elements[i])
+        }
+        let parentPath = sb.toString()
+        if (parentPath.size == 0) {
+            return None
+        }
+        Some(ActorPath(address, parentPath))
     }
 
     // 创建子路径
     public func child(name: String): ActorPath {
-        let newElements = Array<String>(Int64(elements.size + 1), { i =>
-            if (i < elements.size) {
-                elements[i]
-            } else {
-                name
-            }
-        })
-        ActorPath(address, "/${name}")
+        let sb = StringBuilder()
+        sb.append(getPath())
+        if (!getPath().endsWith("/")) {
+            sb.append("/")
+        }
+        sb.append(name)
+        ActorPath(address, sb.toString())
     }
 
     // 获取路径元素数量

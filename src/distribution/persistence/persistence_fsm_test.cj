@@ -291,7 +291,7 @@ func testStateTransitionEvent_sequenceTracking() {
     var events = ArrayList<StateTransitionEvent>()
 
     for (i in 1..=5) {
-        events.append(StateTransitionEvent("State${i - 1}", "State${i}", Int64(i)))
+        events.add(StateTransitionEvent("State${i - 1}", "State${i}", Int64(i)))
     }
 
     @Expect(events.size, 5)

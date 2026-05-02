@@ -6,6 +6,7 @@ package cactor.distribution.cluster
 
 import std.collection.{ArrayList, HashMap}
 import std.time.*
+import cactor.foundation.network.{NetworkAddress}
 
 // === Test Configuration ===
 
@@ -242,7 +243,7 @@ func testGossipProtocol_convergence() {
 
 @Test
 func testClusterEvent_FormationNodeJoined() {
-    let node = ClusterNode(NodeId("node3"), NetworkAddress("localhost", 2552), ArrayList<String>())
+    let node = ClusterNode(NodeId("node3"), NetworkAddress("localhost", 2552), Array<String>(0, { _ => "" }))
     let event = ClusterEvent.NodeJoined(node)
 
     match (event) {
@@ -255,7 +256,7 @@ func testClusterEvent_FormationNodeJoined() {
 
 @Test
 func testClusterEvent_FormationNodeUp() {
-    let node = ClusterNode(NodeId("node4"), NetworkAddress("localhost", 2552), ArrayList<String>())
+    let node = ClusterNode(NodeId("node4"), NetworkAddress("localhost", 2552), Array<String>(0, { _ => "" }))
     let event = ClusterEvent.NodeUp(node)
 
     match (event) {
@@ -268,7 +269,7 @@ func testClusterEvent_FormationNodeUp() {
 
 @Test
 func testClusterEvent_FormationNodeLeft() {
-    let node = ClusterNode(NodeId("node5"), NetworkAddress("localhost", 2552), ArrayList<String>())
+    let node = ClusterNode(NodeId("node5"), NetworkAddress("localhost", 2552), Array<String>(0, { _ => "" }))
     let event = ClusterEvent.NodeLeft(node)
 
     match (event) {
@@ -281,7 +282,7 @@ func testClusterEvent_FormationNodeLeft() {
 
 @Test
 func testClusterEvent_FormationNodeDown() {
-    let node = ClusterNode(NodeId("node6"), NetworkAddress("localhost", 2552), ArrayList<String>())
+    let node = ClusterNode(NodeId("node6"), NetworkAddress("localhost", 2552), Array<String>(0, { _ => "" }))
     let event = ClusterEvent.NodeDown(node)
 
     match (event) {

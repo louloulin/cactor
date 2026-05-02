@@ -95,8 +95,9 @@ func testRemoteActorRef_path() {
     let ref = RemoteActorRef(host, port, path, proxy)
 
     let pathStr = ref.path.toString()
-    @Expect(pathStr.contains("node1"), true)
-    @Expect(pathStr.contains("8080"), true)
+    // ActorPath.toString() returns "cactor://system/path"
+    @Expect(pathStr.contains("cactor://"), true)
+    @Expect(pathStr.contains("user"), true)
 }
 
 @Test

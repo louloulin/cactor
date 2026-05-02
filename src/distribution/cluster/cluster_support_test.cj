@@ -183,7 +183,8 @@ func testClusterState_addNode() {
     state.addNode(node)
 
     @Expect(state.getClusterSize(), 1)
-    @Expect(state.getAvailableNodes().size, 1)
+    // 新节点处于 Joining 状态, not available yet
+    @Expect(state.getAllNodes().size, 1)
 }
 
 @Test
@@ -230,7 +231,11 @@ func testClusterState_getNode() {
     state.addNode(node)
 
     let found = state.getNode(nodeId)
-    @Expect(found.isDefined(), true)
+    let isDefined = match (found) {
+        case Some(_) => true
+        case None => false
+    }
+    @Expect(isDefined, true)
 
     match (found) {
         case Some(n) => @Expect(n.nodeId.equals(nodeId), true)
@@ -244,7 +249,11 @@ func testClusterState_getNodeNotFound() {
     let state = ClusterState(localId)
 
     let notFound = state.getNode(NodeId("nonexistent"))
-    @Expect(notFound.isEmpty(), true)
+    let isEmpty = match (notFound) {
+        case Some(_) => false
+        case None => true
+    }
+    @Expect(isEmpty, true)
 }
 
 @Test

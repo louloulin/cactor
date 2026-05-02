@@ -128,7 +128,9 @@ public class RemoteActorRef <: ActorRef {
      * 获取哈希码
      */
     public func hashCode(): Int32 {
-        Int32(toString().hashCode())
+        // Use modulo to avoid overflow
+        let hash = toString().hashCode()
+        Int32(hash % Int64(Int32.Max))
     }
 
     // === 远程 Actor 特有方法 ===
