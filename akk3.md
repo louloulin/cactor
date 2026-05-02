@@ -15,8 +15,8 @@
 | 指标 | 状态 | 验证日期 |
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 | 2026-05-02 |
-| **测试** | ✅ 782/782 通过 | 2026-05-02 |
-| **完成度** | ✅ 93% (168/182 特性) | 2026-05-02 |
+| **测试** | ✅ 817/817 通过 | 2026-05-02 |
+| **完成度** | ✅ 94% (170/182 特性) | 2026-05-02 |
 
 ### 1.2 测试验证详情
 
@@ -29,7 +29,7 @@
 | cactor.distribution.cluster | 218 | ✅ |
 | cactor.distribution.persistence | 81 | ✅ |
 | cactor.distribution.remote | 81 | ✅ |
-| cactor.distribution.streaming | 38 | ✅ |
+| cactor.distribution.streaming | 73 | ✅ |
 | cactor.foundation.serialization | 17 | ✅ |
 | cactor.patterns.* | 97 | ✅ |
 | cactor.runtime.* | 119 | ✅ |
@@ -251,7 +251,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ### 7.2 Phase 2 验收
 
-- [ ] Akka Streams 图计算测试 > 30
+- [x] ✅ Akka Streams 图计算测试 > 30 (已实现 35 个 GraphDSL 测试)
 - [x] ✅ 分布式锁测试 > 10 (已实现 17 个测试)
 - [ ] 消息可靠性测试 > 20
 
@@ -302,7 +302,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 | 任务 | 优先级 | 状态 | 工作量 |
 |------|--------|------|--------|
-| Akka Streams 图计算 | P1 | ⏳ 进行中 | 3天 |
+| Akka Streams 图计算 | P1 | ✅ 已完成 | 3天 |
 | Akka Projections | P2 | ⏳ 进行中 | 4天 |
 | 分布式锁机制 | P1 | ✅ 已完成 | 2天 |
 | 消息可靠性增强 | P1 | ⏳ 进行中 | 2天 |
