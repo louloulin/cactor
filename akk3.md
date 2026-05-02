@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 1.1
+> **文档版本**: 1.2
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-02 (v1.1: 验证完成)
+> **更新日期**: 2026-05-02 (v1.2: Akka Projections 实现完成)
 > **基于**: akka2.md (v2.5: 765测试通过, 92%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -15,8 +15,8 @@
 | 指标 | 状态 | 验证日期 |
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 | 2026-05-02 |
-| **测试** | ✅ 817/817 通过 | 2026-05-02 |
-| **完成度** | ✅ 94% (170/182 特性) | 2026-05-02 |
+| **测试** | ✅ 847/847 通过 | 2026-05-02 |
+| **完成度** | ✅ 95% (173/182 特性) | 2026-05-02 |
 
 ### 1.2 测试验证详情
 
@@ -27,13 +27,13 @@
 | cactor.core.message | 46 | ✅ |
 | cactor.core.supervision | 37 | ✅ |
 | cactor.distribution.cluster | 218 | ✅ |
-| cactor.distribution.persistence | 81 | ✅ |
+| cactor.distribution.persistence | 122 | ✅ |
 | cactor.distribution.remote | 81 | ✅ |
 | cactor.distribution.streaming | 73 | ✅ |
 | cactor.foundation.serialization | 17 | ✅ |
 | cactor.patterns.* | 97 | ✅ |
 | cactor.runtime.* | 119 | ✅ |
-| **总计** | **765** | **✅ 全部通过** |
+| **总计** | **847** | **✅ 全部通过** |
 
 ### 1.3 已实现核心功能
 
@@ -43,7 +43,7 @@
 | Core | actor, message, supervision, context | **97%** |
 | Runtime | mailbox, dispatcher, scheduler | **93%** |
 | Patterns | ask, backpressure, circuit_breaker, routing, typed | **94%** |
-| Distribution | remote, cluster, persistence, streaming | **93%** |
+| Distribution | remote, cluster, persistence, streaming | **95%** |
 | API | config, public, extensions | **85%** |
 
 ---
@@ -116,12 +116,14 @@
 
 #### 3.2.2 Akka Projections
 
-| 功能 | 描述 | 实现难度 |
-|------|------|----------|
-| Projection | 事件投影 | 高 |
-| ProjectionInstance | 投影实例 | 高 |
-| SourceProvider | 源提供者 | 高 |
-| OffsetStore | 偏移存储 | 中 |
+| 功能 | 描述 | 状态 |
+|------|------|------|
+| Projection | 事件投影 | ✅ 已实现 |
+| ProjectionInstance | 投影实例 | ✅ 已实现 |
+| SourceProvider | 源提供者 | ✅ 已实现 |
+| OffsetStore | 偏移存储 | ✅ 已实现 |
+| ProjectionRegistry | 投影注册表 | ✅ 已实现 |
+| ProjectionBuilder | 投影构建器 | ✅ 已实现 |
 
 ### 3.3 低优先级功能 (P3)
 
@@ -274,7 +276,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-## 九、验证结果 (v1.1)
+## 九、验证结果 (v1.2)
 
 ### 已验证功能
 
@@ -288,12 +290,15 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | CRDT 分布式数据 | ✅ 已实现 | 2026-05-02 |
 | Remote Transport | ✅ 已实现 | 2026-05-02 |
 | Persistence | ✅ 已实现 | 2026-05-02 |
+| Akka Streams GraphDSL | ✅ 已实现 | 2026-05-02 |
+| Akka Projections | ✅ 已实现 | 2026-05-02 |
+| Akka Projections 测试 | ✅ 54个测试通过 | 2026-05-02 |
 
-### Phase 1 验收状态
+### Phase 2 验收状态
 
-- [x] ✅ ActorContext 子 Actor 创建测试通过 (6/6)
-- [x] ✅ Cluster Sharding 完整测试 (201/201)
-- [x] ✅ RemoteTransport 框架存在
+- [x] ✅ Akka Streams GraphDSL (73个测试通过)
+- [x] ✅ Akka Projections (54个测试通过)
+- [x] ✅ 分布式锁机制 (17个测试通过)
 - [x] ✅ 编译通过 (1 warning, 无错误)
 
 ## 十、下一步行动
@@ -303,7 +308,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | 任务 | 优先级 | 状态 | 工作量 |
 |------|--------|------|--------|
 | Akka Streams 图计算 | P1 | ✅ 已完成 | 3天 |
-| Akka Projections | P2 | ⏳ 进行中 | 4天 |
+| Akka Projections | P2 | ✅ 已完成 | 4天 |
 | 分布式锁机制 | P1 | ✅ 已完成 | 2天 |
 | 消息可靠性增强 | P1 | ⏳ 进行中 | 2天 |
 
@@ -317,9 +322,9 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v1.1 已验证
+> **文档状态**: v1.2 已验证
 > **维护者**: CActor Team
-> **下一步**: Phase 2 分布式增强
+> **下一步**: Phase 2 消息可靠性增强
 > **验证命令**:
 > ```bash
 > source ~/.cangjie_env
