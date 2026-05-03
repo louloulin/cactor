@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.10
+> **文档版本**: 2.11
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-03 (v2.10: 心跳检测、文件持久化后端实现)
-> **基于**: akka2.md (v2.10: 编译成功, 98%完成)
+> **更新日期**: 2026-05-03 (v2.11: HA 分片协调器实现)
+> **基于**: akka2.md (v2.11: 编译成功, 99%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -495,11 +495,22 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | createFileJournal() 函数 | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
 | createFileSnapshotStore() 函数 | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
 
+#### HA 分片协调器实现详情 (新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| CoordinatorState class | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
+| ShardCoordinatorEventHandler interface | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
+| ShardAllocation struct | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
+| HAShardCoordinator class | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
+| CoordinatorStats struct | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
+| createHAShardCoordinator() 函数 | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
+
 ---
 
-> **文档状态**: v2.10 Phase 9 完成 (心跳检测+文件持久化)
+> **文档状态**: v2.11 Phase 10 完成 (HA 分片协调器)
 > **维护者**: CActor Team
-> **下一步**: Cluster ShardCoordinator HA 完善
+> **下一步**: 完善测试和示例程序
 > **验证命令**:
 > ```bash
 > source ~/.cangjie_env
