@@ -506,6 +506,12 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | CoordinatorStats struct | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
 | createHAShardCoordinator() 函数 | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
 
+#### HA 分片协调器示例程序 (新增)
+
+| 示例 | 描述 | 文件 |
+|------|------|------|
+| cluster_ha_demo | 展示 HA 分片协调器功能 | `src/examples/cluster_ha_demo/main.cj` |
+
 ---
 
 > **文档状态**: v2.11 Phase 10 完成 (HA 分片协调器)
