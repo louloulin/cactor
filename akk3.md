@@ -341,6 +341,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | MixedMessageRouter | ✅ 已实现 | 2026-05-03 |
 | SystemCoordinator | ✅ 已实现 | 2026-05-03 |
 | Coexistences 测试 | ✅ 编译通过 | 2026-05-03 |
+| 模式演示示例 | ✅ 已创建 | 2026-05-03 |
 
 ### Phase 2 验收状态
 
@@ -528,6 +529,12 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | SystemCoordinator class | ✅ | `src/patterns/coexistence/coexistence.cj` |
 | CoexistenceConfig struct | ✅ | `src/patterns/coexistence/coexistence.cj` |
 | Coexistences 测试 | ✅ | `src/patterns/coexistence/coexistence_test.cj` (15+ 测试) |
+
+#### 示例程序 (新增)
+
+| 示例 | 描述 | 文件 |
+|------|------|------|
+| patterns_demo | 展示 Stash, Pipe, Routing, Coexistence 模式 | `src/examples/patterns_demo/main.cj` |
 
 ---
 
