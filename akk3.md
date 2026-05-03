@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 1.6
+> **文档版本**: 1.7
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v1.6: Phase 3 完成, Phase 4 计划)
+> **更新日期**: 2026-05-03 (v1.7: Route DSL 完成)
 > **基于**: akka2.md (v2.5: 765测试通过, 92%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -334,13 +334,13 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | HTTP Client | P2 | ✅ 已完成 | 2天 |
 | WebSocket 支持 | P2 | ✅ 已完成 | 2天 |
 
-### Phase 4: 完善与优化 (计划中)
+### Phase 4: 完善与优化 (进行中)
 
-| 任务 | 优先级 | 工作量 |
-|------|--------|--------|
-| Route DSL 完善 | P2 | 2天 |
-| 真实网络连接实现 | P2 | 5天 |
-| Akka Management | P3 | 5天 |
+| 任务 | 优先级 | 状态 | 工作量 |
+|------|--------|------|--------|
+| Route DSL 完善 | P2 | ✅ 已完成 | 2天 |
+| 真实网络连接实现 | P2 | 🔄 计划中 | 5天 |
+| Akka Management | P3 | 🔄 计划中 | 5天 |
 
 #### HTTP 模块实现详情
 
@@ -355,6 +355,20 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | HttpServer class | ✅ | `src/api/http/http_server.cj` |
 | HttpClient class | ✅ | `src/api/http/http_server.cj` |
 | HTTP 测试 | ✅ | `src/api/http/http_test.cj` (30+ 测试) |
+
+#### Route DSL 模块实现详情
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| PathParams class | ✅ | `src/api/http/route_dsl.cj` |
+| QueryParams class | ✅ | `src/api/http/route_dsl.cj` |
+| RequestContext class | ✅ | `src/api/http/route_dsl.cj` |
+| PathMatcher class | ✅ | `src/api/http/route_dsl.cj` |
+| RouteResult enum | ✅ | `src/api/http/route_dsl.cj` |
+| Directives class | ✅ | `src/api/http/route_dsl.cj` |
+| get/post/put/delete 指令 | ✅ | `src/api/http/route_dsl.cj` |
+| header/parameter 指令 | ✅ | `src/api/http/route_dsl.cj` |
+| Route DSL 测试 | ✅ | `src/api/http/route_dsl_test.cj` (20+ 测试) |
 
 #### WebSocket 模块实现详情
 
@@ -375,9 +389,9 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v1.6 Phase 3 完成
+> **文档状态**: v1.7 Phase 4 进行中
 > **维护者**: CActor Team
-> **下一步**: Phase 4 Route DSL 完善
+> **下一步**: 真实网络连接实现
 > **验证命令**:
 > ```bash
 > source ~/.cangjie_env
