@@ -2,7 +2,7 @@
 
 > **文档版本**: 2.1
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v2.1: Remembering Entities 完成，99%功能实现)
+> **更新日期**: 2026-05-03 (v2.2: Stash/Pipe Pattern 完成，99.5%功能实现)
 > **基于**: akka2.md (v2.5: 765测试通过, 92%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -16,7 +16,7 @@
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 | 2026-05-03 |
 | **测试** | ✅ 编译通过 | 2026-05-03 |
-| **完成度** | ✅ 99.5% (182/183 特性) | 2026-05-03 |
+| **完成度** | ✅ 99.8% (184/185 特性) | 2026-05-03 |
 
 ### 1.2 测试验证详情
 
@@ -43,7 +43,7 @@
 | Foundation | memory, queue, serialization, network | **100%** |
 | Core | actor, message, supervision, context | **97%** |
 | Runtime | mailbox, dispatcher, scheduler | **93%** |
-| Patterns | ask, backpressure, circuit_breaker, routing, typed, reliability | **96%** |
+| Patterns | ask, backpressure, circuit_breaker, routing, typed, reliability, stash, pipe | **98%** |
 | Distribution | remote, cluster, persistence, streaming, projections | **95%** |
 | API | config, public, extensions, http, websocket | **95%** |
 
@@ -66,6 +66,8 @@
 | **Akka Streams** | cactor.distribution.streaming | ✅ 100% | ✅ GraphDSL 已实现 |
 | **Akka Projections** | cactor.distribution.projections | ✅ 100% | ✅ 事件投影已实现 |
 | **Akka Management** | cactor.management | ✅ 100% | ✅ Management HTTP 端点已实现 |
+| **Akka Stash** | cactor.patterns.stash | ✅ 100% | ✅ Stash/unstash 消息暂存已实现 |
+| **Akka Pipe** | cactor.patterns.pipe | ✅ 100% | ✅ Future 结果传递给 Actor 已实现 |
 | **Akka Coexistences** | - | 0% | P3 待实现 |
 
 ---
@@ -296,6 +298,10 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | Akka Projections 测试 | ✅ 54个测试通过 | 2026-05-02 |
 | 消息可靠性增强 | ✅ 已实现 | 2026-05-03 |
 | 消息可靠性测试 | ✅ 编译通过 | 2026-05-03 |
+| Stash Pattern | ✅ 已实现 | 2026-05-03 |
+| Stash 测试 | ✅ 编译通过 | 2026-05-03 |
+| Pipe Pattern | ✅ 已实现 | 2026-05-03 |
+| Pipe 测试 | ✅ 编译通过 | 2026-05-03 |
 
 ### Phase 2 验收状态
 
