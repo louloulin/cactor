@@ -383,10 +383,16 @@ public class MixedMessageRouter {
         let messageType = message.messageType()
 
         // 查找特定适配器
-        for ((type, adapter) in adapters) {
+        let adaptersArray = adapters
+        var i = 0
+        while (i < adaptersArray.size) {
+            let pair = adaptersArray[i]
+            let type = pair[0]
+            let adapter = pair[1]
             if (messageType == type) {
                 return adapter.adapt(message)
             }
+            i += 1
         }
 
         // 使用默认适配器
