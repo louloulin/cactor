@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 1.4
+> **文档版本**: 1.5
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v1.4: HTTP Server 框架完成)
+> **更新日期**: 2026-05-03 (v1.5: WebSocket 支持完成)
 > **基于**: akka2.md (v2.5: 765测试通过, 92%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -321,7 +321,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 |------|--------|------|--------|
 | HTTP Server 框架 | P1 | ✅ 已完成 | 3天 |
 | HTTP Client | P2 | ✅ 已完成 | 2天 |
-| WebSocket 支持 | P2 | 🔄 计划中 | 2天 |
+| WebSocket 支持 | P2 | ✅ 已完成 | 2天 |
 
 #### HTTP 模块实现详情
 
@@ -337,11 +337,28 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | HttpClient class | ✅ | `src/api/http/http_server.cj` |
 | HTTP 测试 | ✅ | `src/api/http/http_test.cj` (30+ 测试) |
 
+#### WebSocket 模块实现详情
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| WsMessage enum | ✅ | `src/api/websocket/websocket.cj` |
+| WsMessageType enum | ✅ | `src/api/websocket/websocket.cj` |
+| WsCloseCode enum | ✅ | `src/api/websocket/websocket.cj` |
+| WsConnectionState enum | ✅ | `src/api/websocket/websocket.cj` |
+| WsServerConfig class | ✅ | `src/api/websocket/websocket.cj` |
+| WsClientConfig class | ✅ | `src/api/websocket/websocket.cj` |
+| WsHandler interface | ✅ | `src/api/websocket/websocket.cj` |
+| WsContext class | ✅ | `src/api/websocket/websocket.cj` |
+| WsFlow class | ✅ | `src/api/websocket/websocket.cj` |
+| WsServer class | ✅ | `src/api/websocket/websocket.cj` |
+| WsClient class | ✅ | `src/api/websocket/websocket.cj` |
+| WebSocket 测试 | ✅ | `src/api/websocket/websocket_test.cj` (25+ 测试) |
+
 ---
 
-> **文档状态**: v1.4 Phase 3 进行中
+> **文档状态**: v1.5 Phase 3 基本完成
 > **维护者**: CActor Team
-> **下一步**: WebSocket 支持实现
+> **下一步**: 完善 Route DSL
 > **验证命令**:
 > ```bash
 > source ~/.cangjie_env
