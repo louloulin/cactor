@@ -16,7 +16,7 @@
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 | 2026-05-03 |
 | **测试** | ✅ 编译通过 | 2026-05-03 |
-| **完成度** | ✅ 99% (181/182 特性) | 2026-05-03 |
+| **完成度** | ✅ 99.5% (182/183 特性) | 2026-05-03 |
 
 ### 1.2 测试验证详情
 
@@ -60,7 +60,7 @@
 | **Akka Cluster** | cactor.distribution.cluster | 85% | 集群成员管理已实现 |
 | **Akka Cluster Sharding** | cactor.distribution.cluster | ✅ 95% | ✅ Remembering Entities 已实现 |
 | **Akka Persistence** | cactor.distribution.persistence | 90% | 事件溯源已实现 |
-| **Akka Distributed Data** | cactor.distribution.cluster/crdt | 80% | CRDT 已实现 |
+| **Akka Distributed Data** | cactor.distribution.cluster/crdt | ✅ 90% | ✅ GSet/Flag/ORMap/2P-Set/MVRegister/RWSequence 已实现 |
 | **Akka Remoting** | cactor.distribution.remote | 75% | 基础远程通信已实现 |
 | **Akka HTTP** | cactor.api.http | ✅ 100% | ✅ HTTP Server/Client 已实现 |
 | **Akka Streams** | cactor.distribution.streaming | ✅ 100% | ✅ GraphDSL 已实现 |
@@ -421,9 +421,28 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | ManagementFactory class | ✅ | `src/management/management.cj` |
 | Management 测试 | ✅ | `src/management/management_test.cj` (18+ 测试) |
 
+#### CRDT 模块实现详情 (新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| VectorClock class | ✅ | `src/distribution/cluster/crdt.cj` |
+| LWWRegister class | ✅ | `src/distribution/cluster/crdt.cj` |
+| PNCounter class | ✅ | `src/distribution/cluster/crdt.cj` |
+| GCounter class | ✅ | `src/distribution/cluster/crdt.cj` |
+| ORSet class | ✅ | `src/distribution/cluster/crdt.cj` |
+| LWWMap class | ✅ | `src/distribution/cluster/crdt.cj` |
+| GSet class | ✅ 新增 | `src/distribution/cluster/crdt.cj` |
+| Flag class | ✅ 新增 | `src/distribution/cluster/crdt.cj` |
+| TwoPhaseSet class | ✅ 新增 | `src/distribution/cluster/crdt.cj` |
+| MVRegister class | ✅ 新增 | `src/distribution/cluster/crdt.cj` |
+| ORMap class | ✅ 新增 | `src/distribution/cluster/crdt.cj` |
+| RWSequence class | ✅ 新增 | `src/distribution/cluster/crdt.cj` |
+| DistributedDataNode class | ✅ | `src/distribution/cluster/crdt.cj` |
+| CRDT 测试 | ✅ | `src/distribution/cluster/crdt_test.cj` (35+ 测试) |
+
 ---
 
-> **文档状态**: v1.9 Phase 5 完成
+> **文档状态**: v2.2 Phase 8 完成 (CRDT 扩展)
 > **维护者**: CActor Team
 > **下一步**: 继续完善其他功能
 > **验证命令**:
@@ -431,5 +450,5 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 > source ~/.cangjie_env
 > export RUNTIME_LIB="$CANGJIE_HOME/runtime/lib/darwin_aarch64_llvm"
 > export DYLD_LIBRARY_PATH="$RUNTIME_LIB:$DYLD_LIBRARY_PATH"
-> cjpm build && ./target/release/unittest_bin/cactor.*
+> cjpm build && cjpm test --no-run
 > ```

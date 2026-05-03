@@ -434,6 +434,488 @@ public class LWWMap {
 }
 
 /**
+ * G-Set (Grow-only Set - 只增集合)
+ * 只能添加元素，不能移除元素
+ * 使用 String 类型以避免泛型限制
+ */
+public class GSet {
+    private var elements: HashMap<String, String>  // element -> element
+    private let nodeId: String
+
+    public init(nodeId: String) {
+        this.elements = HashMap<String, String>()
+        this.nodeId = nodeId
+    }
+
+    /**
+     * 添加元素
+     */
+    public func add(element: String): Unit {
+        if (!elements.contains(element)) {
+            elements.add(element, element)
+        }
+    }
+
+    /**
+     * 合并另一个 G-Set
+     */
+    public func merge(other: GSet): GSet {
+        for ((key, val) in other.elements) {
+            if (!elements.contains(key)) {
+                elements.add(key, val)
+            }
+        }
+        this
+    }
+
+    /**
+     * 获取所有元素
+     */
+    public func value(): HashMap<String, String> {
+        elements
+    }
+
+    /**
+     * 检查是否包含元素
+     */
+    public func contains(element: String): Bool {
+        elements.contains(element)
+    }
+
+    /**
+     * 获取元素数量
+     */
+    public func size(): Int64 {
+        Int64(elements.size)
+    }
+
+    public func identity(): String { "GSet:${nodeId}" }
+}
+
+/**
+ * Flag (Enable-Wins Flag - 启用胜出标志)
+ * 用于协调跨节点的事件，只能从 false 变为 true
+ */
+public class Flag {
+    private var isEnabled: Bool
+    private let nodeId: String
+    private let clock: VectorClock
+
+    public init(nodeId: String) {
+        this.isEnabled = false
+        this.nodeId = nodeId
+        this.clock = VectorClock(nodeId)
+    }
+
+    /**
+     * 创建已启用的 Flag
+     */
+    public static func createEnabled(nodeId: String): Flag {
+        let flag = Flag(nodeId)
+        flag.isEnabled = true
+        flag
+    }
+
+    /**
+     * 启用标志（只能从 false 变为 true）
+     */
+    public func enable(): Unit {
+        clock.increment()
+        isEnabled = true
+    }
+
+    /**
+     * 合并另一个 Flag（任一节点启用则最终启用）
+     */
+    public func merge(other: Flag): Flag {
+        clock.merge(other.clock)
+        isEnabled = isEnabled || other.isEnabled
+        this
+    }
+
+    /**
+     * 获取当前值
+     */
+    public func value(): Bool {
+        isEnabled
+    }
+
+    public func identity(): String { "Flag:${nodeId}" }
+}
+
+/**
+ * 2P-Set (Two-Phase Set)
+ * 由两个 G-Set 组成：一个添加集，一个移除集
+ */
+public class TwoPhaseSet {
+    private var addedSet: GSet
+    private var removedSet: GSet
+    private let nodeId: String
+
+    public init(nodeId: String) {
+        this.addedSet = GSet(nodeId)
+        this.removedSet = GSet(nodeId)
+        this.nodeId = nodeId
+    }
+
+    /**
+     * 添加元素
+     */
+    public func add(element: String): Unit {
+        addedSet.add(element)
+    }
+
+    /**
+     * 移除元素
+     */
+    public func remove(element: String): Bool {
+        // 只能移除已添加且未移除的元素
+        if (addedSet.contains(element) && !removedSet.contains(element)) {
+            removedSet.add(element)
+            return true
+        }
+        false
+    }
+
+    /**
+     * 合并另一个 2P-Set
+     */
+    public func merge(other: TwoPhaseSet): TwoPhaseSet {
+        addedSet = addedSet.merge(other.addedSet)
+        removedSet = removedSet.merge(other.removedSet)
+        this
+    }
+
+    /**
+     * 获取当前可见的元素
+     */
+    public func value(): HashMap<String, String> {
+        let result = HashMap<String, String>()
+        for ((key, val) in addedSet.value()) {
+            if (!removedSet.contains(key)) {
+                result.add(key, val)
+            }
+        }
+        result
+    }
+
+    public func identity(): String { "TwoPhaseSet:${nodeId}" }
+}
+
+/**
+ * MV-Register (Multi-Value Register)
+ * 允许多个并发值，最终收敛到所有可能值之一
+ */
+public class MVRegister<T> {
+    private var values: HashMap<String, T>  // nodeId -> value
+    private var timestamps: HashMap<String, Int64>  // nodeId -> timestamp
+    private let nodeId: String
+    private let clock: VectorClock
+
+    public init(nodeId: String, initialValue: T) {
+        this.values = HashMap<String, T>()
+        this.timestamps = HashMap<String, Int64>()
+        this.nodeId = nodeId
+        this.clock = VectorClock(nodeId)
+        values.add(nodeId, initialValue)
+        timestamps.add(nodeId, DateTime.now().toUnixTimeStamp().toMilliseconds())
+    }
+
+    /**
+     * 设置值
+     */
+    public func set(newValue: T): Unit {
+        clock.increment()
+        let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        values.remove(nodeId)
+        values.add(nodeId, newValue)
+        timestamps.remove(nodeId)
+        timestamps.add(nodeId, timestamp)
+    }
+
+    /**
+     * 合并另一个 MV-Register
+     */
+    public func merge(other: MVRegister<T>): MVRegister<T> {
+        clock.merge(other.clock)
+
+        for ((nid, v) in other.values) {
+            let ts = match (other.timestamps.get(nid)) {
+                case Some(t) => t
+                case None => 0
+            }
+            match (timestamps.get(nid)) {
+                case Some(currentTs) =>
+                    if (ts > currentTs) {
+                        values.remove(nid)
+                        values.add(nid, v)
+                        timestamps.remove(nid)
+                        timestamps.add(nid, ts)
+                    }
+                case None =>
+                    values.add(nid, v)
+                    timestamps.add(nid, ts)
+            }
+        }
+        this
+    }
+
+    /**
+     * 获取所有可能的值
+     */
+    public func value(): ArrayList<T> {
+        let result = ArrayList<T>()
+        for ((_, v) in values) {
+            result.add(v)
+        }
+        result
+    }
+
+    public func identity(): String { "MVRegister:${nodeId}" }
+}
+
+/**
+ * ORMap (Observed-Remove Map)
+ * 支持键值对的添加、删除和合并
+ * 使用 HashMap<String, Int64> 记录删除时间戳来替代 HashSet
+ */
+public class ORMap {
+    private var entries: HashMap<String, (String, Int64)>  // key -> (value, timestamp)
+    private var removedTimestamps: HashMap<String, Int64>  // key -> delete timestamp
+    private let nodeId: String
+    private let clock: VectorClock
+
+    public init(nodeId: String) {
+        this.entries = HashMap<String, (String, Int64)>()
+        this.removedTimestamps = HashMap<String, Int64>()
+        this.nodeId = nodeId
+        this.clock = VectorClock(nodeId)
+    }
+
+    /**
+     * 设置键值
+     */
+    public func set(key: String, value: String): Unit {
+        clock.increment()
+        let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        entries.remove(key)
+        entries.add(key, (value, timestamp))
+        // 如果之前被删除，取消删除标记
+        if (removedTimestamps.contains(key)) {
+            removedTimestamps.remove(key)
+        }
+    }
+
+    /**
+     * 删除键
+     */
+    public func remove(key: String): Unit {
+        clock.increment()
+        if (entries.contains(key)) {
+            let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
+            removedTimestamps.remove(key)
+            removedTimestamps.add(key, timestamp)
+            entries.remove(key)
+        }
+    }
+
+    private func isRemoved(key: String): Bool {
+        removedTimestamps.contains(key)
+    }
+
+    /**
+     * 合并另一个 ORMap
+     */
+    public func merge(other: ORMap): ORMap {
+        clock.merge(other.clock)
+
+        // 合并 entries
+        for ((key, (value, ts)) in other.entries) {
+            if (!isRemoved(key)) {
+                match (entries.get(key)) {
+                    case Some((_, existingTs)) =>
+                        if (ts > existingTs) {
+                            entries.remove(key)
+                            entries.add(key, (value, ts))
+                        }
+                    case None =>
+                        entries.add(key, (value, ts))
+                }
+            }
+        }
+
+        // 合并删除时间戳
+        for ((key, ts) in other.removedTimestamps) {
+            match (removedTimestamps.get(key)) {
+                case Some(existingTs) =>
+                    if (ts > existingTs) {
+                        removedTimestamps.remove(key)
+                        removedTimestamps.add(key, ts)
+                    }
+                case None =>
+                    removedTimestamps.add(key, ts)
+            }
+        }
+
+        // 移除被标记为删除的键
+        for ((key, _) in removedTimestamps) {
+            if (entries.contains(key)) {
+                entries.remove(key)
+            }
+        }
+
+        this
+    }
+
+    /**
+     * 获取键对应的值
+     */
+    public func get(key: String): Option<String> {
+        if (isRemoved(key)) {
+            return None
+        }
+        match (entries.get(key)) {
+            case Some((value, _)) => Some(value)
+            case None => None
+        }
+    }
+
+    /**
+     * 检查键是否存在
+     */
+    public func contains(key: String): Bool {
+        !isRemoved(key) && entries.contains(key)
+    }
+
+    /**
+     * 获取所有键
+     */
+    public func keys(): ArrayList<String> {
+        let result = ArrayList<String>()
+        for ((key, _) in entries) {
+            if (!isRemoved(key)) {
+                result.add(key)
+            }
+        }
+        result
+    }
+
+    /**
+     * 获取条目数量
+     */
+    public func size(): Int64 {
+        Int64(entries.size)
+    }
+
+    public func identity(): String { "ORMap:${nodeId}" }
+}
+
+/**
+ * RWSequence (Read-Write Sequence)
+ * 支持并发追加的序列，保证因果顺序
+ */
+public class RWSequence {
+    private var elements: ArrayList<(String, Int64)>  // (nodeId, timestamp)
+    private var tombstones: ArrayList<Int64>  // 已删除的索引
+    private let nodeId: String
+    private let clock: VectorClock
+
+    public init(nodeId: String) {
+        this.elements = ArrayList<(String, Int64)>()
+        this.tombstones = ArrayList<Int64>()
+        this.nodeId = nodeId
+        this.clock = VectorClock(nodeId)
+    }
+
+    private func isTombstoned(idx: Int64): Bool {
+        for (t in tombstones) {
+            if (t == idx) {
+                return true
+            }
+        }
+        false
+    }
+
+    private func addTombstone(idx: Int64): Unit {
+        if (!isTombstoned(idx)) {
+            tombstones.add(idx)
+        }
+    }
+
+    /**
+     * 追加元素
+     */
+    public func append(): Int64 {
+        clock.increment()
+        let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        let index = elements.size
+        elements.add((nodeId, timestamp))
+        Int64(index)
+    }
+
+    /**
+     * 获取指定位置的值（按索引）
+     */
+    public func getAt(index: Int64): Option<(String, Int64)> {
+        if (index >= 0 && index < Int64(elements.size) && !isTombstoned(index)) {
+            Some(elements[index])
+        } else {
+            None
+        }
+    }
+
+    /**
+     * 合并另一个 RWSequence
+     */
+    public func merge(other: RWSequence): RWSequence {
+        clock.merge(other.clock)
+
+        // 合并元素
+        for ((nid, ts) in other.elements) {
+            var found = false
+            for ((existingNid, existingTs) in elements) {
+                if (existingNid == nid && existingTs == ts) {
+                    found = true
+                    break
+                }
+            }
+            if (!found) {
+                elements.add((nid, ts))
+            }
+        }
+
+        // 合并墓碑
+        for (idx in other.tombstones) {
+            addTombstone(idx)
+        }
+
+        this
+    }
+
+    /**
+     * 获取有效元素数量
+     */
+    public func size(): Int64 {
+        Int64(elements.size) - Int64(tombstones.size)
+    }
+
+    /**
+     * 获取所有有效元素
+     */
+    public func value(): ArrayList<(String, Int64)> {
+        let result = ArrayList<(String, Int64)>()
+        for (i in 0..elements.size) {
+            if (!tombstones.contains(Int64(i))) {
+                result.add(elements[i])
+            }
+        }
+        result
+    }
+
+    public func identity(): String { "RWSequence:${nodeId}" }
+}
+
+/**
  * Distributed Data 节点
  */
 public class DistributedDataNode {

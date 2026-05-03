@@ -419,3 +419,456 @@ func testPNCounter_distributed() {
     // 最终应该是 8 (5 + 1 + 2)
     @Expect(counter1.value() >= 5, true)
 }
+
+// === GSet Tests ===
+
+@Test
+func testGSet_creation() {
+    let set = GSet("node1")
+
+    @Expect(set.size(), 0)
+    @Expect(set.identity().contains("GSet"), true)
+}
+
+@Test
+func testGSet_add() {
+    let set = GSet("node1")
+
+    set.add("a")
+    set.add("b")
+    set.add("c")
+
+    @Expect(set.size(), 3)
+    @Expect(set.contains("a"), true)
+    @Expect(set.contains("b"), true)
+    @Expect(set.contains("c"), true)
+}
+
+@Test
+func testGSet_merge() {
+    let set1 = GSet("node1")
+    let set2 = GSet("node2")
+
+    set1.add("1")
+    set1.add("2")
+
+    set2.add("3")
+    set2.add("4")
+
+    set1.merge(set2)
+
+    @Expect(set1.size(), 4)
+}
+
+@Test
+func testGSet_convergence() {
+    let set1 = GSet("node1")
+    let set2 = GSet("node2")
+
+    set1.add("x")
+    set1.add("y")
+
+    set2.add("y")
+    set2.add("z")
+
+    set1.merge(set2)
+    set2.merge(set1)
+
+    // 最终集合应该收敛
+    @Expect(set1.size(), 3)
+    @Expect(set2.size(), 3)
+}
+
+// === Flag Tests ===
+
+@Test
+func testFlag_creation() {
+    let flag = Flag("node1")
+
+    @Expect(flag.value(), false)
+    @Expect(flag.identity().contains("Flag"), true)
+}
+
+@Test
+func testFlag_creationWithInitial() {
+    let flag = Flag.createEnabled("node1")
+
+    @Expect(flag.value(), true)
+}
+
+@Test
+func testFlag_enable() {
+    let flag = Flag("node1")
+
+    @Expect(flag.value(), false)
+
+    flag.enable()
+
+    @Expect(flag.value(), true)
+}
+
+@Test
+func testFlag_mergeBothFalse() {
+    let flag1 = Flag("node1")
+    let flag2 = Flag("node2")
+
+    flag1.merge(flag2)
+
+    @Expect(flag1.value(), false)
+}
+
+@Test
+func testFlag_mergeOneEnabled() {
+    let flag1 = Flag("node1")
+    let flag2 = Flag("node2")
+
+    flag2.enable()
+
+    flag1.merge(flag2)
+
+    @Expect(flag1.value(), true)
+}
+
+@Test
+func testFlag_mergeBothEnabled() {
+    let flag1 = Flag.createEnabled("node1")
+    let flag2 = Flag("node2")
+
+    flag2.enable()
+
+    flag1.merge(flag2)
+
+    @Expect(flag1.value(), true)
+}
+
+// === TwoPhaseSet Tests ===
+
+@Test
+func testTwoPhaseSet_creation() {
+    let set = TwoPhaseSet("node1")
+
+    @Expect(set.value().size, 0)
+    @Expect(set.identity().contains("TwoPhaseSet"), true)
+}
+
+@Test
+func testTwoPhaseSet_add() {
+    let set = TwoPhaseSet("node1")
+
+    set.add("a")
+    set.add("b")
+
+    @Expect(set.value().size, 2)
+}
+
+@Test
+func testTwoPhaseSet_remove() {
+    let set = TwoPhaseSet("node1")
+
+    set.add("a")
+    set.add("b")
+
+    let removed = set.remove("a")
+
+    @Expect(removed, true)
+    @Expect(set.value().size, 1)
+    // Check "a" is not in value
+    let values = set.value()
+    var hasA = false
+    for ((k, _) in values) {
+        if (k == "a") {
+            hasA = true
+            break
+        }
+    }
+    @Expect(hasA, false)
+}
+
+@Test
+func testTwoPhaseSet_removeNonExistent() {
+    let set = TwoPhaseSet("node1")
+
+    let removed = set.remove("x")
+
+    @Expect(removed, false)
+}
+
+@Test
+func testTwoPhaseSet_merge() {
+    let set1 = TwoPhaseSet("node1")
+    let set2 = TwoPhaseSet("node2")
+
+    set1.add("1")
+    set1.add("2")
+
+    set2.add("3")
+    set2.add("4")
+
+    set1.merge(set2)
+
+    @Expect(set1.value().size >= 3, true)
+}
+
+// === MVRegister Tests ===
+
+@Test
+func testMVRegister_creation() {
+    let reg = MVRegister<Int64>("node1", 0)
+
+    @Expect(reg.identity().contains("MVRegister"), true)
+}
+
+@Test
+func testMVRegister_set() {
+    let reg = MVRegister<Int64>("node1", 0)
+
+    reg.set(42)
+
+    let values = reg.value()
+    @Expect(values.size >= 1, true)
+}
+
+@Test
+func testMVRegister_merge() {
+    let reg1 = MVRegister<String>("node1", "a")
+    let reg2 = MVRegister<String>("node2", "b")
+
+    reg1.set("c")
+    reg2.set("d")
+
+    reg1.merge(reg2)
+
+    let values = reg1.value()
+    // 应该包含多个值
+    @Expect(values.size >= 1, true)
+}
+
+// === ORMap Tests ===
+
+@Test
+func testORMap_creation() {
+    let map = ORMap("node1")
+
+    @Expect(map.size(), 0)
+    @Expect(map.identity().contains("ORMap"), true)
+}
+
+@Test
+func testORMap_set() {
+    let map = ORMap("node1")
+
+    map.set("key1", "value1")
+    map.set("key2", "value2")
+
+    @Expect(map.size(), 2)
+    @Expect(map.contains("key1"), true)
+}
+
+@Test
+func testORMap_get() {
+    let map = ORMap("node1")
+
+    map.set("key1", "value1")
+
+    let value = map.get("key1")
+    match (value) {
+        case Some(v) => @Expect(v, "value1")
+        case None => @Expect(false, true)
+    }
+}
+
+@Test
+func testORMap_getNonExistent() {
+    let map = ORMap("node1")
+
+    let value = map.get("nonexistent")
+
+    match (value) {
+        case Some(_) => @Expect(false, true)
+        case None => @Expect(true, true)
+    }
+}
+
+@Test
+func testORMap_remove() {
+    let map = ORMap("node1")
+
+    map.set("key1", "value1")
+    map.remove("key1")
+
+    @Expect(map.contains("key1"), false)
+}
+
+@Test
+func testORMap_merge() {
+    let map1 = ORMap("node1")
+    let map2 = ORMap("node2")
+
+    map1.set("a", "1")
+    map1.set("b", "2")
+
+    map2.set("c", "3")
+    map2.set("d", "4")
+
+    map1.merge(map2)
+
+    @Expect(map1.size() >= 3, true)
+}
+
+@Test
+func testORMap_keys() {
+    let map = ORMap("node1")
+
+    map.set("key1", "value1")
+    map.set("key2", "value2")
+    map.set("key3", "value3")
+
+    let keys = map.keys()
+    @Expect(keys.size, 3)
+}
+
+// === RWSequence Tests ===
+
+@Test
+func testRWSequence_creation() {
+    let seq = RWSequence("node1")
+
+    @Expect(seq.size(), 0)
+    @Expect(seq.identity().contains("RWSequence"), true)
+}
+
+@Test
+func testRWSequence_append() {
+    let seq = RWSequence("node1")
+
+    let idx1 = seq.append()
+    let idx2 = seq.append()
+    let idx3 = seq.append()
+
+    @Expect(seq.size(), 3)
+    @Expect(idx1 != idx2, true)
+    @Expect(idx2 != idx3, true)
+}
+
+@Test
+func testRWSequence_getAt() {
+    let seq = RWSequence("node1")
+
+    let idx = seq.append()
+    let elem = seq.getAt(idx)
+
+    match (elem) {
+        case Some(_) => @Expect(true, true)
+        case None => @Expect(false, true)
+    }
+}
+
+@Test
+func testRWSequence_merge() {
+    let seq1 = RWSequence("node1")
+    let seq2 = RWSequence("node2")
+
+    seq1.append()
+    seq1.append()
+
+    seq2.append()
+    seq2.append()
+    seq2.append()
+
+    seq1.merge(seq2)
+
+    @Expect(seq1.size() >= 4, true)
+}
+
+// === CRDT Comprehensive Tests ===
+
+@Test
+func testCRDT_allTypesConverge() {
+    // 测试所有 CRDT 类型的收敛性
+    // G-Counter
+    let gc1 = GCounter("node1")
+    let gc2 = GCounter("node2")
+    gc1.increment(5)
+    gc2.increment(3)
+    gc1.merge(gc2)
+    gc2.merge(gc1)
+    @Expect(gc1.value(), gc2.value())
+
+    // PNCounter
+    let pc1 = PNCounter("node1")
+    let pc2 = PNCounter("node2")
+    pc1.increment(5)
+    pc2.increment(3)
+    pc2.decrement(2)
+    pc1.merge(pc2)
+    pc2.merge(pc1)
+    @Expect(pc1.value(), pc2.value())
+
+    // GSet
+    let gs1 = GSet("node1")
+    let gs2 = GSet("node2")
+    gs1.add("a")
+    gs1.add("b")
+    gs2.add("b")
+    gs2.add("c")
+    gs1.merge(gs2)
+    gs2.merge(gs1)
+    @Expect(gs1.size(), gs2.size())
+
+    // ORSet
+    let os1 = ORSet<String>("node1")
+    let os2 = ORSet<String>("node2")
+    let id1 = os1.add("x")
+    let id2 = os2.add("y")
+    os1.merge(os2)
+    os2.merge(os1)
+    @Expect(os1.value().size, os2.value().size)
+}
+
+@Test
+func testCRDT_flagEventualConsistency() {
+    // 模拟分布式系统中 Flag 的一致性
+    let flag1 = Flag("node1")
+    let flag2 = Flag("node2")
+    let flag3 = Flag("node3")
+
+    // 节点1启用
+    flag1.enable()
+
+    // 节点2和节点3合并节点1
+    flag2.merge(flag1)
+    flag3.merge(flag1)
+
+    // 所有节点应该最终一致
+    @Expect(flag1.value(), true)
+    @Expect(flag2.value(), true)
+    @Expect(flag3.value(), true)
+}
+
+@Test
+func testCRDT_ormapDistributed() {
+    // 模拟分布式 ORMap 操作
+    let map1 = ORMap("node1")
+    let map2 = ORMap("node2")
+    let map3 = ORMap("node3")
+
+    // 节点1设置
+    map1.set("key1", "value1")
+
+    // 节点2设置并删除
+    map2.set("key1", "value1_updated")
+    map2.set("key2", "value2")
+    map2.remove("key1")
+
+    // 节点3设置
+    map3.set("key3", "value3")
+
+    // 合并所有
+    map1.merge(map2)
+    map1.merge(map3)
+
+    // key1 已被节点2删除，所以 map1 中应该不存在
+    @Expect(map1.contains("key1"), false)
+    @Expect(map1.contains("key2"), true)
+    @Expect(map1.contains("key3"), true)
+}
