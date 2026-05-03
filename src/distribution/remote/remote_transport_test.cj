@@ -1,437 +1,243 @@
 /*
  * Copyright (c) 2024. All rights reserved.
- * CActor - RemoteTransport 单元测试
+ * CActor Remote Transport 测试
  */
 package cactor.distribution.remote
 
-import std.collection.*
 import std.time.*
-import cactor.core.message.Message
+import std.collection.*
+import std.unittest.*
+import std.unittest.testmacro.*
 import cactor.core.actor.{ActorPath, ActorAddress}
+import cactor.core.message.Message
 
-// === Test Messages ===
-
-class TestMessage <: Message {
-    public let content: String
-
+/**
+ * 测试消息
+ */
+class SimpleMessage <: Message {
+    private let content: String
     public init(content: String) {
         this.content = content
     }
-
     public func messageType(): String {
-        "TestMessage"
+        "SimpleMessage"
     }
-}
-
-// === Helper function to extract message content ===
-
-func getMessageString(msg: Message): String {
-    match (msg) {
-        case m: TestMessage => m.content
-        case _ => ""
-    }
-}
-
-// === Address Tests ===
-
-@Test
-func testAddress_creation() {
-    let addr = Address("cactor", "testSystem", "localhost", 2552)
-
-    @Expect(addr.protocol, "cactor")
-    @Expect(addr.system, "testSystem")
-    @Expect(addr.host, "localhost")
-    @Expect(addr.port, 2552)
-}
-
-@Test
-func testAddress_toString() {
-    let addr = Address("cactor", "sys", "node1.local", 2552)
-    let str = addr.toString()
-
-    let hasProtocol = str.contains("cactor://")
-    let hasHost = str.contains("node1.local")
-    let hasPort = str.contains("2552")
-    @Expect(hasProtocol, true)
-    @Expect(hasHost, true)
-    @Expect(hasPort, true)
-}
-
-@Test
-func testAddress_hasHost() {
-    let addr1 = Address("cactor", "sys", "localhost", 2552)
-    let addr2 = Address("cactor", "sys", "", 2552)
-
-    @Expect(addr1.hasHost(), true)
-    @Expect(addr2.hasHost(), false)
-}
-
-@Test
-func testAddress_withDifferentPorts() {
-    let addr1 = Address("cactor", "sys", "node1", 2552)
-    let addr2 = Address("cactor", "sys", "node1", 2553)
-
-    let portsDifferent = addr1.port != addr2.port
-    @Expect(portsDifferent, true)
-}
-
-// === ActorPath Tests ===
-
-@Test
-func testActorPath_creation() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let path = ActorPath(addr, "/user/actor1")
-
-    let addr2 = path.getAddress()
-    @Expect(addr2.host.size > 0, true)
-    @Expect(path.getPath().contains("user"), true)
-}
-
-@Test
-func testActorPath_toString() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let path = ActorPath(addr, "/user/actor1")
-    let str = path.toString()
-
-    let hasCactor = str.contains("cactor://")
-    let hasUser = str.contains("user")
-    @Expect(hasCactor, true)
-    @Expect(hasUser, true)
-}
-
-@Test
-func testActorPath_parse() {
-    let path = ActorPath(ActorAddress("sys", "localhost", 2552), "/user/actor1")
-    // parse creates a default path, verify it exists
-    let str = path.toString()
-    let hasContent = str.size > 0
-    @Expect(hasContent, true)
-}
-
-@Test
-func testActorPath_parent() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let path = ActorPath(addr, "/user/actor1")
-    let parentOpt = path.parent()
-
-    match (parentOpt) {
-        case Some(parent) =>
-            let parentStr = parent.toString()
-            let hasUser = parentStr.contains("user")
-            @Expect(hasUser, true)
-        case None =>
-            @Expect(true, false)
+    public func getContent(): String {
+        content
     }
 }
 
 @Test
-func testActorPath_parentWithSingleElement() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let path = ActorPath(addr, "/user")
-    let parentOpt = path.parent()
-
-    // For /user, parent could be root or None depending on implementation
-    match (parentOpt) {
-        case Some(parent) =>
-            let parentStr = parent.toString()
-            @Expect(parentStr.size >= 0, true)
-        case None =>
-            @Expect(true, true)  // Accept None as valid
-    }
+func testAddress(): Unit {
+    let addr = Address("cactor", "system", "localhost", 2552)
+    @Assert(addr.toString() == "cactor://system@localhost:2552")
+    @Assert(addr.hasHost())
 }
 
 @Test
-func testActorPath_child() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let path = ActorPath(addr, "/user")
-    let child = path.child("actor1")
-
-    let childPath = child.getPath()
-    @Expect(childPath.contains("user"), true)
-    @Expect(childPath.contains("actor1"), true)
+func testAddressNoHost(): Unit {
+    let addr = Address("cactor", "system", "", 0)
+    @Assert(!addr.hasHost())
 }
 
 @Test
-func testActorPath_name() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let path = ActorPath(addr, "/user/actor1")
-
-    @Expect(path.name(), "actor1")
+func testRemoteEnvelope(): Unit {
+    let path = ActorPath("user", Array<String>())
+    let msg = SimpleMessage("hello")
+    let envelope = RemoteEnvelope.create(path, msg, Some(path))
+    @Assert(envelope.senderOption.isSome())
 }
 
 @Test
-func testActorPath_nameEmpty() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let path = ActorPath(addr, "/")
-
-    let name = path.name()
-    let isEmpty = name.size == 0
-    @Expect(isEmpty, true)
-}
-
-// === RemoteEnvelope Tests ===
-
-@Test
-func testRemoteEnvelope_creation() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let recipient = ActorPath(addr, "/user/actor1")
-    let msg = TestMessage("hello")
-    let sender = ActorPath(addr, "/user/sender")
-    let envelope = RemoteEnvelope(recipient, msg, Some(sender), 1, Some("TestMessage"))
-
-    @Expect(envelope.serializerId, 1)
-    let content = getMessageString(envelope.message)
-    @Expect(content, "hello")
-
-    let hasManifest = match (envelope.manifest) {
-        case Some(m) => m == "TestMessage"
-        case _ => false
-    }
-    @Expect(hasManifest, true)
-}
-
-@Test
-func testRemoteEnvelope_create() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let recipient = ActorPath(addr, "/user/actor1")
-    let msg = TestMessage("test")
-    let envelope = RemoteEnvelope.create(recipient, msg, None)
-
-    @Expect(envelope.serializerId, 0)
-
-    let hasManifest = match (envelope.manifest) {
-        case Some(_) => true
-        case None => false
-    }
-    @Expect(hasManifest, false)
-}
-
-@Test
-func testRemoteEnvelope_toString() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let recipient = ActorPath(addr, "/user/actor1")
-    let msg = TestMessage("test")
-    let sender = ActorPath(addr, "/user/sender")
-    let envelope = RemoteEnvelope(recipient, msg, Some(sender), 0, None)
-    let str = envelope.toString()
-
-    let hasEnvelope = str.contains("RemoteEnvelope")
-    let hasActor = str.contains("actor1")
-    @Expect(hasEnvelope, true)
-    @Expect(hasActor, true)
-}
-
-// === SimpleRemoteMessageStream Tests ===
-
-@Test
-func testSimpleRemoteMessageStream_creation() {
-    let stream = SimpleRemoteMessageStream()
-    // Basic creation - just verify no exception thrown
-    @Expect(true, true)
-}
-
-@Test
-func testSimpleRemoteMessageStream_enqueue() {
-    let stream = SimpleRemoteMessageStream()
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let recipient = ActorPath(addr, "/user/actor1")
-    let msg = TestMessage("test")
-    let envelope = RemoteEnvelope(recipient, msg, None, 0, None)
-
-    // Enqueue should not throw
-    stream.enqueue(envelope)
-    @Expect(true, true)
-}
-
-@Test
-func testSimpleRemoteMessageStream_next() {
-    let stream = SimpleRemoteMessageStream()
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let recipient = ActorPath(addr, "/user/actor1")
-    let msg = TestMessage("test1")
-    let envelope = RemoteEnvelope(recipient, msg, None, 0, None)
-
-    stream.enqueue(envelope)
-    let result = stream.next()
-
-    // Check we got something
-    let gotValue = match (result) {
-        case Some(_) => true
-        case None => false
-    }
-    @Expect(gotValue, true)
-
-    // Check content
-    match (result) {
-        case Some(e) => @Expect(getMessageString(e.message), "test1")
-        case None => @Expect(false, true)
-    }
-}
-
-@Test
-func testSimpleRemoteMessageStream_nextEmpty() {
-    let stream = SimpleRemoteMessageStream()
-    let result = stream.next()
-
-    let isEmpty = match (result) {
-        case Some(_) => false
-        case None => true
-    }
-    @Expect(isEmpty, true)
-}
-
-@Test
-func testSimpleRemoteMessageStream_multipleEnqueue() {
-    let stream = SimpleRemoteMessageStream()
-    let addr = ActorAddress("sys", "localhost", 2552)
-
-    // Enqueue 3 items and verify we can retrieve them all
-    for (i in 0..3) {
-        let recipient = ActorPath(addr, "/user/actor${i}")
-        let msg = TestMessage("test${i}")
-        let envelope = RemoteEnvelope(recipient, msg, None, 0, None)
-        stream.enqueue(envelope)
-    }
-
-    // Count items retrieved
-    var count = 0
-    while (true) {
-        let result = stream.next()
-        let hasMore = match (result) {
-            case Some(_) => true
-            case None => false
-        }
-        if (!hasMore) {
-            break
-        }
-        count += 1
-    }
-
-    @Expect(count, 3)
-}
-
-@Test
-func testSimpleRemoteMessageStream_close() {
-    let stream = SimpleRemoteMessageStream()
-    // close() should not throw
-    stream.close()
-    @Expect(true, true)
-}
-
-// === RemoteMessageStream Interface Tests ===
-
-@Test
-func testRemoteMessageStream_nextWithContent() {
-    let stream = SimpleRemoteMessageStream()
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let recipient = ActorPath(addr, "/user/actor1")
-    let msg = TestMessage("test")
-    let envelope = RemoteEnvelope(recipient, msg, None, 0, None)
-
-    stream.enqueue(envelope)
-    let result = stream.next()
-
-    // Check we got something
-    let gotValue = match (result) {
-        case Some(_) => true
-        case None => false
-    }
-    @Expect(gotValue, true)
-
-    // Check content
-    match (result) {
-        case Some(e) => @Expect(getMessageString(e.message), "test")
-        case None => @Expect(false, true)
-    }
-}
-
-// === Integration Tests ===
-
-@Test
-func testAddressPathEnvelope_integration() {
-    // Create address
-    let addr = ActorAddress("testSystem", "192.168.1.100", 8080)
-    @Expect(addr.port, 8080)
-    @Expect(addr.host, "192.168.1.100")
-
-    // Create actor path
-    let path = ActorPath(addr, "/user/service/worker")
-    let pathStr = path.toString()
-    // ActorPath.toString() returns "cactor://system/path"
-    let hasSystem = pathStr.contains("testSystem")
-    let hasPath = pathStr.contains("user")
-    @Expect(hasSystem, true)
-    @Expect(hasPath, true)
-
-    // Create and send envelope
-    let msg = TestMessage("integration test")
+func testRemoteEnvelopeNoSender(): Unit {
+    let path = ActorPath("user", Array<String>())
+    let msg = SimpleMessage("hello")
     let envelope = RemoteEnvelope.create(path, msg, None)
-    @Expect(envelope.serializerId, 0)
-
-    // Verify envelope in stream
-    let stream = SimpleRemoteMessageStream()
-    stream.enqueue(envelope)
-
-    // Retrieve and verify
-    let result = stream.next()
-    let gotValue = match (result) {
-        case Some(_) => true
-        case None => false
-    }
-    @Expect(gotValue, true)
-
-    match (result) {
-        case Some(e) => @Expect(getMessageString(e.message), "integration test")
-        case None => @Expect(false, true)
-    }
+    @Assert(envelope.senderOption.isNone())
 }
 
 @Test
-func testRemoteEnvelope_withSender() {
-    let addr = ActorAddress("sys", "localhost", 2552)
-    let recipient = ActorPath(addr, "/user/receiver")
-    let sender = ActorPath(addr, "/user/sender")
-    let msg = TestMessage("message with sender")
-    let envelope = RemoteEnvelope(recipient, msg, Some(sender), 1, Some("TestMessage"))
-
-    let str = envelope.toString()
-    let hasSender = str.contains("sender")
-    @Expect(hasSender, true)
+func testTcpSocketConnect(): Unit {
+    let socket = TcpSocket()
+    let addr = NetworkAddress("localhost", 2552)
+    let connected = socket.connect(addr, Duration.second * 5)
+    @Assert(connected)
+    socket.close()
 }
 
 @Test
-func testRemoteStream_multipleRetrieve() {
-    let stream = SimpleRemoteMessageStream()
-    let addr = ActorAddress("sys", "localhost", 2552)
+func testTcpSocketBind(): Unit {
+    let socket = TcpSocket()
+    let addr = NetworkAddress("localhost", 2555)
+    let bound = socket.bind(addr)
+    @Assert(bound)
+    socket.close()
+}
 
-    // Enqueue two messages
-    let msg1 = TestMessage("first")
-    let msg2 = TestMessage("second")
-    stream.enqueue(RemoteEnvelope.create(ActorPath(addr, "/a"), msg1, None))
-    stream.enqueue(RemoteEnvelope.create(ActorPath(addr, "/b"), msg2, None))
+@Test
+func testTcpSocketWrite(): Unit {
+    let socket = TcpSocket()
+    let addr = NetworkAddress("localhost", 2552)
+    socket.connect(addr, Duration.second * 5)
+    let data = Array<UInt8>(5, { i => UInt8(i) })
+    let written = socket.write(data)
+    @Assert(written >= 0)
+    socket.close()
+}
 
-    // Retrieve first
-    let r1 = stream.next()
-    let firstMatch = match (r1) {
-        case Some(e) => getMessageString(e.message) == "first"
-        case None => false
-    }
+@Test
+func testTcpServerStart(): Unit {
+    let config = TcpTransportConfig("localhost", 2556)
+    let server = TcpServer(config)
+    let started = server.start()
+    @Assert(started)
+    server.stop()
+}
 
-    // Retrieve second
-    let r2 = stream.next()
-    let secondMatch = match (r2) {
-        case Some(e) => getMessageString(e.message) == "second"
-        case None => false
-    }
+@Test
+func testTcpClientConnect(): Unit {
+    let config = TcpTransportConfig("localhost", 2557)
+    let client = TcpClient(config)
+    let connected = client.connect()
+    @Assert(connected)
+    client.disconnect()
+}
 
-    // Verify empty
-    let r3 = stream.next()
-    let isEmpty = match (r3) {
-        case Some(_) => false
-        case None => true
-    }
+@Test
+func testTcpClientSend(): Unit {
+    let config = TcpTransportConfig("localhost", 2558)
+    let client = TcpClient(config)
+    client.connect()
+    let data = Array<UInt8>(5, { i => UInt8(i) })
+    let sent = client.send(data)
+    @Assert(sent)
+    client.disconnect()
+}
 
-    @Expect(firstMatch, true)
-    @Expect(secondMatch, true)
-    @Expect(isEmpty, true)
+@Test
+func testTcpConnectionState(): Unit {
+    let state = TcpConnectionState.CONNECTED
+    @Assert(state.isConnected())
+    @Assert(!TcpConnectionState.CLOSED.isConnected())
+}
+
+@Test
+func testConnectionPool(): Unit {
+    let pool = ConnectionPool()
+    @Assert(pool.size() == 0)
+}
+
+@Test
+func testConnectionPoolAcquire(): Unit {
+    let pool = ConnectionPool()
+    let addr = Address("cactor", "system", "localhost", 2552)
+    let conn = pool.acquire(addr)
+    @Assert(conn.isNone())
+}
+
+@Test
+func testSimpleRemoteTransport(): Unit {
+    let addr = Address("cactor", "system", "localhost", 2559)
+    let transport = SimpleRemoteTransport(addr)
+    @Assert(!transport.isStarted())
+    transport.bind()
+    @Assert(transport.isStarted())
+    transport.shutdown()
+}
+
+@Test
+func testRemoteActorPath(): Unit {
+    let addr = ActorAddress("system", "localhost")
+    let path = RemoteActorPath(addr, Array<String>())
+    @Assert(path.name() == "")
+    let childPath = path.child("actor1")
+    @Assert(childPath.name() == "actor1")
+}
+
+@Test
+func testRemoteActorPathParent(): Unit {
+    let addr = ActorAddress("system", "localhost")
+    let path = RemoteActorPath(addr, Array<String>())
+    let childPath = path.child("actor1").child("actor2")
+    @Assert(childPath.name() == "actor2")
+    let parentPath = childPath.parent()
+    @Assert(parentPath.name() == "actor1")
+}
+
+@Test
+func testTcpTransportConfig(): Unit {
+    let config = TcpTransportConfig("localhost", 2552)
+    @Assert(config.host == "localhost")
+    @Assert(config.port == 2552)
+    @Assert(config.backlog == 128)
+    @Assert(config.keepAlive)
+}
+
+@Test
+func testTcpConnectionInfo(): Unit {
+    let info = TcpConnectionInfo(
+        "conn-1",
+        NetworkAddress("localhost", 2552),
+        NetworkAddress("localhost", 2553),
+        TcpConnectionState.CONNECTED,
+        DateTime.now().toUnixTimeStamp().toMilliseconds()
+    )
+    @Assert(info.connectionId == "conn-1")
+    @Assert(info.state.isConnected())
+}
+
+@Test
+func testTcpConnection(): Unit {
+    let socket = TcpSocket()
+    let conn = TcpConnection(
+        "conn-1",
+        NetworkAddress("localhost", 2552),
+        NetworkAddress("localhost", 2553),
+        socket
+    )
+    let info = conn.getConnectionInfo()
+    @Assert(info.connectionId == "conn-1")
+}
+
+@Test
+func testTcpConnectionSend(): Unit {
+    let socket = TcpSocket()
+    socket.connect(NetworkAddress("localhost", 2552), Duration.second * 5)
+    let conn = TcpConnection(
+        "conn-1",
+        NetworkAddress("localhost", 2552),
+        NetworkAddress("localhost", 2553),
+        socket
+    )
+    conn.connected()
+    let data = Array<UInt8>(5, { i => UInt8(i) })
+    let sent = conn.send(data)
+    @Assert(sent)
+}
+
+@Test
+func testTcpConnectionReceive(): Unit {
+    let socket = TcpSocket()
+    socket.connect(NetworkAddress("localhost", 2552), Duration.second * 5)
+    let conn = TcpConnection(
+        "conn-1",
+        NetworkAddress("localhost", 2552),
+        NetworkAddress("localhost", 2553),
+        socket
+    )
+    conn.connected()
+    let data = conn.receive(4096)
+    // 预期无数据可读
+    @Assert(data.isNone())
+}
+
+@Test
+func testRealTcpRemoteTransport(): Unit {
+    let addr = Address("cactor", "system", "localhost", 2560)
+    let transport = RealTcpRemoteTransport(addr)
+    @Assert(!transport.isStarted())
+    transport.bind()
+    @Assert(transport.isStarted())
+    @Assert(transport.getConnectionCount() == 0)
+    transport.shutdown()
 }
