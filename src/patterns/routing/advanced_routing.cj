@@ -49,7 +49,7 @@ public class ScatterGatherFirstCompleted {
         }
 
         let remaining = AtomicInt64(Int64(routees.size))
-        let firstResult = AtomicReference<Option<Message>>(None)
+        let firstResult = RoutingAtomicReference<Option<Message>>(None)
         let completed = AtomicBoolean(false)
         let lock = Mutex()
 
@@ -118,9 +118,9 @@ public class FutureResult<T> {
 }
 
 /**
- * AtomicReference - 原子引用
+ * RoutingAtomicReference - 原子引用
  */
-public class AtomicReference<T> {
+public class RoutingAtomicReference<T> {
     private var value: T
     private let lock: Mutex
 
@@ -622,8 +622,8 @@ public class TailChopping {
 
         let completed = AtomicBoolean(false)
         let lock = Mutex()
-        let result = AtomicReference<Option<Message>>(None)
-        let errorMsg = AtomicReference<String>("")
+        let result = RoutingAtomicReference<Option<Message>>(None)
+        let errorMsg = RoutingAtomicReference<String>("")
 
         // 使用简单的轮询机制
         var index: Int64 = 0
@@ -658,8 +658,8 @@ public class TailChopping {
      * 同步版本的 chop
      */
     public func chopSync(message: Message, sender: Option<String>): Option<Message> {
-        let result = AtomicReference<Option<Message>>(None)
-        let errorResult = AtomicReference<String>("")
+        let result = RoutingAtomicReference<Option<Message>>(None)
+        let errorResult = RoutingAtomicReference<String>("")
 
         chop(message, sender, { res, err =>
             result.store(res)

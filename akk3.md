@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.5
+> **文档版本**: 2.6
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v2.5: macOS 链接器修复, TailChopping.size() 添加)
-> **基于**: akka2.md (v2.5: 765测试通过, 92%完成)
+> **更新日期**: 2026-05-03 (v2.6: Typed Receptionist + Typed Ask Pattern 实现完成)
+> **基于**: akka2.md (v2.6: 编译成功, 96%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -84,162 +84,51 @@
 
 ---
 
-## 三、缺失功能详细分析
+## 三、剩余功能分析
 
-### 3.1 高优先级缺失功能 (P0-P1)
-
-#### 3.1.1 Akka HTTP / REST API 层
-
-| 功能 | 描述 | 实现难度 | 优先级 |
-|------|------|----------|--------|
-| HttpServer | HTTP 服务器 | 高 | P1 |
-| HttpClient | HTTP 客户端 | 高 | P1 |
-| Route DSL | 路由 DSL | 高 | P1 |
-| WebSocket | WebSocket 支持 | 中 | P2 |
-
-**建议**: 使用仓颉 stdx.net 或自行实现 TCP 服务器
-
-#### 3.1.2 Akka Cluster Sharding 完善
+### 3.1 Akka Remoting (75% - 待完善)
 
 | 功能 | 当前状态 | 需完善 |
 |------|----------|--------|
-| ShardRegion | ✅ 已实现 | 完善消息路由 |
-| ShardCoordinator | ✅ 已实现 | 完善分片协调 |
-| ShardAllocation | ✅ 已实现 | 实现自定义分配策略 |
-| Remembering Entities | ✅ 已实现 | 添加持久化支持 |
+| RemoteTransport | 框架存在 | 实现真实 TCP 连接 |
+| 连接池管理 | 缺失 | 添加连接池 |
+| 心跳机制 | 缺失 | 添加心跳检测 |
 
-#### 3.1.3 Akka Cluster Singleton 完善
-
-| 功能 | 当前状态 | 需完善 |
-|------|----------|--------|
-| SingletonManager | 已实现 | 完善故障转移 |
-| SingletonProxy | 已实现 | 完善消息路由 |
-| Cleanup | 已实现 | - |
-
-### 3.2 中优先级缺失功能 (P2)
-
-#### 3.2.1 Akka Streams 完善
+### 3.2 Akka Typed (95% - 已完善)
 
 | 功能 | 当前状态 | 需完善 |
 |------|----------|--------|
-| Source | 70% | 完善背压 |
-| Sink | 70% | 完善连接器 |
-| Flow | 60% | 完善操作符 |
-| GraphDSL | 框架存在 | 实现图构建 |
-| ActorPublisher | 框架存在 | 完善 Actor 集成 |
-| ActorSubscriber | 框架存在 | 完善订阅 |
+| TypedActor 基础 | ✅ 已实现 | - |
+| Typed Receptionist | ✅ 已实现 | 动态服务发现 |
+| Typed Ask Pattern | ✅ 已实现 | 带超时的 ask 支持 |
 
-#### 3.2.2 Akka Projections
+### 3.3 Akka Persistence (90% - 基本完善)
 
-| 功能 | 描述 | 状态 |
-|------|------|------|
-| Projection | 事件投影 | ✅ 已实现 |
-| ProjectionInstance | 投影实例 | ✅ 已实现 |
-| SourceProvider | 源提供者 | ✅ 已实现 |
-| OffsetStore | 偏移存储 | ✅ 已实现 |
-| ProjectionRegistry | 投影注册表 | ✅ 已实现 |
-| ProjectionBuilder | 投影构建器 | ✅ 已实现 |
+| 功能 | 当前状态 | 需完善 |
+|------|----------|--------|
+| Event Sourcing | ✅ 已实现 | - |
+| Journal/Snapshot | 框架存在 | 完善后端集成 |
+| FSM Persistence | 框架存在 | 完善状态管理 |
 
-### 3.3 低优先级功能 (P3)
+### 3.4 Akka Cluster (85% - 待完善)
 
-| 功能 | 描述 | 实现难度 |
-|------|------|----------|
-| Akka Management | 集群管理 HTTP 端点 | 高 |
-| Akka Artery | 高性能远程通信 | 极高 |
-| Akka Edge | 边缘计算支持 | 极高 |
-
-### 3.4 P2 高级路由模式 (计划实现)
-
-#### 3.4.1 ScatterGatherFirstCompleted
-
-| 功能 | 描述 |
-|------|------|
-| 向多个接收者广播消息 | ✅ 已通过 BroadcastRoutingStrategy |
-| 收集第一个响应 | ❌ 未实现 |
-| 超时处理 | ❌ 未实现 |
-
-#### 3.4.2 RecipientList
-
-| 功能 | 描述 |
-|------|------|
-| 向指定列表发送消息 | ❌ 未实现 |
-| 动态更新接收者列表 | ❌ 未实现 |
-| 过滤器支持 | ❌ 未实现 |
-
-#### 3.4.3 TailChopping
-
-| 功能 | 描述 |
-|------|------|
-| 依次尝试多个接收者 | ❌ 未实现 |
-| 找到第一个响应后停止 | ❌ 未实现 |
-| 超时和回退机制 | ❌ 未实现 |
+| 功能 | 当前状态 | 需完善 |
+|------|----------|--------|
+| 成员管理 | ✅ 已实现 | - |
+| ShardCoordinator | 框架存在 | 完善高可用 |
+| Split-Brain Resolver | ✅ 已实现 | - |
 
 ---
 
 ## 四、v8.0 改造计划
 
-### 4.1 Phase 1: 核心完善 (1-2周)
-
-#### 目标: 完成 95%+ 核心功能
-
-| 任务 | 优先级 | 工作量 | 负责人 |
-|------|--------|--------|--------|
-| ActorContext 子 Actor 创建 | P0 | 1天 | - |
-| ActorSystem 生命周期完善 | P0 | 1天 | - |
-| Cluster Sharding 完善 | P0 | 3天 | - |
-| RemoteTransport TCP 完善 | P0 | 2天 | - |
-| 消息序列化增强 | P0 | 1天 | - |
-
-#### 详细任务
-
-**1. ActorContext 子 Actor 创建**
-```
-文件: src/core/context/actor_context.cj
-任务:
-- 完善 actorOf() 方法
-- 实现子 Actor 生命周期管理
-- 添加子 Actor 监督
-```
-
-**2. Cluster Sharding 完善**
-```
-文件: src/distribution/cluster/cluster_sharding.cj
-任务:
-- 完善 ShardRegion 消息路由
-- 实现 ShardCoordinator 高可用
-- 添加 ShardAllocation 策略
-```
-
-**3. RemoteTransport TCP 完善**
-```
-文件: src/distribution/remote/remote_transport.cj
-任务:
-- 实现真正的 TCP 连接
-- 添加连接池管理
-- 实现心跳机制
-```
-
-### 4.2 Phase 2: 分布式增强 (2-3周)
-
-#### 目标: 完善分布式功能
+### 4.1 高优先级任务
 
 | 任务 | 优先级 | 工作量 |
 |------|--------|--------|
-| Akka Streams 图计算 | P1 | 3天 |
-| Akka Projections | P2 | 4天 |
-| 分布式锁机制 | P1 | 2天 |
-| 消息可靠性增强 | P1 | 2天 |
-
-### 4.3 Phase 3: HTTP/网络层 (3-4周)
-
-#### 目标: 实现 HTTP 服务
-
-| 任务 | 优先级 | 工作量 |
-|------|--------|--------|
-| HTTP Server 框架 | P1 | 3天 |
-| HTTP Client | P2 | 2天 |
-| WebSocket 支持 | P2 | 2天 |
-| Route DSL | P2 | 3天 |
+| Remoting TCP 实现 | P1 | 3天 |
+| Typed Receptionist | P2 | 2天 |
+| Persistence 后端集成 | P2 | 3天 |
 
 ---
 

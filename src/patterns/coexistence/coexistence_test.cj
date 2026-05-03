@@ -83,7 +83,10 @@ func testMessageAdapter_creation() {
         { msg => msg },
         { msg => msg }
     )
-    @Expect(adapter != None, true)
+    // Verify the adapter was created by calling adapt
+    let msg = TestCoexistenceMessage("test")
+    let resultType = adapter.adapt(msg).messageType()
+    @Expect(resultType, "TestCoexistenceMessage")
 }
 
 @Test
@@ -94,8 +97,8 @@ func testMessageAdapter_adapt() {
         { m => m }
     )
 
-    let result = adapted.adapt(msg)
-    @Expect(result.messageType(), "TestCoexistenceMessage")
+    let resultType = adapted.adapt(msg).messageType()
+    @Expect(resultType, "TestCoexistenceMessage")
 }
 
 @Test
@@ -106,8 +109,8 @@ func testMessageAdapter_reverse() {
         { m => m }
     )
 
-    let result = adapter.reverse(msg)
-    @Expect(result.messageType(), "TestTypedMessage")
+    let resultType = adapter.reverse(msg).messageType()
+    @Expect(resultType, "TestTypedMessage")
 }
 
 // === WrappedMessage Tests ===
@@ -127,7 +130,11 @@ func testWrappedMessage_creation() {
 @Test
 func testMixedMessageRouter_creation() {
     let router = MixedMessageRouter()
-    @Expect(router != None, true)
+    // Verify router was created by calling addRoute
+    let mockRef = TestMockActorRef("test")
+    router.addRoute("TestMessage", mockRef)
+    let routes = router.getRoutes()
+    @Expect(routes.size, 1)
 }
 
 @Test
@@ -178,7 +185,9 @@ func testMixedMessageRouter_setDefaultAdapter() {
 @Test
 func testSystemCoordinator_creation() {
     let coordinator = SystemCoordinator()
-    @Expect(coordinator != None, true)
+    // Verify coordinator was created by calling listSystems
+    let systems = coordinator.listSystems()
+    @Expect(systems.size, 0)
 }
 
 @Test

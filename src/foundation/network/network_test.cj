@@ -201,7 +201,8 @@ func testConnectionPoolConfig_defaults() {
 func testConnectionPool_creation() {
     let config = ConnectionPoolConfig()
     let pool = ConnectionPool(config)
-    @Expect(pool.size(), 0)
+    let s = pool.size()
+    @Expect(s == 0, true)
 }
 
 @Test
@@ -211,7 +212,8 @@ func testConnectionPool_add() {
     let info = ConnectionInfo("remote:9000", "local:8080")
     let result = pool.add("connection1", info)
     @Expect(result, true)
-    @Expect(pool.size(), 1)
+    let s = pool.size()
+    @Expect(s == 1, true)
 }
 
 @Test
@@ -234,7 +236,8 @@ func testConnectionPool_release() {
     let info = ConnectionInfo("remote:9000", "local:8080")
     let _ = pool.add("connection1", info)
     pool.release("connection1")
-    @Expect(pool.size(), 1)
+    let s = pool.size()
+    @Expect(s == 1, true)
 }
 
 @Test
@@ -244,7 +247,8 @@ func testConnectionPool_remove() {
     let info = ConnectionInfo("remote:9000", "local:8080")
     let _ = pool.add("connection1", info)
     pool.remove("connection1")
-    @Expect(pool.size(), 0)
+    let s = pool.size()
+    @Expect(s == 0, true)
 }
 
 @Test
@@ -293,5 +297,6 @@ func testNetworkFactory_createByProtocol() {
 @Test
 func testNetworkFactory_createConnectionPool() {
     let pool = NetworkFactory.createConnectionPool()
-    @Expect(pool.size(), 0)
+    let s = pool.size()
+    @Expect(s == 0, true)
 }

@@ -5,12 +5,25 @@
 package cactor.patterns.pipe
 
 import std.collection.*
-import std.sync.*
 import cactor.core.message.Message
 import cactor.core.actor.ActorRef
 
-// Ref type alias
-typealias Ref<T> = std.sync.Ref<T>
+// === SimpleRef - 测试用可变引用 ===
+class SimpleRef<T> {
+    private var value: T
+
+    public init(value: T) {
+        this.value = value
+    }
+
+    public func get(): T {
+        value
+    }
+
+    public func set(v: T): Unit {
+        value = v
+    }
+}
 
 // === PipeMessage Tests ===
 
@@ -53,47 +66,47 @@ func testPipeContext_creation() {
 @Test
 func testPipeBuilder_onSuccess() {
     let builder = PipeBuilder()
-    let called = Ref(false)
-    let receivedValue = Ref("")
+    let called = SimpleRef(false)
+    let receivedValue = SimpleRef("")
 
     builder.onSuccess({ value, ctx =>
-        called.store(true)
-        receivedValue.store(value)
+        called.set(true)
+        receivedValue.set(value)
     })
 
     builder.executeSuccess("test value")
 
-    @Expect(called.load(), true)
-    @Expect(receivedValue.load(), "test value")
+    @Expect(called.get(), true)
+    @Expect(receivedValue.get(), "test value")
 }
 
 @Test
 func testPipeBuilder_onFailure() {
     let builder = PipeBuilder()
-    let called = Ref(false)
-    let receivedReason = Ref("")
+    let called = SimpleRef(false)
+    let receivedReason = SimpleRef("")
 
     builder.onFailure({ reason, ctx =>
-        called.store(true)
-        receivedReason.store(reason)
+        called.set(true)
+        receivedReason.set(reason)
     })
 
     builder.executeFailure("failure reason")
 
-    @Expect(called.load(), true)
-    @Expect(receivedReason.load(), "failure reason")
+    @Expect(called.get(), true)
+    @Expect(receivedReason.get(), "failure reason")
 }
 
 @Test
 func testPipeBuilder_chaining() {
-    let successCalled = Ref(false)
+    let successCalled = SimpleRef(false)
 
     let builder = PipeBuilder()
-        .onSuccess({ v, c => successCalled.store(true) })
+        .onSuccess({ v, c => successCalled.set(true) })
 
     builder.executeSuccess("value")
 
-    @Expect(successCalled.load(), true)
+    @Expect(successCalled.get(), true)
 }
 
 // === SuccessMessage Tests ===
@@ -126,51 +139,51 @@ func testFailureMessage_creation() {
 
 @Test
 func testPipe_successCase() {
-    let resultProcessed = Ref(false)
+    let resultProcessed = SimpleRef(false)
     let builder = PipeBuilder()
 
     builder.onSuccess({ value, ctx =>
-        resultProcessed.store(true)
+        resultProcessed.set(true)
     })
 
     builder.executeSuccess("processed")
 
-    @Expect(resultProcessed.load(), true)
+    @Expect(resultProcessed.get(), true)
 }
 
 @Test
 func testPipe_failureCase() {
-    let failureHandled = Ref(false)
+    let failureHandled = SimpleRef(false)
     let builder = PipeBuilder()
 
     builder.onFailure({ reason, ctx =>
-        failureHandled.store(true)
+        failureHandled.set(true)
     })
 
     builder.executeFailure("error")
 
-    @Expect(failureHandled.load(), true)
+    @Expect(failureHandled.get(), true)
 }
 
 @Test
 func testPipe_multipleHandlers() {
-    let successCount = Ref(0)
-    let failureCount = Ref(0)
+    let successCount = SimpleRef(0)
+    let failureCount = SimpleRef(0)
 
     let builder = PipeBuilder()
 
     builder.onSuccess({ v, c =>
-        successCount.store(successCount.load() + 1)
+        successCount.set(successCount.get() + 1)
     })
 
     builder.onFailure({ r, ctx =>
-        failureCount.store(failureCount.load() + 1)
+        failureCount.set(failureCount.get() + 1)
     })
 
     builder.executeSuccess("v1")
     builder.executeSuccess("v2")
     builder.executeFailure("e1")
 
-    @Expect(successCount.load(), 2)
-    @Expect(failureCount.load(), 1)
+    @Expect(successCount.get(), 2)
+    @Expect(failureCount.get(), 1)
 }

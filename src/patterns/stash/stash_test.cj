@@ -7,6 +7,23 @@ package cactor.patterns.stash
 import std.collection.*
 import cactor.core.message.Message
 
+// === SimpleRef - 测试用可变引用 ===
+class SimpleRef<T> {
+    private var value: T
+
+    public init(value: T) {
+        this.value = value
+    }
+
+    public func load(): T {
+        value
+    }
+
+    public func store(v: T): Unit {
+        value = v
+    }
+}
+
 // === Test Messages ===
 
 class TestStashMessage <: Message {
@@ -184,7 +201,7 @@ func testBoundedStash_sizeLimit() {
 func testStash_patternUsage() {
     // 模拟 Actor 使用 stash
     let stash = StashSupport()
-    let processing = Ref(true)
+    let processing = SimpleRef(true)
 
     // 模拟处理状态 - 当忙碌时 stash 消息
     if (processing.load()) {
