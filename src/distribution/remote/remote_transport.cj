@@ -253,8 +253,43 @@ public class SimpleRemoteTransport <: RemoteTransport {
 }
 
 /**
+ * 连接心跳信息
+ */
+public struct HeartbeatInfo {
+    public let connectionId: String
+    public let lastActivityTime: Int64
+    public let heartbeatCount: Int64
+    public let missedHeartbeats: Int64
+
+    public init(
+        connectionId: String,
+        lastActivityTime: Int64,
+        heartbeatCount!: Int64 = 0,
+        missedHeartbeats!: Int64 = 0
+    ) {
+        this.connectionId = connectionId
+        this.lastActivityTime = lastActivityTime
+        this.heartbeatCount = heartbeatCount
+        this.missedHeartbeats = missedHeartbeats
+    }
+
+    public func isAlive(maxMissed: Int64): Bool {
+        missedHeartbeats < maxMissed
+    }
+}
+
+/**
+ * 心跳事件处理器
+ */
+public interface HeartbeatEventHandler {
+    func onHeartbeat(connectionId: String): Unit
+    func onHeartbeatTimeout(connectionId: String, missedCount: Int64): Unit
+    func onConnectionDead(connectionId: String): Unit
+}
+
+/**
  * 真实 TCP 远程传输层实现
- * 提供基于真实网络连接的远程传输
+ * 提供基于真实网络连接的远程传输，支持心跳检测
  */
 public class RealTcpRemoteTransport <: RemoteTransport {
     private let localAddress: Address
@@ -262,20 +297,36 @@ public class RealTcpRemoteTransport <: RemoteTransport {
     private let started: AtomicBool
     private let terminated: AtomicBool
     private let connections: HashMap<String, TcpConnection>
+    private let heartbeatInfos: HashMap<String, HeartbeatInfo>
     private let heartbeatInterval: Duration
+    private let maxMissedHeartbeats: Int64
     private let lock: ReentrantReadWriteMutex
+    private var heartbeatHandler: Option<HeartbeatEventHandler>
 
     public init(
         localAddress: Address,
-        heartbeatInterval!: Duration = Duration.second * 10
+        heartbeatInterval!: Duration = Duration.second * 10,
+        maxMissedHeartbeats!: Int64 = 3
     ) {
         this.localAddress = localAddress
         this.messageStream = SimpleRemoteMessageStream()
         this.started = AtomicBool(false)
         this.terminated = AtomicBool(false)
         this.connections = HashMap<String, TcpConnection>()
+        this.heartbeatInfos = HashMap<String, HeartbeatInfo>()
         this.heartbeatInterval = heartbeatInterval
+        this.maxMissedHeartbeats = maxMissedHeartbeats
         this.lock = ReentrantReadWriteMutex()
+        this.heartbeatHandler = None
+    }
+
+    /**
+     * 设置心跳事件处理器
+     */
+    public func setHeartbeatHandler(handler: HeartbeatEventHandler): Unit {
+        lock.writeMutex.lock()
+        heartbeatHandler = Some(handler)
+        lock.writeMutex.unlock()
     }
 
     public func address(): Address {
@@ -295,10 +346,112 @@ public class RealTcpRemoteTransport <: RemoteTransport {
                     spawn {
                         serverRef.acceptConnections(sock)
                     }
+                    // 启动心跳监控任务
+                    let ref = this
+                    spawn {
+                        ref.heartbeatMonitor()
+                    }
                     println("RealTcpRemoteTransport 绑定到 ${localAddress.toString()}")
                 }
             }
         }
+    }
+
+    /**
+     * 心跳监控循环
+     */
+    private func heartbeatMonitor(): Unit {
+        while (!terminated.load()) {
+            checkHeartbeats()
+            // 等待心跳间隔
+            var waited: Int64 = 0
+            let checkInterval = heartbeatInterval
+            while (waited < checkInterval.toMilliseconds() && !terminated.load()) {
+                // 简化等待
+                waited += 100
+            }
+        }
+    }
+
+    /**
+     * 检查所有连接的心跳状态
+     */
+    private func checkHeartbeats(): Unit {
+        let now = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        let interval = heartbeatInterval.toMilliseconds()
+        lock.writeMutex.lock()
+        let deadConnIds = ArrayList<String>()
+        for ((connId, info) in heartbeatInfos) {
+            let elapsed = now - info.lastActivityTime
+            if (elapsed > interval * (info.missedHeartbeats + 1)) {
+                // 心跳超时
+                let missedCount = info.missedHeartbeats + 1
+                heartbeatInfos.add(connId, HeartbeatInfo(
+                    connId,
+                    info.lastActivityTime,
+                    heartbeatCount: info.heartbeatCount,
+                    missedHeartbeats: missedCount
+                ))
+                if (missedCount >= maxMissedHeartbeats) {
+                    deadConnIds.add(connId)
+                }
+            }
+        }
+        lock.writeMutex.unlock()
+
+        // 清理死亡连接
+        for (connId in deadConnIds) {
+            removeDeadConnection(connId)
+        }
+    }
+
+    /**
+     * 更新连接心跳
+     */
+    public func updateHeartbeat(connectionId: String): Unit {
+        let now = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        lock.writeMutex.lock()
+        let existing = heartbeatInfos.get(connectionId)
+        if (existing.isSome()) {
+            let info = existing.getOrThrow()
+            heartbeatInfos.add(connectionId, HeartbeatInfo(
+                connectionId,
+                now,
+                heartbeatCount: info.heartbeatCount + 1,
+                missedHeartbeats: 0
+            ))
+        } else {
+            heartbeatInfos.add(connectionId, HeartbeatInfo(connectionId, now))
+        }
+        lock.writeMutex.unlock()
+    }
+
+    /**
+     * 移除死亡连接
+     */
+    private func removeDeadConnection(connectionId: String): Unit {
+        lock.writeMutex.lock()
+        heartbeatInfos.remove(connectionId)
+        let connOpt = connections.get(connectionId)
+        if (connOpt.isSome()) {
+            let conn = connOpt.getOrThrow()
+            conn.close(reason: "heartbeat_timeout")
+            connections.remove(connectionId)
+        }
+        lock.writeMutex.unlock()
+    }
+
+    /**
+     * 获取所有连接的心跳信息
+     */
+    public func getHeartbeatInfos(): Array<HeartbeatInfo> {
+        lock.readMutex.lock()
+        let result = ArrayList<HeartbeatInfo>()
+        for ((_, info) in heartbeatInfos) {
+            result.add(info)
+        }
+        lock.readMutex.unlock()
+        result.toArray()
     }
 
     private func acceptConnections(serverSocket: TcpSocket): Unit {

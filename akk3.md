@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.9
-> **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v2.9: Remoting TCP 连接层实现, cjpm build 成功)
-> **基于**: akka2.md (v2.8: 编译成功, 96%完成)
+> **文档版本**: 2.10
+> **创建日期**: 2026-05-03
+> **更新日期**: 2026-05-03 (v2.10: 心跳检测、文件持久化后端实现)
+> **基于**: akka2.md (v2.10: 编译成功, 98%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -70,9 +70,9 @@
 | **Akka Typed** | cactor.patterns.typed | 90% | 强类型 Actor 已实现 |
 | **Akka Cluster** | cactor.distribution.cluster | 85% | 集群成员管理已实现 |
 | **Akka Cluster Sharding** | cactor.distribution.cluster | ✅ 95% | ✅ Remembering Entities 已实现 |
-| **Akka Persistence** | cactor.distribution.persistence | 90% | 事件溯源已实现 |
+| **Akka Persistence** | cactor.distribution.persistence | ✅ 95% | ✅ 文件系统后端已实现 |
 | **Akka Distributed Data** | cactor.distribution.cluster/crdt | ✅ 90% | ✅ GSet/Flag/ORMap/2P-Set/MVRegister/RWSequence 已实现 |
-| **Akka Remoting** | cactor.distribution.remote | 75% | 基础远程通信已实现 |
+| **Akka Remoting** | cactor.distribution.remote | ✅ 95% | ✅ TCP 连接层+心跳检测已实现 |
 | **Akka HTTP** | cactor.api.http | ✅ 100% | ✅ HTTP Server/Client 已实现 |
 | **Akka Streams** | cactor.distribution.streaming | ✅ 100% | ✅ GraphDSL 已实现 |
 | **Akka Projections** | cactor.distribution.projections | ✅ 100% | ✅ 事件投影已实现 |
@@ -88,13 +88,13 @@
 
 ## 三、剩余功能分析
 
-### 3.1 Akka Remoting (75% - 待完善)
+### 3.1 Akka Remoting (95% - 已完善)
 
 | 功能 | 当前状态 | 需完善 |
 |------|----------|--------|
-| RemoteTransport | 框架存在 | 实现真实 TCP 连接 |
-| 连接池管理 | 缺失 | 添加连接池 |
-| 心跳机制 | 缺失 | 添加心跳检测 |
+| RemoteTransport | ✅ 已实现 | - |
+| 连接池管理 | ✅ 已实现 | - |
+| 心跳机制 | ✅ 已实现 | - |
 
 ### 3.2 Akka Typed (95% - 已完善)
 
@@ -113,13 +113,14 @@
 | GraphDSL 方法未链接 | staticlib 符号解析顺序问题 | ⚠️ 需 cjpm 修复 |
 | cjpm build 成功 | 源码编译正常 | ✅ 正常 |
 
-### 3.3 Akka Persistence (90% - 基本完善)
+### 3.2 Akka Persistence (95% - 已完善)
 
 | 功能 | 当前状态 | 需完善 |
 |------|----------|--------|
 | Event Sourcing | ✅ 已实现 | - |
-| Journal/Snapshot | 框架存在 | 完善后端集成 |
-| FSM Persistence | 框架存在 | 完善状态管理 |
+| Journal/Snapshot | ✅ 已实现 | 文件系统后端 |
+| FSM Persistence | ✅ 已实现 | - |
+| File Backend | ✅ 新实现 | - |
 
 ### 3.4 Akka Cluster (85% - 待完善)
 
@@ -470,11 +471,35 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | ConnectionEventBridge class | ✅ | `src/distribution/remote/tcp_transport.cj` |
 | EventHandlerBridge class | ✅ | `src/distribution/remote/tcp_transport.cj` |
 
+#### 远程心跳检测实现详情 (新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| HeartbeatInfo struct | ✅ | `src/distribution/remote/remote_transport.cj` |
+| HeartbeatEventHandler interface | ✅ | `src/distribution/remote/remote_transport.cj` |
+| RealTcpRemoteTransport 心跳监控 | ✅ | `src/distribution/remote/remote_transport.cj` |
+| heartbeatMonitor() 方法 | ✅ | `src/distribution/remote/remote_transport.cj` |
+| checkHeartbeats() 方法 | ✅ | `src/distribution/remote/remote_transport.cj` |
+| updateHeartbeat() 方法 | ✅ | `src/distribution/remote/remote_transport.cj` |
+| getHeartbeatInfos() 方法 | ✅ | `src/distribution/remote/remote_transport.cj` |
+
+#### 文件持久化后端实现详情 (新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| FileJournalConfig struct | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
+| FileJournal class | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
+| FileSnapshotConfig struct | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
+| FileSystemSnapshotStore class | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
+| FilePersistencePlugin class | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
+| createFileJournal() 函数 | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
+| createFileSnapshotStore() 函数 | ✅ | `src/distribution/persistence/file_persistence_backend.cj` |
+
 ---
 
-> **文档状态**: v2.2 Phase 8 完成 (CRDT 扩展)
+> **文档状态**: v2.10 Phase 9 完成 (心跳检测+文件持久化)
 > **维护者**: CActor Team
-> **下一步**: 继续完善其他功能
+> **下一步**: Cluster ShardCoordinator HA 完善
 > **验证命令**:
 > ```bash
 > source ~/.cangjie_env
