@@ -8,7 +8,7 @@ package cactor.core.context
 
 import std.time.*
 import std.collection.*
-import cactor.core.actor.{ActorRef, ActorPath, Props, Actor, ActorContext}
+import cactor.core.actor.{ActorRef, ActorPath, Props, Actor}
 import cactor.core.system.ActorSystem
 
 /**

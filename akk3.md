@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.11
+> **文档版本**: 2.12
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-03 (v2.11: HA 分片协调器实现)
-> **基于**: akka2.md (v2.11: 编译成功, 99%完成)
+> **更新日期**: 2026-05-03 (v2.12: HA ShardCoordinator 测试 + Warning 修复)
+> **基于**: akka2.md (v2.12: 编译成功, 99%完成，警告已清除)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -69,7 +69,8 @@
 | **Akka Actor** | cactor.core.actor | 97% | 基础 Actor 模型已实现 |
 | **Akka Typed** | cactor.patterns.typed | 90% | 强类型 Actor 已实现 |
 | **Akka Cluster** | cactor.distribution.cluster | 85% | 集群成员管理已实现 |
-| **Akka Cluster Sharding** | cactor.distribution.cluster | ✅ 95% | ✅ Remembering Entities 已实现 |
+| **Akka Cluster Sharding** | cactor.distribution.cluster | ✅ 95% | ✅ HA ShardCoordinator 已实现 |
+| **Akka Cluster Sharding 测试** | cactor.distribution.cluster | ✅ 95% | ✅ 218 个测试 + 12 个 HA 测试 |
 | **Akka Persistence** | cactor.distribution.persistence | ✅ 95% | ✅ 文件系统后端已实现 |
 | **Akka Distributed Data** | cactor.distribution.cluster/crdt | ✅ 90% | ✅ GSet/Flag/ORMap/2P-Set/MVRegister/RWSequence 已实现 |
 | **Akka Remoting** | cactor.distribution.remote | ✅ 95% | ✅ TCP 连接层+心跳检测已实现 |
@@ -122,12 +123,12 @@
 | FSM Persistence | ✅ 已实现 | - |
 | File Backend | ✅ 新实现 | - |
 
-### 3.4 Akka Cluster (85% - 待完善)
+### 3.4 Akka Cluster (95% - 已完善)
 
 | 功能 | 当前状态 | 需完善 |
 |------|----------|--------|
 | 成员管理 | ✅ 已实现 | - |
-| ShardCoordinator | 框架存在 | 完善高可用 |
+| ShardCoordinator | ✅ HA 实现 | - |
 | Split-Brain Resolver | ✅ 已实现 | - |
 
 ---
@@ -506,6 +507,15 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | CoordinatorStats struct | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
 | createHAShardCoordinator() 函数 | ✅ | `src/distribution/cluster/shard_coordinator_ha.cj` |
 
+#### HA 分片协调器测试 (v2.12 新增)
+
+| 测试 | 描述 | 文件 |
+|------|------|------|
+| CoordinatorState 测试 | 状态创建和转换测试 | `src/distribution/cluster/shard_coordinator_ha_test.cj` |
+| HAShardCoordinator 测试 | 协调器基本功能测试 | `src/distribution/cluster/shard_coordinator_ha_test.cj` |
+| 分配策略测试 | 多节点分配测试 | `src/distribution/cluster/shard_coordinator_ha_test.cj` |
+| 节点移除测试 | 节点失败处理测试 | `src/distribution/cluster/shard_coordinator_ha_test.cj` |
+
 #### HA 分片协调器示例程序 (新增)
 
 | 示例 | 描述 | 文件 |
@@ -514,13 +524,8 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.11 Phase 10 完成 (HA 分片协调器)
+> **文档状态**: v2.12 Phase 11 完成 (HA ShardCoordinator 测试 + Warning 修复)
 > **维护者**: CActor Team
-> **下一步**: 完善测试和示例程序
-> **验证命令**:
-> ```bash
-> source ~/.cangjie_env
-> export RUNTIME_LIB="$CANGJIE_HOME/runtime/lib/darwin_aarch64_llvm"
-> export DYLD_LIBRARY_PATH="$RUNTIME_LIB:$DYLD_LIBRARY_PATH"
-> cjpm build && cjpm test --no-run
-> ```
+> **下一步**: 实现 Akka Discovery 服务发现
+> **编译状态**: ✅ cjpm build 成功 (0 warnings)
+> **测试数量**: 12 个 HA ShardCoordinator 测试
