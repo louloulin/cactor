@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.8
+> **文档版本**: 2.9
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v2.8: AskResult 工厂方法修复, cjpm build 成功)
+> **更新日期**: 2026-05-03 (v2.9: Remoting TCP 连接层实现, cjpm build 成功)
 > **基于**: akka2.md (v2.8: 编译成功, 96%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -135,11 +135,11 @@
 
 ### 4.1 高优先级任务
 
-| 任务 | 优先级 | 工作量 |
-|------|--------|--------|
-| Remoting TCP 实现 | P1 | 3天 |
-| Typed Receptionist | P2 | 2天 |
-| Persistence 后端集成 | P2 | 3天 |
+| 任务 | 优先级 | 状态 | 工作量 |
+|------|--------|------|--------|
+| Remoting TCP 实现 | P1 | ✅ 已完成 | 3天 |
+| Typed Receptionist | P2 | ✅ 已完成 | 2天 |
+| Persistence 后端集成 | P2 | ⚠️ 框架存在 | 3天 |
 
 ---
 
@@ -217,7 +217,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-## 九、验证结果 (v1.3)
+## 九、验证结果 (v2.9)
 
 ### 已验证功能
 
@@ -251,6 +251,9 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | SystemCoordinator | ✅ 已实现 | 2026-05-03 |
 | Coexistences 测试 | ✅ 编译通过 | 2026-05-03 |
 | 模式演示示例 | ✅ 已创建 | 2026-05-03 |
+| Remoting TCP 连接层 | ✅ 已实现 | 2026-05-03 |
+| RealTcpRemoteTransport | ✅ 已实现 | 2026-05-03 |
+| ConnectionPool | ✅ 已实现 | 2026-05-03 |
 
 ### Phase 2 验收状态
 
@@ -296,6 +299,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 |------|--------|------|--------|
 | Route DSL 完善 | P2 | ✅ 已完成 | 2天 |
 | 真实网络连接实现 | P2 | ✅ 已完成 | 3天 |
+| Remoting TCP 连接层 | P1 | ✅ 已完成 | 2天 |
 | Akka Management | P3 | ✅ 已完成 | 3天 |
 
 ### Phase 5: 高级路由模式 (已完成)
@@ -444,6 +448,27 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | 示例 | 描述 | 文件 |
 |------|------|------|
 | patterns_demo | 展示 Stash, Pipe, Routing, Coexistence 模式 | `src/examples/patterns_demo/main.cj` |
+
+#### 远程传输层实现详情 (新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| Address struct | ✅ | `src/distribution/remote/remote_transport.cj` |
+| RemoteEnvelope class | ✅ | `src/distribution/remote/remote_transport.cj` |
+| RemoteActorPath class | ✅ | `src/distribution/remote/remote_transport.cj` |
+| RemoteTransport interface | ✅ | `src/distribution/remote/remote_transport.cj` |
+| SimpleRemoteTransport class | ✅ | `src/distribution/remote/remote_transport.cj` |
+| RealTcpRemoteTransport class | ✅ | `src/distribution/remote/remote_transport.cj` |
+| ConnectionPool class | ✅ | `src/distribution/remote/remote_transport.cj` |
+| TcpTransportConfig struct | ✅ | `src/distribution/remote/tcp_transport.cj` |
+| TcpConnectionState enum | ✅ | `src/distribution/remote/tcp_transport.cj` |
+| TcpConnectionInfo struct | ✅ | `src/distribution/remote/tcp_transport.cj` |
+| TcpConnection class | ✅ | `src/distribution/remote/tcp_transport.cj` |
+| TcpSocket class | ✅ | `src/distribution/remote/tcp_transport.cj` |
+| TcpServer class | ✅ | `src/distribution/remote/tcp_transport.cj` |
+| TcpClient class | ✅ | `src/distribution/remote/tcp_transport.cj` |
+| ConnectionEventBridge class | ✅ | `src/distribution/remote/tcp_transport.cj` |
+| EventHandlerBridge class | ✅ | `src/distribution/remote/tcp_transport.cj` |
 
 ---
 

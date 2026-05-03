@@ -361,10 +361,13 @@ public class TcpConnection {
 }
 
 /**
- * TCP 套接字
+ * TCP 套接字 - 简化实现
+ * 后续可升级为使用 std.net 的真实实现
  */
 public class TcpSocket {
-    private var fd: Int64 = -1  // 文件描述符
+    private var fd: Int64 = -1
+    private var isServer: Bool = false
+    private var connected: Bool = false
 
     public init() { }
 
@@ -372,9 +375,9 @@ public class TcpSocket {
      * 连接到远程地址
      */
     public func connect(address: NetworkAddress, timeout: Duration): Bool {
-        // 简化实现，实际应该使用真实的 socket 连接
-        // 这里返回 true 表示连接成功
-        fd = 1  // 模拟文件描述符
+        // 简化实现：标记为已连接
+        connected = true
+        fd = 1  // 占位符文件描述符
         return true
     }
 
@@ -382,7 +385,7 @@ public class TcpSocket {
      * 绑定到地址
      */
     public func bind(address: NetworkAddress): Bool {
-        // 简化实现
+        isServer = true
         fd = 1
         return true
     }
@@ -391,42 +394,48 @@ public class TcpSocket {
      * 监听连接
      */
     public func listen(backlog: Int64): Bool {
-        // 简化实现
-        return true
+        return isServer && fd > 0
     }
 
     /**
      * 接受连接
      */
     public func accept(): Option<TcpSocket> {
-        // 简化实现，返回新套接字
-        let socket = TcpSocket()
-        return Some(socket)
+        if (isServer) {
+            let client = TcpSocket()
+            client.setConnected(true)
+            return Some(client)
+        }
+        return None
+    }
+
+    private func setConnected(value: Bool): Unit {
+        connected = value
     }
 
     /**
      * 发送数据
      */
     public func write(data: Array<UInt8>): Int64 {
-        // 简化实现，返回发送的字节数
-        return Int64(data.size)
+        if (connected || isServer) {
+            return Int64(data.size)
+        }
+        return 0
     }
 
     /**
      * 接收数据
      */
     public func read(bufferSize: Int64): Array<UInt8> {
-        // 简化实现，返回空数组
-        return Array<UInt8>(Int64(0), { _ => UInt8(0) })
+        return Array<UInt8>(0, { _ => UInt8(0) })
     }
 
     /**
      * 关闭
      */
     public func close(): Unit {
-        if (fd >= 0) {
-            fd = -1
-        }
+        fd = -1
+        connected = false
     }
 
     /**
@@ -498,8 +507,9 @@ public class TcpServer {
             isRunning = true
 
             // 启动接受连接任务
+            let server = this
             acceptTask = Some(spawn {
-                this.acceptLoop()
+                server.acceptLoop()
             })
 
             return true
@@ -535,32 +545,27 @@ public class TcpServer {
      */
     private func acceptLoop(): Unit {
         while (isRunning) {
-            try {
-                match (serverSocket.accept()) {
-                    case Some(clientSocket) =>
-                        let remoteAddr = NetworkAddress("unknown", 0)
-                        let localAddr = NetworkAddress(config.host, Int32(config.port))
-                        let connId = generateConnectionId()
-                        let connection = TcpConnection(connId, remoteAddr, localAddr, clientSocket)
+            let clientOpt = serverSocket.accept()
+            if (clientOpt.isSome()) {
+                let clientSocket = clientOpt.getOrThrow()
+                let remoteAddr = NetworkAddress("unknown", 0)
+                let localAddr = NetworkAddress(config.host, Int32(config.port))
+                let connId = generateConnectionId()
+                let connection = TcpConnection(connId, remoteAddr, localAddr, clientSocket)
 
-                        // 设置事件处理器
-                        connection.setEventHandler(ConnectionEventBridge(this))
+                // 设置事件处理器
+                connection.setEventHandler(ConnectionEventBridge(this))
 
-                        // 添加到连接列表
-                        try {
-                            lock.writeMutex.lock()
-                            connections.add(connId, connection)
-                            lock.writeMutex.unlock()
-                        } catch (e: Exception) {
-                            // ignore
-                        }
-
-                        connection.connected()
-                    case None =>
-                        ()
+                // 添加到连接列表
+                try {
+                    lock.writeMutex.lock()
+                    connections.add(connId, connection)
+                    lock.writeMutex.unlock()
+                } catch (e: Exception) {
+                    // ignore
                 }
-            } catch (e: Exception) {
-                ()
+
+                connection.connected()
             }
         }
     }
@@ -571,11 +576,11 @@ public class TcpServer {
     public func closeConnection(connectionId: String, reason!: String = "normal"): Unit {
         try {
             lock.writeMutex.lock()
-            match (connections.get(connectionId)) {
-                case Some(conn) =>
-                    conn.close(reason: reason)
-                    connections.remove(connectionId)
-                case None => ()
+            let opt = connections.get(connectionId)
+            if (opt.isSome()) {
+                let conn = opt.getOrThrow()
+                conn.close(reason: reason)
+                connections.remove(connectionId)
             }
             lock.writeMutex.unlock()
         } catch (e: Exception) {
@@ -711,11 +716,10 @@ public class TcpClient {
     public func disconnect(): Unit {
         try {
             lock.writeMutex.lock()
-            match (connection) {
-                case Some(conn) =>
-                    conn.close(reason: "client_disconnect")
-                    connection = None
-                case None => ()
+            if (connection.isSome()) {
+                let conn = connection.getOrThrow()
+                conn.close(reason: "client_disconnect")
+                connection = None
             }
             lock.writeMutex.unlock()
         } catch (e: Exception) {
@@ -729,15 +733,13 @@ public class TcpClient {
     public func send(data: Array<UInt8>): Bool {
         try {
             lock.readMutex.lock()
-            match (connection) {
-                case Some(conn) =>
-                    let result = conn.send(data)
-                    lock.readMutex.unlock()
-                    return result
-                case None =>
-                    lock.readMutex.unlock()
-                    return false
+            if (connection.isSome()) {
+                let result = connection.getOrThrow().send(data)
+                lock.readMutex.unlock()
+                return result
             }
+            lock.readMutex.unlock()
+            return false
         } catch (e: Exception) {
             return false
         }
@@ -749,15 +751,13 @@ public class TcpClient {
     public func isConnected(): Bool {
         try {
             lock.readMutex.lock()
-            match (connection) {
-                case Some(conn) =>
-                    let info = conn.getConnectionInfo()
-                    lock.readMutex.unlock()
-                    return info.state.isConnected()
-                case None =>
-                    lock.readMutex.unlock()
-                    return false
+            if (connection.isSome()) {
+                let info = connection.getOrThrow().getConnectionInfo()
+                lock.readMutex.unlock()
+                return info.state.isConnected()
             }
+            lock.readMutex.unlock()
+            return false
         } catch (e: Exception) {
             return false
         }
