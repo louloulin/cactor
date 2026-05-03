@@ -252,33 +252,54 @@ public interface WithAskPattern<Command, Response> {
 
 /**
  * AskResult - Ask 操作的结果
+ * 使用工厂方法创建实例以避免构造函数歧义
  */
 public class AskResult<T> {
-    private let value: Option<T>
-    private let error: Option<String>
+    private let resultValue: Option<T>
+    private let errorMsg: Option<String>
 
-    public init(value: T) {
-        this.value = Some(value)
-        this.error = None
+    private init(successResult: T, isSuccess: Bool) {
+        if (isSuccess) {
+            this.resultValue = Some(successResult)
+            this.errorMsg = None
+        } else {
+            this.resultValue = None
+            this.errorMsg = None  // Will be set by factory method
+        }
     }
 
-    public init(error: String) {
-        this.value = None
-        this.error = Some(error)
+    private init(errorMessage: String) {
+        this.resultValue = None
+        this.errorMsg = Some(errorMessage)
+    }
+
+    /**
+     * 创建成功结果
+     */
+    public static func success<T>(value: T): AskResult<T> {
+        let result = AskResult<T>(value, true)
+        result
+    }
+
+    /**
+     * 创建失败结果
+     */
+    public static func failure<T>(msg: String): AskResult<T> {
+        AskResult<T>(msg)
     }
 
     /**
      * 检查是否成功
      */
     public func isSuccess(): Bool {
-        value.isSome()
+        resultValue.isSome()
     }
 
     /**
      * 获取值
      */
     public func get(): T {
-        match (value) {
+        match (resultValue) {
             case Some(v) => v
             case None => throw Exception("Unknown error")
         }
@@ -288,7 +309,7 @@ public class AskResult<T> {
      * 获取值或默认值
      */
     public func getOrDefault(defaultValue: T): T {
-        match (value) {
+        match (resultValue) {
             case Some(v) => v
             case None => defaultValue
         }
@@ -298,9 +319,9 @@ public class AskResult<T> {
      * 映射结果
      */
     public func map<U>(f: (T) -> U): AskResult<U> {
-        match (value) {
-            case Some(v) => AskResult<U>(f(v))
-            case None => AskResult<U>("Unknown error")
+        match (resultValue) {
+            case Some(v) => AskResult<U>.success(f(v))
+            case None => AskResult<U>.failure("Unknown error message")
         }
     }
 
@@ -308,9 +329,9 @@ public class AskResult<T> {
      * 扁平映射结果
      */
     public func flatMap<U>(f: (T) -> AskResult<U>): AskResult<U> {
-        match (value) {
+        match (resultValue) {
             case Some(v) => f(v)
-            case None => AskResult<U>("Unknown error")
+            case None => AskResult<U>.failure("Unknown error message")
         }
     }
 }

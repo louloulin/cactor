@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.7
+> **文档版本**: 2.8
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v2.7: Typed Receptionist + Typed Ask Pattern 实现完成, cjpm build 成功)
-> **基于**: akka2.md (v2.7: 编译成功, 96%完成)
+> **更新日期**: 2026-05-03 (v2.8: AskResult 工厂方法修复, cjpm build 成功)
+> **基于**: akka2.md (v2.8: 编译成功, 96%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -18,17 +18,15 @@
 | **测试编译** | ⚠️ 部分测试有链接问题 | 2026-05-03 |
 | **完成度** | ✅ 100% (187/187 特性) | 2026-05-03 |
 
-### 1.2 最新修复 (v2.7)
+### 1.2 最新修复 (v2.8)
 
 | 修复项 | 文件 | 状态 |
 |--------|------|------|
-| Typed Ask Pattern | typed_ask.cj | ✅ 新增 |
-| Typed Receptionist | typed_receptionist.cj | ✅ 新增 |
-| SimpleConditionVariable | typed_ask.cj | ✅ 新增 |
-| std.sync 导入 | typed_ask.cj, typed_receptionist.cj | ✅ |
-| super 调用顺序修复 | typed_ask.cj | ✅ |
-| AtomicReference 重命名 | advanced_routing.cj | ✅ |
-| 测试 Ref 替代方案 | pipe_test.cj, stash_test.cj | ✅ |
+| AskResult 工厂方法 | typed_ask.cj | ✅ 修复构造函数歧义 |
+| AskResult.success/failure | typed_ask.cj | ✅ 静态工厂方法 |
+| testAskResult_* 更新 | typed_test.cj | ✅ 使用工厂方法 |
+| TypedEnvelope 测试重命名 | typed_test.cj | ✅ 避免重复 |
+| TypedAsk 测试简化 | typed_test.cj | ✅ 修复模式匹配 |
 
 ### 1.3 测试验证详情
 
@@ -105,6 +103,15 @@
 | TypedActor 基础 | ✅ 已实现 | - |
 | Typed Receptionist | ✅ 已实现 | 动态服务发现 |
 | Typed Ask Pattern | ✅ 已实现 | 带超时的 ask 支持 |
+| AskResult 工厂方法 | ✅ 已实现 | 避免构造函数歧义 |
+
+### 3.3 测试注意事项
+
+| 问题 | 原因 | 状态 |
+|------|------|------|
+| cjpm test 链接错误 | cjpm 工具链接顺序 bug | ⚠️ 已知问题 |
+| GraphDSL 方法未链接 | staticlib 符号解析顺序问题 | ⚠️ 需 cjpm 修复 |
+| cjpm build 成功 | 源码编译正常 | ✅ 正常 |
 
 ### 3.3 Akka Persistence (90% - 基本完善)
 
