@@ -9,6 +9,9 @@ import std.sync.*
 import cactor.core.message.Message
 import cactor.core.actor.ActorRef
 
+// Ref type alias
+typealias Ref<T> = std.sync.Ref<T>
+
 // === PipeMessage Tests ===
 
 @Test

@@ -32,20 +32,11 @@ public class ScatterGatherFirstCompleted {
         sg
     }
 
-    /**
-     * 设置超时时间
-     */
     public func withTimeout(timeout: Duration): ScatterGatherFirstCompleted {
         this.timeout = timeout
         this
     }
 
-    /**
-     * 向所有接收者发送消息并获取第一个响应
-     * @param routees 接收者列表
-     * @param message 要发送的消息
-     * @param originalSender 原始发送者
-     */
     public func scatterGather(
         routees: Array<ActorRef>,
         message: Message,
@@ -592,6 +583,18 @@ public class TailChopping {
             if (index >= 0) {
                 recipients.remove(index..index + 1)
             }
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    /**
+     * 获取接收者数量
+     */
+    public func size(): Int64 {
+        mutex.lock()
+        try {
+            recipients.size
         } finally {
             mutex.unlock()
         }
