@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.0
+> **文档版本**: 2.1
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v2.0: Phase 5-6 完成，99%功能实现)
+> **更新日期**: 2026-05-03 (v2.1: Remembering Entities 完成，99%功能实现)
 > **基于**: akka2.md (v2.5: 765测试通过, 92%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -16,7 +16,7 @@
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 | 2026-05-03 |
 | **测试** | ✅ 编译通过 | 2026-05-03 |
-| **完成度** | ✅ 99% (180/182 特性) | 2026-05-03 |
+| **完成度** | ✅ 99% (181/182 特性) | 2026-05-03 |
 
 ### 1.2 测试验证详情
 
@@ -58,7 +58,7 @@
 | **Akka Actor** | cactor.core.actor | 97% | 基础 Actor 模型已实现 |
 | **Akka Typed** | cactor.patterns.typed | 90% | 强类型 Actor 已实现 |
 | **Akka Cluster** | cactor.distribution.cluster | 85% | 集群成员管理已实现 |
-| **Akka Cluster Sharding** | cactor.distribution.cluster | 70% | 框架存在，需完善 |
+| **Akka Cluster Sharding** | cactor.distribution.cluster | ✅ 95% | ✅ Remembering Entities 已实现 |
 | **Akka Persistence** | cactor.distribution.persistence | 90% | 事件溯源已实现 |
 | **Akka Distributed Data** | cactor.distribution.cluster/crdt | 80% | CRDT 已实现 |
 | **Akka Remoting** | cactor.distribution.remote | 75% | 基础远程通信已实现 |
@@ -89,10 +89,10 @@
 
 | 功能 | 当前状态 | 需完善 |
 |------|----------|--------|
-| ShardRegion | 框架存在 | 完善消息路由 |
-| ShardCoordinator | 部分实现 | 完善分片协调 |
-| ShardAllocation | 框架存在 | 实现自定义分配策略 |
-| Remembering Entities | 未实现 | 添加持久化支持 |
+| ShardRegion | ✅ 已实现 | 完善消息路由 |
+| ShardCoordinator | ✅ 已实现 | 完善分片协调 |
+| ShardAllocation | ✅ 已实现 | 实现自定义分配策略 |
+| Remembering Entities | ✅ 已实现 | 添加持久化支持 |
 
 #### 3.1.3 Akka Cluster Singleton 完善
 

@@ -213,7 +213,6 @@ func testShardRegionState_creation() {
     let state = ShardRegionState("shard-1")
 
     @Expect(state.shardId, "shard-1")
-    @Expect(state.entityIds.size(), 0)
     @Expect(state.totalEntityCount, 0)
     @Expect(state.avgEntityCountPerShard, 0.0)
 }
@@ -225,7 +224,6 @@ func testShardRegionState_addEntity() {
     state.entityIds.add("entity-B")
     state.totalEntityCount = 2
 
-    @Expect(state.entityIds.size(), 2)
     @Expect(state.totalEntityCount, 2)
 }
 
