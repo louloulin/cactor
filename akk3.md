@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.12
+> **文档版本**: 2.13
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-03 (v2.12: HA ShardCoordinator 测试 + Warning 修复)
-> **基于**: akka2.md (v2.12: 编译成功, 99%完成，警告已清除)
+> **更新日期**: 2026-05-03 (v2.13: Akka Discovery 服务发现)
+> **基于**: akka2.md (v2.13: 编译成功, 99%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -68,9 +68,9 @@
 |-----------|-------------|------|----------|
 | **Akka Actor** | cactor.core.actor | 97% | 基础 Actor 模型已实现 |
 | **Akka Typed** | cactor.patterns.typed | 90% | 强类型 Actor 已实现 |
-| **Akka Cluster** | cactor.distribution.cluster | 85% | 集群成员管理已实现 |
+| **Akka Cluster** | cactor.distribution.cluster | ✅ 95% | 集群成员管理已实现 |
 | **Akka Cluster Sharding** | cactor.distribution.cluster | ✅ 95% | ✅ HA ShardCoordinator 已实现 |
-| **Akka Cluster Sharding 测试** | cactor.distribution.cluster | ✅ 95% | ✅ 218 个测试 + 12 个 HA 测试 |
+| **Akka Discovery** | cactor.distribution.cluster | ✅ 90% | ✅ 服务发现实现 |
 | **Akka Persistence** | cactor.distribution.persistence | ✅ 95% | ✅ 文件系统后端已实现 |
 | **Akka Distributed Data** | cactor.distribution.cluster/crdt | ✅ 90% | ✅ GSet/Flag/ORMap/2P-Set/MVRegister/RWSequence 已实现 |
 | **Akka Remoting** | cactor.distribution.remote | ✅ 95% | ✅ TCP 连接层+心跳检测已实现 |
@@ -522,10 +522,23 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 |------|------|------|
 | cluster_ha_demo | 展示 HA 分片协调器功能 | `src/examples/cluster_ha_demo/main.cj` |
 
+#### Akka Discovery 服务发现实现详情 (v2.13 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| ServiceInstance class | ✅ | `src/distribution/cluster/service_discovery.cj` |
+| ServiceRegistry class | ✅ | `src/distribution/cluster/service_discovery.cj` |
+| ServiceDiscovery interface | ✅ | `src/distribution/cluster/service_discovery.cj` |
+| SimpleServiceDiscovery class | ✅ | `src/distribution/cluster/service_discovery.cj` |
+| DnsServiceDiscovery class | ✅ | `src/distribution/cluster/service_discovery.cj` |
+| createSimpleServiceDiscovery() | ✅ | `src/distribution/cluster/service_discovery.cj` |
+| createDnsServiceDiscovery() | ✅ | `src/distribution/cluster/service_discovery.cj` |
+| 服务发现测试 | ✅ | `src/distribution/cluster/service_discovery_test.cj` (18个测试) |
+
 ---
 
-> **文档状态**: v2.12 Phase 11 完成 (HA ShardCoordinator 测试 + Warning 修复)
+> **文档状态**: v2.13 Phase 12 完成 (Akka Discovery 服务发现)
 > **维护者**: CActor Team
-> **下一步**: 实现 Akka Discovery 服务发现
+> **下一步**: 实现 Akka Cluster Downing Provider
 > **编译状态**: ✅ cjpm build 成功 (0 warnings)
-> **测试数量**: 12 个 HA ShardCoordinator 测试
+> **测试数量**: 18 个服务发现测试
