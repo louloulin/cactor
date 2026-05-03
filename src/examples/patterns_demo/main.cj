@@ -13,6 +13,7 @@ import cactor.core.context.{ActorContext}
 import cactor.patterns.stash.*
 import cactor.patterns.pipe.*
 import cactor.patterns.routing.*
+import cactor.patterns.coexistence.*
 
 /**
  * StashPatternDemo - Stash 模式演示
@@ -56,8 +57,12 @@ public class StashPatternDemo <: Actor {
         // 处理下一个暂存消息
         match (stashSupport.unstash()) {
             case Some(nextMsg) =>
-                this.isBusy = true
-                processMessage(nextMsg as StashDemoMessage)
+                match (nextMsg) {
+                    case stashMsg: StashDemoMessage =>
+                        this.isBusy = true
+                        processMessage(stashMsg)
+                    case _ => ()
+                }
             case None =>
                 println("[StashDemo] 处理完成，共处理 ${processedMessages.size} 条消息")
         }
@@ -66,7 +71,11 @@ public class StashPatternDemo <: Actor {
     private func unstashAll(): Unit {
         match (stashSupport.unstash()) {
             case Some(msg) =>
-                processMessage(msg as StashDemoMessage)
+                match (msg) {
+                    case stashMsg: StashDemoMessage =>
+                        processMessage(stashMsg)
+                    case _ => ()
+                }
             case None =>
                 println("[StashDemo] 暂存区为空")
         }
@@ -189,8 +198,8 @@ public class CoexistencePatternDemo {
         // 演示 TypeAdapter
         println("\n1. TypeAdapter:")
         let adapter = MessageAdapter(
-            toUntyped: { msg => msg },
-            toTyped: { msg => msg }
+            { msg => msg },
+            { msg => msg }
         )
         println("[TypeAdapter] 适配器创建成功")
 
@@ -250,7 +259,7 @@ class MockRouteeRef <: ActorRef {
     }
 
     public func hashCode(): Int32 {
-        name.hashCode()
+        Int32(name.hashCode())
     }
 
     public func getSentMessages(): ArrayList<Message> {
@@ -262,9 +271,9 @@ class MockRouteeRef <: ActorRef {
  * 主演示函数
  */
 main(args: Array<String>): Unit {
-    println("=".repeat(50))
+    println("==================================================")
     println("CActor 模式演示")
-    println("=".repeat(50))
+    println("==================================================")
 
     // Stash 模式演示
     let stashDemo = StashPatternDemo()
@@ -282,7 +291,7 @@ main(args: Array<String>): Unit {
     let coexistenceDemo = CoexistencePatternDemo()
     coexistenceDemo.demonstrate()
 
-    println("\n" + "=".repeat(50))
+    println("\n==================================================")
     println("CActor 模式演示完成!")
-    println("=".repeat(50))
+    println("==================================================")
 }

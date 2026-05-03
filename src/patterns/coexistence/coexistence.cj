@@ -7,6 +7,7 @@ package cactor.patterns.coexistence
 
 import std.collection.*
 import std.time.*
+import std.sync.*
 import cactor.core.message.Message
 import cactor.core.actor.{ActorRef, ActorPath, Actor, ActorSystem}
 
@@ -35,7 +36,7 @@ public class ActorSystemBridge {
     public func registerRemoteSystem(name: String, system: ActorSystem): Unit {
         mutex.lock()
         try {
-            remoteSystems.put(name, system)
+            let _ = remoteSystems.add(name, system)
         } finally {
             mutex.unlock()
         }
@@ -94,7 +95,7 @@ public class ActorSystemBridge {
         remoteSystemName: String,
         actorPath: String,
         message: Message,
-        sender: Option<ActorRef>
+        sender: Option<String>
     ): Bool {
         match (remoteSystems.get(remoteSystemName)) {
             case Some(system) =>
@@ -111,44 +112,40 @@ public class ActorSystemBridge {
  * CrossSystemActorRef - 跨系统的 ActorRef
  */
 public class CrossSystemActorRef <: ActorRef {
-    private let path: ActorPath
+    private let actorPath: ActorPath
     private let remoteSystemName: String
     private let bridge: ActorSystemBridge
     private let messageQueue: ArrayList<Message>
 
     public init(path: ActorPath, remoteSystemName: String, bridge: ActorSystemBridge) {
-        this.path = path
+        this.actorPath = path
         this.remoteSystemName = remoteSystemName
         this.bridge = bridge
         this.messageQueue = ArrayList<Message>()
     }
 
     public prop path: ActorPath {
-        get() { path }
+        get() { actorPath }
     }
 
     public func tell(message: Message): Unit {
-        bridge.sendCrossSystemMessage(remoteSystemName, path.toString(), message, None)
+        bridge.sendCrossSystemMessage(remoteSystemName, actorPath.toString(), message, None)
     }
 
     public func tell(message: Message, sender: Option<String>): Unit {
-        let senderRef: Option<ActorRef> = match (sender) {
-            case Some(s) => Some(BridgeActorRef(s, bridge))
-            case None => None
-        }
-        bridge.sendCrossSystemMessage(remoteSystemName, path.toString(), message, senderRef)
+        bridge.sendCrossSystemMessage(remoteSystemName, actorPath.toString(), message, sender)
     }
 
     public func equals(other: ActorRef): Bool {
         match (other) {
             case cross: CrossSystemActorRef =>
-                path.equals(cross.path) && remoteSystemName == cross.remoteSystemName
+                actorPath.equals(cross.actorPath) && remoteSystemName == cross.remoteSystemName
             case _ => false
         }
     }
 
     public func hashCode(): Int32 {
-        path.toString().hashCode()
+        Int32(actorPath.toString().hashCode())
     }
 }
 
@@ -185,7 +182,7 @@ class BridgeActorRef <: ActorRef {
     }
 
     public func hashCode(): Int32 {
-        pathString.hashCode()
+        Int32(pathString.hashCode())
     }
 }
 
@@ -238,12 +235,12 @@ public class MessageAdapter <: TypeAdapter<Message, Message> {
 public class WrappedMessage <: Message {
     public let originalMessage: Message
     public let sourceSystem: String
-    public let timestamp: Int64
+    public let ts: Int64
 
     public init(originalMessage: Message, sourceSystem: String) {
         this.originalMessage = originalMessage
         this.sourceSystem = sourceSystem
-        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        this.ts = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
     public func messageType(): String {
@@ -271,7 +268,7 @@ public class MixedMessageRouter {
     private let adapters: HashMap<String, TypeAdapter<Message, Message>>
     private let routes: HashMap<String, ActorRef>
     private let mutex: Mutex
-    private let defaultAdapter: Option<TypeAdapter<Message, Message>>
+    private var defaultAdapter: Option<TypeAdapter<Message, Message>>
 
     public init() {
         this.adapters = HashMap<String, TypeAdapter<Message, Message>>()
@@ -289,7 +286,7 @@ public class MixedMessageRouter {
     ): Unit {
         mutex.lock()
         try {
-            adapters.put(messageType, adapter)
+            adapters.add(messageType, adapter)
         } finally {
             mutex.unlock()
         }
@@ -313,7 +310,7 @@ public class MixedMessageRouter {
     public func addRoute(path: String, target: ActorRef): Unit {
         mutex.lock()
         try {
-            routes.put(path, target)
+            routes.add(path, target)
         } finally {
             mutex.unlock()
         }
@@ -334,7 +331,7 @@ public class MixedMessageRouter {
     /**
      * 路由消息
      */
-    public func route(message: Message, sender: Option<ActorRef>): Unit {
+    public func route(message: Message, sender: Option<String>): Unit {
         mutex.lock()
         let currentRoutes = routes.toArray()
         let currentAdapters = adapters.toArray()
@@ -380,16 +377,16 @@ public class MixedMessageRouter {
         adapters: Array<(String, TypeAdapter<Message, Message>)>,
         defaultAdapter: Option<TypeAdapter<Message, Message>>
     ): Message {
-        let messageType = message.messageType()
+        let msgType = message.messageType()
 
         // 查找特定适配器
         let adaptersArray = adapters
-        var i = 0
+        var i: Int64 = 0
         while (i < adaptersArray.size) {
             let pair = adaptersArray[i]
-            let type = pair[0]
+            let typeName = pair[0]
             let adapter = pair[1]
-            if (messageType == type) {
+            if (msgType == typeName) {
                 return adapter.adapt(message)
             }
             i += 1
@@ -441,8 +438,8 @@ public class SystemCoordinator {
         mutex.lock()
         try {
             let bridge = ActorSystemBridge(system)
-            bridges.put(name, bridge)
-            healthStatus.put(name, true)
+            bridges.add(name, bridge)
+            healthStatus.add(name, true)
         } finally {
             mutex.unlock()
         }
@@ -466,7 +463,7 @@ public class SystemCoordinator {
     public func updateHealthStatus(name: String, healthy: Bool): Unit {
         mutex.lock()
         try {
-            healthStatus.put(name, healthy)
+            healthStatus.add(name, healthy)
         } finally {
             mutex.unlock()
         }
@@ -509,7 +506,7 @@ public class SystemCoordinator {
 public struct CoexistenceConfig {
     public let enableCrossSystem: Bool
     public let defaultTimeout: Duration
-    public let maxRetries: Int32
+    public let maxRetries: Int64
     public let retryInterval: Duration
 
     public init() {

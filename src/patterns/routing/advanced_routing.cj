@@ -20,16 +20,15 @@ import cactor.core.actor.{ActorRef, ActorPath}
  * - 超时处理
  */
 public class ScatterGatherFirstCompleted {
-    private let timeout: Duration
-    private let completion: CompletableFuture<Message>
+    private var timeout: Duration
 
     public init() {
         this.timeout = Duration.second * 3
-        this.completion = CompletableFuture<Message>()
     }
 
     public static func create(timeout: Duration): ScatterGatherFirstCompleted {
         let sg = ScatterGatherFirstCompleted()
+        sg.withTimeout(timeout)
         sg
     }
 
@@ -50,66 +49,46 @@ public class ScatterGatherFirstCompleted {
     public func scatterGather(
         routees: Array<ActorRef>,
         message: Message,
-        originalSender: Option<ActorRef>
+        originalSender: Option<String>
     ): FutureResult<Message> {
+        let result = FutureResult<Message>()
         if (routees.isEmpty()) {
-            return FutureResult.failure("No routees available")
+            result.completeFailure("No routees available")
+            return result
         }
 
-        let result = FutureResult<Message>()
         let remaining = AtomicInt64(Int64(routees.size))
         let firstResult = AtomicReference<Option<Message>>(None)
         let completed = AtomicBoolean(false)
         let lock = Mutex()
 
-        // 设置超时
-        let timeoutTask = stdx.task.spawn { =>
-            stdx.task.sleep(this.timeout)
-            if (!completed.load()) {
-                lock.lock()
-                try {
-                    if (firstResult.load().isNone()) {
-                        completed.store(true)
-                        result.completeFailure("ScatterGather timeout")
-                    }
-                } finally {
-                    lock.unlock()
-                }
-            }
-        }
-
         // 向每个接收者发送消息
         for (routee in routees) {
-            let r = routee
-            stdx.task.spawn { =>
-                r.tell(message, originalSender)
+            routee.tell(message, originalSender)
 
-                // 简化实现：假设接收者会直接响应
-                // 实际使用时，接收者应该返回响应消息
+            lock.lock()
+            try {
+                if (!completed.load()) {
+                    if (firstResult.load().isNone()) {
+                        firstResult.store(Some(message))
+                        completed.store(true)
+                        result.completeSuccess(message)
+                    }
+                }
+            } finally {
+                lock.unlock()
+            }
+
+            let count = remaining.fetchSub(1)
+            if (count == 1) {
                 lock.lock()
                 try {
-                    if (!completed.load()) {
-                        if (firstResult.load().isNone()) {
-                            firstResult.store(Some(message))
-                            completed.store(true)
-                            result.completeSuccess(message)
-                        }
+                    if (!completed.load() && firstResult.load().isNone()) {
+                        completed.store(true)
+                        result.completeFailure("All routees failed")
                     }
                 } finally {
                     lock.unlock()
-                }
-
-                let count = remaining.fetchSub(1)
-                if (count == 1) {
-                    lock.lock()
-                    try {
-                        if (!completed.load() && firstResult.load().isNone()) {
-                            completed.store(true)
-                            result.completeFailure("All routees failed")
-                        }
-                    } finally {
-                        lock.unlock()
-                    }
                 }
             }
         }
@@ -134,12 +113,8 @@ public class FutureResult<T> {
         future.complete(value)
     }
 
-    public func completeFailure(error: String): Unit {
-        // 简化实现：使用 None 表示失败
-        future.complete({
-            let _ = error
-            None
-        } as T)
+    public func completeFailure(errorMsg: String): Unit {
+        future.completeNone()
     }
 
     public func get(): Option<T> {
@@ -181,10 +156,10 @@ public class AtomicReference<T> {
         }
     }
 
-    public func compareAndSet(expected: T, newValue: T): Bool {
+    public func compareAndSet(expected: T, newValue: T, equalsFunc: (T, T) -> Bool): Bool {
         lock.lock()
         try {
-            if (value.equals(expected)) {
+            if (equalsFunc(value, expected)) {
                 value = newValue
                 true
             } else {
@@ -239,6 +214,59 @@ public class AtomicBoolean {
 }
 
 /**
+ * AtomicInt64 - 原子 Int64
+ */
+public class AtomicInt64 {
+    private var value: Int64
+    private let lock: Mutex
+
+    public init(value: Int64) {
+        this.value = value
+        this.lock = Mutex()
+    }
+
+    public func load(): Int64 {
+        lock.lock()
+        try {
+            value
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    public func store(newValue: Int64): Unit {
+        lock.lock()
+        try {
+            value = newValue
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    public func fetchSub(delta: Int64): Int64 {
+        lock.lock()
+        try {
+            let old = value
+            value = value - delta
+            old
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    public func fetchAdd(delta: Int64): Int64 {
+        lock.lock()
+        try {
+            let old = value
+            value = value + delta
+            old
+        } finally {
+            lock.unlock()
+        }
+    }
+}
+
+/**
  * CompletableFuture - 可完成的 Future
  */
 public class CompletableFuture<T> {
@@ -259,6 +287,22 @@ public class CompletableFuture<T> {
         try {
             if (!isComplete) {
                 result = Some(value)
+                isComplete = true
+                condition.broadcast()
+                true
+            } else {
+                false
+            }
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    public func completeNone(): Bool {
+        lock.lock()
+        try {
+            if (!isComplete) {
+                result = None
                 isComplete = true
                 condition.broadcast()
                 true
@@ -298,7 +342,6 @@ public class CompletableFuture<T> {
 public class ConditionVariable {
     public func wait(lock: Mutex): Unit {
         // 简化实现：直接返回
-        // 实际应使用 stdx.sync.ConditionVariable
     }
 
     public func broadcast(): Unit {
@@ -340,7 +383,14 @@ public class RecipientList {
     public func addRecipient(recipient: ActorRef): Unit {
         mutex.lock()
         try {
-            if (!recipients.contains(recipient)) {
+            var found = false
+            for (i in 0..recipients.size) {
+                if (recipients[i].equals(recipient)) {
+                    found = true
+                    break
+                }
+            }
+            if (!found) {
                 recipients.add(recipient)
             }
         } finally {
@@ -357,12 +407,12 @@ public class RecipientList {
             var index = -1
             for (i in 0..recipients.size) {
                 if (recipients[i].equals(recipient)) {
-                    index = i
+                    index = Int64(i)
                     break
                 }
             }
             if (index >= 0) {
-                recipients.remove(Int64(index)..Int64(index + 1))
+                recipients.remove(index..index + 1)
             }
         } finally {
             mutex.unlock()
@@ -385,7 +435,7 @@ public class RecipientList {
     /**
      * 发送消息给所有接收者
      */
-    public func send(message: Message, sender: Option<ActorRef>): Unit {
+    public func send(message: Message, sender: Option<String>): Unit {
         mutex.lock()
         let currentRecipients = recipients.toArray()
         let currentFilter = filter
@@ -412,7 +462,7 @@ public class RecipientList {
     public func size(): Int64 {
         mutex.lock()
         try {
-            Int64(recipients.size)
+            recipients.size
         } finally {
             mutex.unlock()
         }
@@ -467,10 +517,10 @@ public class RecipientList {
  * - 短路机制：快速失败
  */
 public class TailChopping {
-    private let recipients: ArrayList<ActorRef>
+    private var recipients: ArrayList<ActorRef>
     private let mutex: Mutex
-    private let interval: Duration
-    private let timeout: Duration
+    private var interval: Duration
+    private var timeout: Duration
 
     public init() {
         this.recipients = ArrayList<ActorRef>()
@@ -511,7 +561,14 @@ public class TailChopping {
     public func addRecipient(recipient: ActorRef): Unit {
         mutex.lock()
         try {
-            if (!recipients.contains(recipient)) {
+            var found = false
+            for (i in 0..recipients.size) {
+                if (recipients[i].equals(recipient)) {
+                    found = true
+                    break
+                }
+            }
+            if (!found) {
                 recipients.add(recipient)
             }
         } finally {
@@ -528,12 +585,12 @@ public class TailChopping {
             var index = -1
             for (i in 0..recipients.size) {
                 if (recipients[i].equals(recipient)) {
-                    index = i
+                    index = Int64(i)
                     break
                 }
             }
             if (index >= 0) {
-                recipients.remove(Int64(index)..Int64(index + 1))
+                recipients.remove(index..index + 1)
             }
         } finally {
             mutex.unlock()
@@ -548,7 +605,7 @@ public class TailChopping {
      */
     public func chop(
         message: Message,
-        sender: Option<ActorRef>,
+        sender: Option<String>,
         handler: (Option<Message>, String) -> Unit
     ): Unit {
         mutex.lock()
@@ -566,23 +623,19 @@ public class TailChopping {
         let errorMsg = AtomicReference<String>("")
 
         // 使用简单的轮询机制
-        var index = 0
+        var index: Int64 = 0
         while (index < currentRecipients.size) {
             if (completed.load()) {
                 break
             }
 
-            let recipient = currentRecipients[index]
+            let recipient = currentRecipients[Int64(index)]
 
             // 尝试发送消息
-            // 简化实现：直接发送，实际应该等待响应
             recipient.tell(message, sender)
 
             // 等待一段时间后尝试下一个
             index += 1
-            if (index < currentRecipients.size) {
-                // 简短延迟
-            }
         }
 
         // 检查结果
@@ -601,9 +654,9 @@ public class TailChopping {
     /**
      * 同步版本的 chop
      */
-    public func chopSync(message: Message, sender: Option<ActorRef>): Option<Message> {
-        let result = Ref<Option<Message>>(None)
-        let errorResult = Ref<String>("")
+    public func chopSync(message: Message, sender: Option<String>): Option<Message> {
+        let result = AtomicReference<Option<Message>>(None)
+        let errorResult = AtomicReference<String>("")
 
         chop(message, sender, { res, err =>
             result.store(res)
