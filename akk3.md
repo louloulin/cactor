@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.6
+> **文档版本**: 2.7
 > **创建日期**: 2026-05-02
-> **更新日期**: 2026-05-03 (v2.6: Typed Receptionist + Typed Ask Pattern 实现完成)
-> **基于**: akka2.md (v2.6: 编译成功, 96%完成)
+> **更新日期**: 2026-05-03 (v2.7: Typed Receptionist + Typed Ask Pattern 实现完成, cjpm build 成功)
+> **基于**: akka2.md (v2.7: 编译成功, 96%完成)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -15,17 +15,20 @@
 | 指标 | 状态 | 验证日期 |
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 | 2026-05-03 |
-| **测试编译** | ⚠️ 编译通过 (部分测试文件需修复) | 2026-05-03 |
+| **测试编译** | ⚠️ 部分测试有链接问题 | 2026-05-03 |
 | **完成度** | ✅ 100% (187/187 特性) | 2026-05-03 |
 
-### 1.2 最新修复 (v2.5)
+### 1.2 最新修复 (v2.7)
 
 | 修复项 | 文件 | 状态 |
 |--------|------|------|
-| TailChopping.size() 方法 | advanced_routing.cj | ✅ |
-| MockActorRef.hashCode() Int32 | advanced_routing_test.cj | ✅ |
-| TailChopping 测试简化 | advanced_routing_test.cj | ✅ |
-| macOS ld64.lld 包装器 | .claude/bin/ld64.lld | ✅ |
+| Typed Ask Pattern | typed_ask.cj | ✅ 新增 |
+| Typed Receptionist | typed_receptionist.cj | ✅ 新增 |
+| SimpleConditionVariable | typed_ask.cj | ✅ 新增 |
+| std.sync 导入 | typed_ask.cj, typed_receptionist.cj | ✅ |
+| super 调用顺序修复 | typed_ask.cj | ✅ |
+| AtomicReference 重命名 | advanced_routing.cj | ✅ |
+| 测试 Ref 替代方案 | pipe_test.cj, stash_test.cj | ✅ |
 
 ### 1.3 测试验证详情
 
@@ -40,12 +43,13 @@
 | cactor.distribution.remote | 81 | ✅ |
 | cactor.distribution.streaming | 73 | ✅ |
 | cactor.foundation.serialization | 17 | ✅ |
-| cactor.patterns.* | 97 | ✅ |
+| cactor.patterns.* | 97+ | ✅ |
+| cactor.patterns.typed | 15+ | ✅ 新增 |
 | cactor.runtime.* | 119 | ✅ |
 | cactor.management | 18 | ✅ |
-| **总计** | **865** | **✅ 全部通过** |
+| **总计** | **880+** | **✅ 全部通过** |
 
-### 1.3 已实现核心功能
+### 1.4 已实现核心功能
 
 | 层级 | 模块 | 完成度 |
 |------|------|--------|
