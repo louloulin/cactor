@@ -7,6 +7,15 @@ package cactor.patterns.circuit_breaker
 import std.collection.*
 import std.time.*
 
+// 测试用事件监听器实现类
+class TestEventListener <: CircuitBreakerEventListener {
+    public var notified: Bool = false
+
+    public func onStateTransition(event: CircuitBreakerEvent): Unit {
+        notified = true
+    }
+}
+
 // === CircuitBreakerState Tests ===
 
 @Test
@@ -313,12 +322,7 @@ func testEventPublishingCircuitBreaker_subscribe() {
     let config = CircuitBreakerConfig(5, 3, Duration.second * 10, Duration.second * 30)
     let cb = EventPublishingCircuitBreaker<Int64>(config)
 
-    let listener = object <: CircuitBreakerEventListener {
-        public var notified = false
-        public func onStateTransition(event: CircuitBreakerEvent): Unit {
-            notified = true
-        }
-    }
+    let listener = TestEventListener()
 
     cb.subscribe(listener)
     // After trip, should notify listener
@@ -331,12 +335,7 @@ func testEventPublishingCircuitBreaker_unsubscribe() {
     let config = CircuitBreakerConfig(5, 3, Duration.second * 10, Duration.second * 30)
     let cb = EventPublishingCircuitBreaker<Int64>(config)
 
-    let listener = object <: CircuitBreakerEventListener {
-        public var notified = false
-        public func onStateTransition(event: CircuitBreakerEvent): Unit {
-            notified = true
-        }
-    }
+    let listener = TestEventListener()
 
     cb.subscribe(listener)
     cb.clearAllSubscriptions()

@@ -7,6 +7,23 @@ package cactor.patterns.event_bus
 import std.collection.*
 import std.time.*
 
+// 计数器类，用于在 lambda 中捕获可变状态
+class Counter {
+    var count: Int64 = 0
+
+    public func increment(): Unit {
+        count += 1
+    }
+
+    public func getValue(): Int64 {
+        count
+    }
+
+    public func reset(): Unit {
+        count = 0
+    }
+}
+
 // ============================================================================
 // SubscriberId Tests
 // ============================================================================
@@ -32,21 +49,21 @@ func testSubscriberId_equals() {
 
 @Test
 func testSimpleSubscriber_creation() {
-    var received: Int64 = 0
-    let handler = { e: Event => received += 1 }
+    let counter = Counter()
+    let handler = { (e: Event) => counter.increment() }
     let subscriber = SimpleSubscriber("sub-1", handler)
     @Expect(subscriber.subscriberId().id, "sub-1")
 }
 
 @Test
 func testSimpleSubscriber_notify() {
-    var received: Int64 = 0
-    let handler = { e: Event => received += 1 }
+    let counter = Counter()
+    let handler = { (e: Event) => counter.increment() }
     let subscriber = SimpleSubscriber("sub-1", handler)
 
     let event = Event("test")
     subscriber.notify(event)
-    @Expect(received, 1)
+    @Expect(counter.getValue(), 1)
 }
 
 // ============================================================================
@@ -72,7 +89,7 @@ func testEvent_creationWithSource() {
 @Test
 func testEventBus_subscribe() {
     let bus = SubclassificationBasedEventBus()
-    let subscriber = SimpleSubscriber("sub-1", { e: Event => () })
+    let subscriber = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let result = bus.subscribe(subscriber, "test.channel")
     @Expect(result, true)
@@ -81,7 +98,7 @@ func testEventBus_subscribe() {
 @Test
 func testEventBus_subscribeDuplicate() {
     let bus = SubclassificationBasedEventBus()
-    let subscriber = SimpleSubscriber("sub-1", { e: Event => () })
+    let subscriber = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let result1 = bus.subscribe(subscriber, "test.channel")
     let result2 = bus.subscribe(subscriber, "test.channel")
@@ -92,7 +109,7 @@ func testEventBus_subscribeDuplicate() {
 @Test
 func testEventBus_unsubscribe() {
     let bus = SubclassificationBasedEventBus()
-    let subscriber = SimpleSubscriber("sub-1", { e: Event => () })
+    let subscriber = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let _ = bus.subscribe(subscriber, "test.channel")
     let result = bus.unsubscribe(subscriber, "test.channel")
@@ -102,7 +119,7 @@ func testEventBus_unsubscribe() {
 @Test
 func testEventBus_unsubscribeNonExistent() {
     let bus = SubclassificationBasedEventBus()
-    let subscriber = SimpleSubscriber("sub-1", { e: Event => () })
+    let subscriber = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let result = bus.unsubscribe(subscriber, "test.channel")
     @Expect(result, false)
@@ -111,7 +128,7 @@ func testEventBus_unsubscribeNonExistent() {
 @Test
 func testEventBus_unsubscribeAll() {
     let bus = SubclassificationBasedEventBus()
-    let subscriber = SimpleSubscriber("sub-1", { e: Event => () })
+    let subscriber = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let _ = bus.subscribe(subscriber, "channel.1")
     let _ = bus.subscribe(subscriber, "channel.2")
@@ -127,24 +144,24 @@ func testEventBus_unsubscribeAll() {
 @Test
 func testEventBus_publish() {
     let bus = SubclassificationBasedEventBus()
-    var receivedCount: Int64 = 0
-    let handler = { e: Event => receivedCount += 1 }
+    let counter = Counter()
+    let handler = { (e: Event) => counter.increment() }
     let subscriber = SimpleSubscriber("sub-1", handler)
 
     let _ = bus.subscribe(subscriber, "test.channel")
 
     bus.publishToClassifier(Event("test message"), "test.channel")
-    @Expect(receivedCount, 1)
+    @Expect(counter.getValue(), 1)
 }
 
 @Test
 func testEventBus_publishToMultipleSubscribers() {
     let bus = SubclassificationBasedEventBus()
-    var count1: Int64 = 0
-    var count2: Int64 = 0
+    let counter1 = Counter()
+    let counter2 = Counter()
 
-    let handler1 = { e: Event => count1 += 1 }
-    let handler2 = { e: Event => count2 += 1 }
+    let handler1 = { (e: Event) => counter1.increment() }
+    let handler2 = { (e: Event) => counter2.increment() }
 
     let sub1 = SimpleSubscriber("sub-1", handler1)
     let sub2 = SimpleSubscriber("sub-2", handler2)
@@ -153,8 +170,8 @@ func testEventBus_publishToMultipleSubscribers() {
     let _ = bus.subscribe(sub2, "test.channel")
 
     bus.publishToClassifier(Event("test message"), "test.channel")
-    @Expect(count1, 1)
-    @Expect(count2, 1)
+    @Expect(counter1.getValue(), 1)
+    @Expect(counter2.getValue(), 1)
 }
 
 @Test
@@ -168,8 +185,8 @@ func testEventBus_publishNoSubscribers() {
 @Test
 func testEventBus_getSubscriberCount() {
     let bus = SubclassificationBasedEventBus()
-    let sub1 = SimpleSubscriber("sub-1", { e: Event => () })
-    let sub2 = SimpleSubscriber("sub-2", { e: Event => () })
+    let sub1 = SimpleSubscriber("sub-1", { (e: Event) => () })
+    let sub2 = SimpleSubscriber("sub-2", { (e: Event) => () })
 
     let _ = bus.subscribe(sub1, "channel")
     let _ = bus.subscribe(sub2, "channel")
@@ -186,7 +203,7 @@ func testEventBus_getSubscriberCountEmpty() {
 @Test
 func testEventBus_getClassifiers() {
     let bus = SubclassificationBasedEventBus()
-    let sub1 = SimpleSubscriber("sub-1", { e: Event => () })
+    let sub1 = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let _ = bus.subscribe(sub1, "channel.1")
     let _ = bus.subscribe(sub1, "channel.2")
@@ -238,7 +255,7 @@ func testClusterEvent_toString() {
 @Test
 func testClusterEventBus_subscribeToMemberChanges() {
     let bus = ClusterEventBus()
-    let subscriber = SimpleSubscriber("sub-1", { e: Event => () })
+    let subscriber = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let result = bus.subscribeToMemberChanges(subscriber)
     @Expect(result, true)
@@ -247,7 +264,7 @@ func testClusterEventBus_subscribeToMemberChanges() {
 @Test
 func testClusterEventBus_subscribeToReachabilityChanges() {
     let bus = ClusterEventBus()
-    let subscriber = SimpleSubscriber("sub-1", { e: Event => () })
+    let subscriber = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let result = bus.subscribeToReachabilityChanges(subscriber)
     @Expect(result, true)
@@ -256,7 +273,7 @@ func testClusterEventBus_subscribeToReachabilityChanges() {
 @Test
 func testClusterEventBus_subscribeToLeaderChanges() {
     let bus = ClusterEventBus()
-    let subscriber = SimpleSubscriber("sub-1", { e: Event => () })
+    let subscriber = SimpleSubscriber("sub-1", { (e: Event) => () })
 
     let result = bus.subscribeToLeaderChanges(subscriber)
     @Expect(result, true)
@@ -265,37 +282,37 @@ func testClusterEventBus_subscribeToLeaderChanges() {
 @Test
 func testClusterEventBus_publishMemberJoined() {
     let bus = ClusterEventBus()
-    var received: Int64 = 0
-    let handler = { e: Event => received += 1 }
+    let counter = Counter()
+    let handler = { (e: Event) => counter.increment() }
     let subscriber = SimpleSubscriber("sub-1", handler)
 
     let _ = bus.subscribe(subscriber, "cluster.member.joined")
     bus.publishMemberJoined("node-1")
-    @Expect(received, 1)
+    @Expect(counter.getValue(), 1)
 }
 
 @Test
 func testClusterEventBus_publishMemberUp() {
     let bus = ClusterEventBus()
-    var received: Int64 = 0
-    let handler = { e: Event => received += 1 }
+    let counter = Counter()
+    let handler = { (e: Event) => counter.increment() }
     let subscriber = SimpleSubscriber("sub-1", handler)
 
     let _ = bus.subscribe(subscriber, "cluster.member.up")
     bus.publishMemberUp("node-1")
-    @Expect(received, 1)
+    @Expect(counter.getValue(), 1)
 }
 
 @Test
 func testClusterEventBus_publishLeaderChanged() {
     let bus = ClusterEventBus()
-    var received: Int64 = 0
-    let handler = { e: Event => received += 1 }
+    let counter = Counter()
+    let handler = { (e: Event) => counter.increment() }
     let subscriber = SimpleSubscriber("sub-1", handler)
 
     let _ = bus.subscribe(subscriber, "cluster.leader.changed")
     bus.publishLeaderChanged("node-1")
-    @Expect(received, 1)
+    @Expect(counter.getValue(), 1)
 }
 
 // ============================================================================
