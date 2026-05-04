@@ -3,7 +3,7 @@
  * CActor - Coexistence 示例程序
  * 演示多 ActorSystem 桥接、类型适配、混合路由
  */
-package cactor.examples
+package cactor.examples.coexistence_demo
 
 import std.collection.*
 import std.time.*
@@ -83,10 +83,10 @@ public class AddressAdapter {
  * 类型适配器
  */
 public class TypeAdapter {
-    private let mappings: HashMap[String, String]
+    private let mappings: HashMap<String, String>
 
     public init() {
-        this.mappings = HashMap[String, String]()
+        this.mappings = HashMap<String, String>()
     }
 
     public func register(localType: String, remoteType: String): TypeAdapter {
@@ -319,7 +319,7 @@ public func demonstrateVersionCompatibility(): Unit {
 /**
  * 运行所有演示
  */
-public func main(): Unit {
+main(): Unit {
     println("========================================")
     println("   CActor Coexistence 多系统共存演示")
     println("========================================")

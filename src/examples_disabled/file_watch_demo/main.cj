@@ -3,10 +3,11 @@
  * CActor - File Watch 示例
  * 演示文件系统监控功能
  */
-package cactor.examples
+package cactor.examples.file_watch_demo
 
 import std.collection.*
 import std.time.*
+import std.sync.*
 
 // ============================================================================
 // 文件监控事件类型
@@ -15,12 +16,22 @@ import std.time.*
 /**
  * 文件系统事件类型
  */
-public enum FileEventType {
+public enum FileEventType <: ToString {
     | Created
     | Modified
     | Deleted
     | Renamed
     | PermissionChanged
+
+    public func toString(): String {
+        match (this) {
+            case Created => "Created"
+            case Modified => "Modified"
+            case Deleted => "Deleted"
+            case Renamed => "Renamed"
+            case PermissionChanged => "PermissionChanged"
+        }
+    }
 }
 
 /**
@@ -68,10 +79,10 @@ public interface FileEventHandler {
  * 简单文件事件处理器
  */
 public class SimpleFileEventHandler <: FileEventHandler {
-    private var events: ArrayList[FileEvent]
+    private var events: ArrayList<FileEvent>
 
     public init() {
-        this.events = ArrayList[FileEvent]()
+        this.events = ArrayList<FileEvent>()
     }
 
     public func handle(event: FileEvent): Unit {
@@ -79,12 +90,12 @@ public class SimpleFileEventHandler <: FileEventHandler {
         println("  [文件事件] ${event}")
     }
 
-    public func getEvents(): ArrayList[FileEvent] {
+    public func getEvents(): ArrayList<FileEvent> {
         events
     }
 
-    public func getEventsByType(eventType: FileEventType): ArrayList[FileEvent] {
-        let result = ArrayList[FileEvent]()
+    public func getEventsByType(eventType: FileEventType): ArrayList<FileEvent> {
+        let result = ArrayList<FileEvent>()
         for (e in events) {
             match (e.eventType) {
                 case t where match(t) {
@@ -119,15 +130,15 @@ public interface FileWatcher {
  * 在实际实现中会使用操作系统级文件监控 API
  */
 public class SimulatedFileWatcher <: FileWatcher {
-    private let watchPaths: ArrayList[String]
+    private let watchPaths: ArrayList<String>
     private var isActive: Bool
-    private var handlers: ArrayList[FileEventHandler]
+    private var handlers: ArrayList<FileEventHandler>
     private let lock: Mutex
 
     public init() {
-        this.watchPaths = ArrayList[String]()
+        this.watchPaths = ArrayList<String>()
         this.isActive = false
-        this.handlers = ArrayList[FileEventHandler]()
+        this.handlers = ArrayList<FileEventHandler>()
         this.lock = Mutex()
     }
 
@@ -147,29 +158,33 @@ public class SimulatedFileWatcher <: FileWatcher {
 
     public func watch(path: String): Unit {
         lock.lock()
-        defer { lock.unlock() }
-
-        if (!watchPaths.contains(path)) {
-            watchPaths.add(path)
-            println("开始监控路径: ${path}")
+        try {
+            if (!watchPaths.contains(path)) {
+                watchPaths.add(path)
+                println("开始监控路径: ${path}")
+            }
+        } finally {
+            lock.unlock()
         }
     }
 
     public func unwatch(path: String): Unit {
         lock.lock()
-        defer { lock.unlock() }
-
-        let remaining = ArrayList[String]()
-        for (p in watchPaths) {
-            if (p != path) {
-                remaining.add(p)
+        try {
+            let remaining = ArrayList<String>()
+            for (p in watchPaths) {
+                if (p != path) {
+                    remaining.add(p)
+                }
             }
+            watchPaths.clear()
+            for (p in remaining) {
+                watchPaths.add(p)
+            }
+            println("停止监控路径: ${path}")
+        } finally {
+            lock.unlock()
         }
-        watchPaths.clear()
-        for (p in remaining) {
-            watchPaths.add(p)
-        }
-        println("停止监控路径: ${path}")
     }
 
     public func onEvent(handler: FileEventHandler): FileWatcher {
@@ -199,9 +214,9 @@ public class SimulatedFileWatcher <: FileWatcher {
         }
     }
 
-    public func getWatchedPaths(): ArrayList[String] {
+    public func getWatchedPaths(): ArrayList<String> {
         lock.lock()
-        let result = ArrayList[String]()
+        let result = ArrayList<String>()
         for (p in watchPaths) {
             result.add(p)
         }
@@ -369,7 +384,7 @@ public func demonstrateStartStop(): Unit {
 /**
  * 运行所有演示
  */
-public func main(): Unit {
+main(): Unit {
     println("========================================")
     println("   CActor File Watch 文件监控演示")
     println("========================================")

@@ -3,7 +3,7 @@
  * CActor - Persistence 持久化示例程序
  * 演示事件溯源和持久化功能
  */
-package cactor.examples
+package cactor.examples.persistence_demo
 
 import std.collection.*
 import std.time.*
@@ -65,12 +65,12 @@ public class AccountState {
 public class AccountAggregate {
     private var state: AccountState
     private let persistenceId: String
-    private var uncommittedEvents: ArrayList[AccountEvent]
+    private var uncommittedEvents: ArrayList<AccountEvent>
 
     public init(persistenceId: String) {
         this.state = AccountState()
         this.persistenceId = persistenceId
-        this.uncommittedEvents = ArrayList[AccountEvent]()
+        this.uncommittedEvents = ArrayList<AccountEvent>()
     }
 
     public func deposit(amount: Int64): Unit {
@@ -93,7 +93,7 @@ public class AccountAggregate {
         state.balance
     }
 
-    public func getUncommittedEvents(): ArrayList[AccountEvent] {
+    public func getUncommittedEvents(): ArrayList<AccountEvent> {
         uncommittedEvents
     }
 
@@ -158,7 +158,7 @@ public func demonstrateEventReplay(): Unit {
     println("=== 事件重放演示 ===")
 
     // 模拟事件历史
-    let events = ArrayList[AccountEvent]()
+    let events = ArrayList<AccountEvent>()
     events.add(Deposited(100))
     events.add(Deposited(200))
     events.add(Withdrawn(50))
@@ -285,7 +285,7 @@ public func demonstrateEventHandler(): Unit {
     var totalDeposits: Int64 = 0
     var totalWithdrawals: Int64 = 0
 
-    let handler = object <: EventHandler[AccountEvent] {
+    let handler = object <: EventHandler<AccountEvent> {
         public func handle(event: AccountEvent): Unit {
             match (event) {
                 case Deposited(amount) =>
@@ -301,7 +301,7 @@ public func demonstrateEventHandler(): Unit {
     }
 
     // 模拟事件流
-    let events = ArrayList[AccountEvent]()
+    let events = ArrayList<AccountEvent>()
     events.add(Deposited(100))
     events.add(Deposited(200))
     events.add(Withdrawn(50))
@@ -390,7 +390,7 @@ public func demonstratePersistenceFSM(): Unit {
 /**
  * 运行所有演示
  */
-public func main(): Unit {
+main(): Unit {
     println("========================================")
     println("   CActor Persistence 持久化演示")
     println("========================================")

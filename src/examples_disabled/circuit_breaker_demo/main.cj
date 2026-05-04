@@ -3,7 +3,7 @@
  * CActor - Circuit Breaker 示例程序
  * 演示断路器模式增强功能
  */
-package cactor.examples
+package cactor.examples.circuit_breaker_demo
 
 import std.collection.*
 import std.time.*
@@ -109,7 +109,7 @@ public func demonstrateEventPublishingCircuitBreaker(): Unit {
     println("=== 带事件监听的断路器演示 ===")
 
     let service = MockService()
-    let events = ArrayList[CircuitBreakerEvent]()
+    let events = ArrayList<CircuitBreakerEvent>()
 
     let listener = object <: CircuitBreakerEventListener {
         public func onEvent(event: CircuitBreakerEvent): Unit {
@@ -308,7 +308,7 @@ public func demonstrateFactory(): Unit {
     println("工厂创建 (配置): ${cb1.state()}")
 
     // 创建带事件监听
-    let events = ArrayList[CircuitBreakerEvent]()
+    let events = ArrayList<CircuitBreakerEvent>()
     let cb2 = CircuitBreakerFactory.createWithEvents(
         3,
         Duration.second,
@@ -334,7 +334,7 @@ public func demonstrateFactory(): Unit {
 /**
  * 运行所有演示
  */
-public func main(): Unit {
+main(): Unit {
     println("========================================")
     println("   CActor Circuit Breaker 断路器演示")
     println("========================================")

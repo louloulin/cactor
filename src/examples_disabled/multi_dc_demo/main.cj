@@ -3,7 +3,7 @@
  * CActor - Multi-DC 多数据中心示例
  * 演示跨数据中心的高可用部署
  */
-package cactor.examples
+package cactor.examples.multi_dc_demo
 
 import std.collection.*
 import std.time.*
@@ -179,7 +179,7 @@ public class MultiDcDemo {
 /**
  * 主函数
  */
-public func main(): Unit {
+main(): Unit {
     let demo = MultiDcDemo()
     demo.run()
 }

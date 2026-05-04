@@ -3,11 +3,11 @@
  * CActor - Event Bus 示例程序
  * 演示发布-订阅模式的事件分发
  */
-package cactor.examples
+package cactor.examples.event_bus_demo
 
 import std.collection.*
 import std.time.*
-import cactor.patterns.eventbus.*
+import cactor.patterns.event_bus.*
 
 // ============================================================================
 // Event Bus 示例演示
@@ -204,7 +204,7 @@ public func demonstrateUnsubscribeAll(): Unit {
 /**
  * 运行所有演示
  */
-public func main(): Unit {
+main(): Unit {
     println("========================================")
     println("   CActor Event Bus 事件总线演示")
     println("========================================")

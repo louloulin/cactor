@@ -3,7 +3,7 @@
  * CActor - Health Check 示例程序
  * 演示健康检查增强功能
  */
-package cactor.examples
+package cactor.examples.health_check_demo
 
 import std.collection.*
 import std.time.*
@@ -278,7 +278,7 @@ public func demonstrateSeverityLevels(): Unit {
 /**
  * 运行所有演示
  */
-public func main(): Unit {
+main(): Unit {
     println("========================================")
     println("   CActor Health Check 健康检查演示")
     println("========================================")

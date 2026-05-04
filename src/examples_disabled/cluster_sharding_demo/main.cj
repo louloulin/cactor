@@ -3,7 +3,7 @@
  * CActor - Cluster Sharding 示例程序
  * 演示集群分片功能
  */
-package cactor.examples
+package cactor.examples.cluster_sharding_demo
 
 import std.collection.*
 import std.time.*
@@ -487,7 +487,7 @@ public class ShardSettings {
 /**
  * 运行所有演示
  */
-public func main(): Unit {
+main(): Unit {
     println("========================================")
     println("   CActor Cluster Sharding 分片演示")
     println("========================================")

@@ -3,7 +3,7 @@
  * CActor - Rate Limiting Middleware 示例
  * 演示 HTTP 请求限流中间件
  */
-package cactor.examples
+package cactor.examples.rate_limiting_middleware_demo
 
 import std.collection.*
 import std.time.*
@@ -228,7 +228,7 @@ public func demonstrateRateLimitHeaders(): Unit {
 /**
  * 运行所有演示
  */
-public func main(): Unit {
+main(): Unit {
     println("========================================")
     println("   CActor Rate Limiting Middleware 演示")
     println("========================================")
