@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.28
+> **文档版本**: 2.29
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.28: Health Check 增强)
+> **更新日期**: 2026-05-04 (v2.29: Multi-DC 多数据中心支持)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -16,7 +16,7 @@
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 (10 warnings) | 2026-05-04 |
 | **单元测试** | ✅ 870+ 测试通过 | 2026-05-04 |
-| **完成度** | ✅ 100% (187/187 特性) | 2026-05-04 |
+| **完成度** | ✅ 100% (188/188 特性) | 2026-05-04 |
 
 ### 1.2 最新修复 (v2.26)
 
@@ -83,7 +83,7 @@
 | Core | actor, message, supervision, context | **97%** |
 | Runtime | mailbox, dispatcher, scheduler | **93%** |
 | Patterns | ask, backpressure, circuit_breaker, routing, typed, reliability, stash, pipe, scatter-gather | **100%** |
-| Distribution | remote, cluster, persistence, streaming, projections | **95%** |
+| Distribution | remote, cluster, persistence, streaming, projections | **98%** |
 | API | config, public, extensions, http, websocket | **95%** |
 
 ---
@@ -108,6 +108,7 @@
 | **Akka CoordinatedShutdown** | cactor.distribution.cluster | ✅ 100% | ✅ 协调关闭已实现 |
 | **Akka AdaptiveLoadBalancing** | cactor.distribution.cluster | ✅ 100% | ✅ 智能路由已实现 |
 | **Akka ClusterBootstrap** | cactor.distribution.cluster | ✅ 100% | ✅ 自动集群引导已实现 (v2.24) |
+| **Akka Multi-DC** | cactor.distribution.cluster | ✅ 100% | ✅ 多数据中心支持已实现 (v2.29) |
 | **Akka Remoting** | cactor.distribution.remote | ✅ 95% | ✅ TCP 连接层+心跳检测已实现 |
 | **Akka HTTP** | cactor.api.http | ✅ 100% | ✅ HTTP Server/Client 已实现 |
 | **Akka Streams** | cactor.distribution.streaming | ✅ 100% | ✅ GraphDSL 已实现 |
@@ -858,12 +859,12 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.25 Phase 25 完成 (Akka Rate Limiting)
+> **文档状态**: v2.29 Phase 29 完成 (Multi-DC 多数据中心支持)
 > **维护者**: CActor Team
-> **下一步**: Circuit Breaker 增强 / Health Check 完善
+> **下一步**: 限流中间件
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
-> **测试数量**: 20+ 个 Rate Limiting 测试
-> **说明**: Rate Limiting 实现三种限流算法：TokenBucket（支持突发）、SlidingWindow（滑动窗口）、FixedWindow（固定窗口）。
+> **测试数量**: 23 个 Multi-DC 测试
+> **说明**: Multi-DC 实现多数据中心支持，包括 DC 感知路由策略、故障转移管理、对标 Akka Cluster Multi-Datacenter。
 
 ---
 
@@ -884,6 +885,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | v2.25 | Rate Limiting 限流机制 | ✅ |
 | v2.26 | Circuit Breaker 事件监听增强 | ✅ |
 | v2.28 | Health Check 完善 | ✅ |
+| v2.29 | Multi-DC 多数据中心支持 | ✅ |
 
 ### Circuit Breaker v2.26 增强内容
 
@@ -905,9 +907,21 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | LivenessHealthCheck | 简单存活探针 |
 | HealthCheckRegistry | 健康检查注册表，支持注册/注销/批量检查 |
 
+### Multi-DC v2.29 实现内容
+
+| 功能 | 说明 |
+|------|------|
+| DatacenterId | 数据中心标识 (name + region) |
+| DcRole | DC 角色枚举 (PrimaryDC/BackupDC/ReadOnlyDC/Neutral) |
+| DcMemberInfo | DC 成员信息 (节点ID、数据中心、角色、状态、心跳) |
+| MultiDcConfig | Multi-DC 配置 (主DC、跨DC复制、DC感知路由、故障转移超时) |
+| DcMembershipManager | DC 成员管理器 (添加/移除成员、获取成员、心跳更新) |
+| DcRoutingStrategy | DC 路由策略 (LocalDCFirst/PrimaryDCOnly/AllDCs/RoundRobinAcrossDCs) |
+| DcAwareRouter | DC 感知路由器 (支持多种路由策略选择目标成员) |
+| DcFailoverManager | DC 故障转移管理器 (检查/执行故障转移、主DC恢复) |
+
 ### 后续可选功能
 
 | 功能 | 优先级 | 说明 |
 |------|--------|------|
-| Multi-DC 支持 | P2 | 多数据中心支持 |
 | 限流中间件 | P2 | HTTP/远程限流 |
