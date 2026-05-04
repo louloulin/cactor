@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.16
+> **文档版本**: 2.17
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.16: Akka Fleet Manager)
-> **基于**: akka2.md (v2.15: Lease 已实现)
+> **更新日期**: 2026-05-04 (v2.17: Akka Cluster Metrics)
+> **基于**: akka2.md (v2.16: Fleet Manager 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -592,9 +592,26 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.16 Phase 15 完成 (Akka Fleet Manager)
+#### Akka Cluster Metrics 实现详情 (v2.17 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| MetricValue class | ✅ | `src/distribution/cluster/cluster_metrics.cj` |
+| NodeMetrics class | ✅ | `src/distribution/cluster/cluster_metrics.cj` |
+| ClusterMetricsSnapshot class | ✅ | `src/distribution/cluster/cluster_metrics.cj` |
+| MetricsCollector interface | ✅ | `src/distribution/cluster/cluster_metrics.cj` |
+| MetricsEventHandler interface | ✅ | `src/distribution/cluster/cluster_metrics.cj` |
+| ClusterMetricsManager class | ✅ | `src/distribution/cluster/cluster_metrics.cj` |
+| StandardMetricsCollector class | ✅ | `src/distribution/cluster/cluster_metrics.cj` |
+| createClusterMetricsManager() | ✅ | `src/distribution/cluster/cluster_metrics.cj` |
+| Cluster Metrics 测试 | ✅ | `src/distribution/cluster/cluster_metrics_test.cj` (20+ 测试) |
+| Cluster Metrics 示例 | ✅ | `src/examples/cluster_metrics_demo/main.cj` |
+
+---
+
+> **文档状态**: v2.17 Phase 16 完成 (Akka Cluster Metrics)
 > **维护者**: CActor Team
-> **下一步**: 完善 Akka Cluster Metrics
+> **下一步**: 实现 Cluster Receptionist / 完善集群其他功能
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
-> **测试数量**: 25+ 个 FleetManager 测试
-> **说明**: Fleet Manager 用于管理集群节点的成员、状态和生命周期。
+> **测试数量**: 20+ 个 Cluster Metrics 测试
+> **说明**: Cluster Metrics 用于收集和分发集群节点指标，支持负载均衡路由。
