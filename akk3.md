@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.32
+> **文档版本**: 2.33
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.32: 示例程序补充)
+> **更新日期**: 2026-05-04 (v2.33: 更多示例程序)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -861,12 +861,12 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.32 Phase 32 完成 (示例程序补充)
+> **文档状态**: v2.33 Phase 33 完成 (更多示例程序)
 > **维护者**: CActor Team
 > **下一步**: (暂无)
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
-> **测试数量**: 30+ 个 Event Bus 测试
-> **说明**: 新增示例程序：event_bus_demo、file_watch_demo、health_check_demo，完善功能演示。
+> **示例数量**: 27+ 个示例程序
+> **说明**: 新增示例程序：circuit_breaker_demo、persistence_demo、cluster_sharding_demo，完善功能演示。
 
 ---
 
@@ -891,6 +891,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | v2.30 | Rate Limiting Middleware | ✅ |
 | v2.31 | Event Bus 事件总线 | ✅ |
 | v2.32 | 示例程序补充 | ✅ |
+| v2.33 | 更多示例程序 | ✅ |
 
 ### Circuit Breaker v2.26 增强内容
 
