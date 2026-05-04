@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.24
+> **文档版本**: 2.25
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.24: Akka ClusterBootstrap)
-> **基于**: akka2.md (v2.23: AdaptiveLoadBalancingPool 已实现)
+> **更新日期**: 2026-05-04 (v2.25: Rate Limiting)
+> **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -784,9 +784,28 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.24 Phase 23 完成 (Akka ClusterBootstrap)
+#### Akka Rate Limiting 实现详情 (v2.25 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| RateLimitResult enum | ✅ | `src/foundation/rate_limiting.cj` |
+| RateLimitConfig class | ✅ | `src/foundation/rate_limiting.cj` |
+| RateLimiter interface | ✅ | `src/foundation/rate_limiting.cj` |
+| TokenBucketRateLimiter class | ✅ | `src/foundation/rate_limiting.cj` |
+| SlidingWindowRateLimiter class | ✅ | `src/foundation/rate_limiting.cj` |
+| FixedWindowRateLimiter class | ✅ | `src/foundation/rate_limiting.cj` |
+| createTokenBucketLimiter() | ✅ | `src/foundation/rate_limiting.cj` |
+| createTokenBucketLimiterWithBurst() | ✅ | `src/foundation/rate_limiting.cj` |
+| createSlidingWindowLimiter() | ✅ | `src/foundation/rate_limiting.cj` |
+| createFixedWindowLimiter() | ✅ | `src/foundation/rate_limiting.cj` |
+| Rate Limiting 测试 | ✅ | `src/foundation/rate_limiting_test.cj` (20+ 测试) |
+| Rate Limiting 示例 | ✅ | `src/examples/rate_limiting_demo/main.cj` |
+
+---
+
+> **文档状态**: v2.25 Phase 24 完成 (Akka Rate Limiting)
 > **维护者**: CActor Team
-> **下一步**: 实现 TokenBucket / 完善其他功能
+> **下一步**: 实现 Dead Letter 机制 / 完善其他功能
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
-> **测试数量**: 25+ 个 ClusterBootstrap 测试
-> **说明**: ClusterBootstrap 实现自动集群引导，支持配置发现、DNS 发现、Kubernetes API 发现和静态种子节点列表四种发现机制。
+> **测试数量**: 20+ 个 Rate Limiting 测试
+> **说明**: Rate Limiting 实现三种限流算法：TokenBucket（支持突发）、SlidingWindow（滑动窗口）、FixedWindow（固定窗口）。
