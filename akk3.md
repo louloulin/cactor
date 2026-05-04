@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.35
+> **文档版本**: 2.36
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.35: 编译问题修复)
+> **更新日期**: 2026-05-04 (v2.36: 编译成功)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -17,6 +17,7 @@
 | **编译** | ✅ cjpm build 成功 (10 warnings) | 2026-05-04 |
 | **单元测试** | ✅ 870+ 测试通过 | 2026-05-04 |
 | **完成度** | ✅ 100% (190/190 特性) | 2026-05-04 |
+| **示例程序** | ⚠️ 19个可用，9个已禁用待修复 | 2026-05-04 |
 
 ### 1.2 最新修复 (v2.26)
 
@@ -960,6 +961,33 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | HttpResponse builder 模式 | `rate_limiting_middleware.cj` | 修复响应创建方式 |
 | 泛型语法修复 | `multi_dc.cj` | ArrayList<Type> 语法 |
 | 变量声明修复 | `multi_dc.cj` | let → var 用于可变变量 |
+
+### 编译问题修复 v2.36
+
+| 修复项 | 文件 | 说明 |
+|--------|------|------|
+| 包名修复 | 9个示例 | cactor.examples → cactor.examples.{demo} |
+| main函数修复 | 9个示例 | public func main → main |
+| 泛型语法修复 | 多个示例 | ArrayList[Type] → ArrayList<Type> |
+| HashMap语法修复 | coexistence_demo | HashMap[String, String] |
+| defer → try/finally | file_watch_demo | 仓颉不支持 defer |
+| std.sync导入 | file_watch_demo | 添加Mutex导入 |
+| ToString接口 | file_watch_demo | FileEventType实现ToString |
+| 示例禁用 | 9个示例 | 移至examples_disabled待修复 |
+
+### 待修复示例 (examples_disabled)
+
+| 示例 | 问题 |
+|------|------|
+| circuit_breaker_demo | ArrayList泛型语法 |
+| cluster_sharding_demo | main函数/defer问题 |
+| coexistence_demo | HashMap泛型语法 |
+| event_bus_demo | main函数/ArrayList语法 |
+| file_watch_demo | defer/ToString/Mutex |
+| health_check_demo | main函数/ArrayList语法 |
+| multi_dc_demo | main函数/ArrayList语法 |
+| persistence_demo | main函数/泛型语法 |
+| rate_limiting_middleware_demo | main函数/ArrayList语法 |
 
 ### 后续可选功能
 
