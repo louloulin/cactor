@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.17
+> **文档版本**: 2.18
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.17: Akka Cluster Metrics)
-> **基于**: akka2.md (v2.16: Fleet Manager 已实现)
+> **更新日期**: 2026-05-04 (v2.18: Akka DistributedPubSub)
+> **基于**: akka2.md (v2.17: Cluster Metrics 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -609,9 +609,28 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.17 Phase 16 完成 (Akka Cluster Metrics)
+#### Akka DistributedPubSub 实现详情 (v2.18 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| PubSubMessageType enum | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| PubSubMessage class | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| Subscriber class | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| TopicManager class | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| NodeRegistration class | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| PubSubEventHandler interface | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| DistributedPubSubMediator class | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| PubSubConfig class | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| createDistributedPubSubMediator() | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| createDefaultPubSubConfig() | ✅ | `src/distribution/cluster/distributed_pubsub.cj` |
+| DistributedPubSub 测试 | ✅ | `src/distribution/cluster/distributed_pubsub_test.cj` (25+ 测试) |
+| DistributedPubSub 示例 | ✅ | `src/examples/pubsub_demo/main.cj` |
+
+---
+
+> **文档状态**: v2.18 Phase 17 完成 (Akka DistributedPubSub)
 > **维护者**: CActor Team
-> **下一步**: 实现 Cluster Receptionist / 完善集群其他功能
+> **下一步**: 实现 AtLeastOnceDelivery / ClusterReceptionist
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
-> **测试数量**: 20+ 个 Cluster Metrics 测试
-> **说明**: Cluster Metrics 用于收集和分发集群节点指标，支持负载均衡路由。
+> **测试数量**: 25+ 个 DistributedPubSub 测试
+> **说明**: DistributedPubSub 实现集群范围内的发布-订阅消息传递，支持主题管理和分组订阅。
