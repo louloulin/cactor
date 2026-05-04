@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.15
+> **文档版本**: 2.16
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.15: Akka Coordination Lease 机制)
-> **基于**: akka2.md (v2.14: DowningProvider 已实现)
+> **更新日期**: 2026-05-04 (v2.16: Akka Fleet Manager)
+> **基于**: akka2.md (v2.15: Lease 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -572,7 +572,29 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 > **文档状态**: v2.15 Phase 14 完成 (Akka Coordination Lease)
 > **维护者**: CActor Team
-> **下一步**: 完善 Akka Cluster Fleet Manager
+> **下一步**: 完善 Akka Cluster Metrics
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
 > **测试数量**: 20+ 个 Lease 测试
 > **说明**: Lease 机制用于分布式协调，确保同一时刻只有一个节点执行特定操作。
+
+#### Akka Fleet Manager 实现详情 (v2.16 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| NodeHealth enum | ✅ | `src/distribution/cluster/fleet_manager.cj` |
+| FleetNode class | ✅ | `src/distribution/cluster/fleet_manager.cj` |
+| FleetEvent enum | ✅ | `src/distribution/cluster/fleet_manager.cj` |
+| FleetEventHandler interface | ✅ | `src/distribution/cluster/fleet_manager.cj` |
+| FleetConfig class | ✅ | `src/distribution/cluster/fleet_manager.cj` |
+| FleetManager class | ✅ | `src/distribution/cluster/fleet_manager.cj` |
+| createFleetManager() | ✅ | `src/distribution/cluster/fleet_manager.cj` |
+| FleetManager 测试 | ✅ | `src/distribution/cluster/fleet_manager_test.cj` (25+ 测试) |
+
+---
+
+> **文档状态**: v2.16 Phase 15 完成 (Akka Fleet Manager)
+> **维护者**: CActor Team
+> **下一步**: 完善 Akka Cluster Metrics
+> **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
+> **测试数量**: 25+ 个 FleetManager 测试
+> **说明**: Fleet Manager 用于管理集群节点的成员、状态和生命周期。
