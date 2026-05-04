@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.31
+> **文档版本**: 2.32
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.31: Event Bus 事件总线)
+> **更新日期**: 2026-05-04 (v2.32: 示例程序补充)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -861,12 +861,12 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.31 Phase 31 完成 (Event Bus 事件总线)
+> **文档状态**: v2.32 Phase 32 完成 (示例程序补充)
 > **维护者**: CActor Team
 > **下一步**: (暂无)
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
 > **测试数量**: 30+ 个 Event Bus 测试
-> **说明**: Event Bus 实现基于分类的发布-订阅事件分发机制，对标 Akka EventBus，支持集群事件类型。
+> **说明**: 新增示例程序：event_bus_demo、file_watch_demo、health_check_demo，完善功能演示。
 
 ---
 
@@ -890,6 +890,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | v2.29 | Multi-DC 多数据中心支持 | ✅ |
 | v2.30 | Rate Limiting Middleware | ✅ |
 | v2.31 | Event Bus 事件总线 | ✅ |
+| v2.32 | 示例程序补充 | ✅ |
 
 ### Circuit Breaker v2.26 增强内容
 
