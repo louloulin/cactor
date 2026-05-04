@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.13
+> **文档版本**: 2.15
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-03 (v2.13: Akka Discovery 服务发现)
-> **基于**: akka2.md (v2.13: 编译成功, 99%完成)
+> **更新日期**: 2026-05-04 (v2.15: Akka Coordination Lease 机制)
+> **基于**: akka2.md (v2.14: DowningProvider 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -68,7 +68,7 @@
 |-----------|-------------|------|----------|
 | **Akka Actor** | cactor.core.actor | 97% | 基础 Actor 模型已实现 |
 | **Akka Typed** | cactor.patterns.typed | 90% | 强类型 Actor 已实现 |
-| **Akka Cluster** | cactor.distribution.cluster | ✅ 98% | 集群成员管理+DowningProvider已实现 |
+| **Akka Cluster** | cactor.distribution.cluster | ✅ 99% | 集群成员管理+DowningProvider+Lease已实现 |
 | **Akka Cluster Sharding** | cactor.distribution.cluster | ✅ 95% | ✅ HA ShardCoordinator 已实现 |
 | **Akka Discovery** | cactor.distribution.cluster | ✅ 90% | ✅ 服务发现实现 |
 | **Akka Persistence** | cactor.distribution.persistence | ✅ 95% | ✅ 文件系统后端已实现 |
@@ -553,11 +553,26 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | createStaticQuorumDowningProvider() | ✅ | `src/distribution/cluster/downing_provider.cj` |
 | DowningProvider 测试 | ✅ | `src/distribution/cluster/downing_provider_test.cj` (20+ 测试) |
 
+#### Akka Coordination Lease 实现详情 (v2.15 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| LeaseState enum | ✅ | `src/distribution/cluster/lease.cj` |
+| LeaseResult class | ✅ | `src/distribution/cluster/lease.cj` |
+| LeaseEventHandler interface | ✅ | `src/distribution/cluster/lease.cj` |
+| Lease interface | ✅ | `src/distribution/cluster/lease.cj` |
+| LeaseConfig class | ✅ | `src/distribution/cluster/lease.cj` |
+| SingleOwnerLease class | ✅ | `src/distribution/cluster/lease.cj` |
+| LeaseManager class | ✅ | `src/distribution/cluster/lease.cj` |
+| createSingleOwnerLease() | ✅ | `src/distribution/cluster/lease.cj` |
+| createLeaseManager() | ✅ | `src/distribution/cluster/lease.cj` |
+| Lease 测试 | ✅ | `src/distribution/cluster/lease_test.cj` (20+ 测试) |
+
 ---
 
-> **文档状态**: v2.14 Phase 13 完成 (Akka Cluster Downing Provider)
+> **文档状态**: v2.15 Phase 14 完成 (Akka Coordination Lease)
 > **维护者**: CActor Team
-> **下一步**: 完善 Akka Cluster Split-Brain Resolver
+> **下一步**: 完善 Akka Cluster Fleet Manager
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
-> **测试数量**: 20+ 个 DowningProvider 测试
-> **说明**: DowningProvider 源码语法正确，实现完整。SDK 链接问题为 Cangjie 工具链环境问题。
+> **测试数量**: 20+ 个 Lease 测试
+> **说明**: Lease 机制用于分布式协调，确保同一时刻只有一个节点执行特定操作。
