@@ -2,7 +2,7 @@
  * Copyright (c) 2024. All rights reserved.
  * CActor - Event Bus 单元测试
  */
-package cactor.patterns.eventbus
+package cactor.patterns.event_bus
 
 import std.collection.*
 import std.time.*

@@ -166,7 +166,10 @@ public class RateLimitingMiddleware {
      */
     private func getOrCreateClientLimiter(clientId: String): TokenBucketRateLimiter {
         lock.writeMutex.lock()
-        defer { lock.writeMutex.unlock() }
+        try {
+        } finally {
+            lock.writeMutex.unlock()
+        }
 
         match (clientLimiters.get(clientId)) {
             case Some(limiter) => limiter
@@ -224,11 +227,11 @@ public class RateLimitingMiddleware {
         let _ = headers.add("X-RateLimit-Limit", config.requestsPerSecond.toString())
         let _ = headers.add("X-RateLimit-Remaining", "0")
 
-        HttpResponse(
-            HttpStatus.TooManyRequests,
-            headers,
-            Array<UInt8>(0, { i: Int64 => 0u8 })
-        )
+        HttpResponse(HttpStatus.ServiceUnavailable)
+            .withHeader("Content-Type", "application/json")
+            .withHeader("Retry-After", config.responseConfig.retryAfterSeconds.toString())
+            .withHeader("X-RateLimit-Limit", config.requestsPerSecond.toString())
+            .withHeader("X-RateLimit-Remaining", "0")
     }
 
     /**

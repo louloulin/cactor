@@ -4,7 +4,7 @@
  * 对标 Akka EventBus
  * 提供发布-订阅模式的事件分发机制
  */
-package cactor.patterns.eventbus
+package cactor.patterns.event_bus
 
 import std.collection.*
 import std.sync.*
@@ -154,7 +154,6 @@ public class SubclassificationBasedEventBus <: EventBus {
 
     public func subscribe(subscriber: Subscriber, classifier: String): Bool {
         lock.writeMutex.lock()
-        defer { lock.writeMutex.unlock() }
 
         match (subscriberMap.get(classifier)) {
             case Some(list) =>
@@ -176,7 +175,6 @@ public class SubclassificationBasedEventBus <: EventBus {
 
     public func unsubscribe(subscriber: Subscriber, classifier: String): Bool {
         lock.writeMutex.lock()
-        defer { lock.writeMutex.unlock() }
 
         match (subscriberMap.get(classifier)) {
             case Some(list) =>
@@ -200,7 +198,6 @@ public class SubclassificationBasedEventBus <: EventBus {
 
     public func unsubscribeAll(subscriber: Subscriber): Unit {
         lock.writeMutex.lock()
-        defer { lock.writeMutex.unlock() }
 
         let sid = subscriber.subscriberId()
         let newMap = HashMap<Classifier, ArrayList<Subscriber>>()
@@ -287,7 +284,7 @@ public class SubclassificationBasedEventBus <: EventBus {
 /**
  * 集群事件类型
  */
-public enum ClusterEventType {
+public enum ClusterEventType <: ToString {
     | MemberJoined
     | MemberUp
     | MemberLeft
@@ -297,6 +294,20 @@ public enum ClusterEventType {
     | LeaderChanged
     | RoleMemberChanged
     | DataCenterChanged
+
+    public func toString(): String {
+        match (this) {
+            case MemberJoined => "MemberJoined"
+            case MemberUp => "MemberUp"
+            case MemberLeft => "MemberLeft"
+            case MemberRemoved => "MemberRemoved"
+            case MemberUnreachable => "MemberUnreachable"
+            case MemberReachable => "MemberReachable"
+            case LeaderChanged => "LeaderChanged"
+            case RoleMemberChanged => "RoleMemberChanged"
+            case DataCenterChanged => "DataCenterChanged"
+        }
+    }
 }
 
 /**
@@ -338,7 +349,33 @@ public class ClusterEvent <: EventClassifier {
  * 集群事件总线
  * 专门用于集群事件的分发
  */
-public class ClusterEventBus <: SubclassificationBasedEventBus {
+public class ClusterEventBus <: EventBus {
+    private let delegate: SubclassificationBasedEventBus
+
+    public init() {
+        this.delegate = SubclassificationBasedEventBus()
+    }
+
+    public func publish(event: Event): Unit {
+        delegate.publish(event)
+    }
+
+    public func subscribe(subscriber: Subscriber, classifier: String): Bool {
+        delegate.subscribe(subscriber, classifier)
+    }
+
+    public func unsubscribe(subscriber: Subscriber, classifier: String): Bool {
+        delegate.unsubscribe(subscriber, classifier)
+    }
+
+    public func unsubscribeAll(subscriber: Subscriber): Unit {
+        delegate.unsubscribeAll(subscriber)
+    }
+
+    public func publishToClassifier(event: Event, classifier: String): Unit {
+        delegate.publishToClassifier(event, classifier)
+    }
+
     /**
      * 订阅成员变更事件
      */

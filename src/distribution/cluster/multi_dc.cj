@@ -135,7 +135,7 @@ public class DcMembershipManager {
     private let members: HashMap<String, DcMemberInfo>
     private let datacenters: HashMap<String, ArrayList<String>>
     private let lock: ReentrantReadWriteMutex
-    private let events: ArrayList[DcMembershipEvent]
+    private let events: ArrayList<DcMembershipEvent>
 
     public init(config: MultiDcConfig) {
         this.config = config
@@ -322,7 +322,7 @@ public class DcMembershipManager {
      */
     public func getRecentEvents(count: Int64): ArrayList<DcMembershipEvent> {
         lock.readMutex.lock()
-        let result = ArrayList[DcMembershipEvent]()
+        let result = ArrayList<DcMembershipEvent>()
         let start = if (events.size > count) { events.size - count } else { 0 }
         var i = start
         while (i < events.size) {
@@ -540,23 +540,28 @@ public class DcFailoverManager {
      */
     public func executeFailover(): Option<String> {
         lock.lock()
-        defer { lock.unlock() }
-
-        if (!shouldFailover()) {
-            return None
-        }
-
-        let dcs = manager.getDatacenters()
-        for (dc in dcs) {
-            if (dc != config.primaryDC) {
-                let count = manager.getMemberCount(dc)
-                if (count > 0) {
-                    primaryDCAvailable.store(false)
-                    return Some(dc)
+        var result: Option<String>
+        try {
+            if (!shouldFailover()) {
+                result = None
+            } else {
+                let dcs = manager.getDatacenters()
+                for (dc in dcs) {
+                    if (dc != config.primaryDC) {
+                        let count = manager.getMemberCount(dc)
+                        if (count > 0) {
+                            primaryDCAvailable.store(false)
+                            result = Some(dc)
+                            return result
+                        }
+                    }
                 }
+                result = None
             }
+        } finally {
+            lock.unlock()
         }
-        None
+        result
     }
 
     /**

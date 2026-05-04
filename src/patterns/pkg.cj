@@ -15,4 +15,4 @@ import cactor.patterns.reliability.*
 import cactor.patterns.stash.*
 import cactor.patterns.pipe.*
 import cactor.patterns.coexistence.*
-import cactor.patterns.eventbus.*
+import cactor.patterns.event_bus.*
