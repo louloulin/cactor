@@ -70,9 +70,16 @@
 | **Akka Typed** | cactor.patterns.typed | 90% | 强类型 Actor 已实现 |
 | **Akka Cluster** | cactor.distribution.cluster | ✅ 99% | 集群成员管理+DowningProvider+Lease已实现 |
 | **Akka Cluster Sharding** | cactor.distribution.cluster | ✅ 95% | ✅ HA ShardCoordinator 已实现 |
-| **Akka Discovery** | cactor.distribution.cluster | ✅ 90% | ✅ 服务发现实现 |
+| **Akka Discovery** | cactor.distribution.cluster | ✅ 90% | ✅ 服务发现+ClusterBootstrap已实现 |
 | **Akka Persistence** | cactor.distribution.persistence | ✅ 95% | ✅ 文件系统后端已实现 |
 | **Akka Distributed Data** | cactor.distribution.cluster/crdt | ✅ 90% | ✅ GSet/Flag/ORMap/2P-Set/MVRegister/RWSequence 已实现 |
+| **Akka DistributedPubSub** | cactor.distribution.cluster | ✅ 100% | ✅ 发布订阅已实现 |
+| **Akka AtLeastOnceDelivery** | cactor.distribution.cluster | ✅ 100% | ✅ 可靠投递已实现 |
+| **Akka ClusterReceptionist** | cactor.distribution.cluster | ✅ 100% | ✅ 服务发现已实现 |
+| **Akka ClusterClient** | cactor.distribution.cluster | ✅ 100% | ✅ 外部客户端通信已实现 |
+| **Akka CoordinatedShutdown** | cactor.distribution.cluster | ✅ 100% | ✅ 协调关闭已实现 |
+| **Akka AdaptiveLoadBalancing** | cactor.distribution.cluster | ✅ 100% | ✅ 智能路由已实现 |
+| **Akka ClusterBootstrap** | cactor.distribution.cluster | ✅ 100% | ✅ 自动集群引导已实现 (v2.24) |
 | **Akka Remoting** | cactor.distribution.remote | ✅ 95% | ✅ TCP 连接层+心跳检测已实现 |
 | **Akka HTTP** | cactor.api.http | ✅ 100% | ✅ HTTP Server/Client 已实现 |
 | **Akka Streams** | cactor.distribution.streaming | ✅ 100% | ✅ GraphDSL 已实现 |
@@ -84,6 +91,9 @@
 | **Akka RecipientList** | cactor.patterns.routing | ✅ 100% | ✅ 动态接收者列表，支持过滤器 |
 | **Akka TailChopping** | cactor.patterns.routing | ✅ 100% | ✅ 依次尝试接收者，快速失败 |
 | **Akka Coexistences** | cactor.patterns.coexistence | ✅ 100% | ✅ 多 ActorSystem 桥接、类型适配、混合路由 |
+| **Akka DeadLetter** | cactor.patterns.reliability | ✅ 100% | ✅ 死信通道+监听器已实现 |
+| **Akka Rate Limiting** | cactor.foundation | ✅ 100% | ✅ TokenBucket/SlidingWindow/FixedWindow已实现 (v2.25) |
+| **Akka Cluster Metrics** | cactor.distribution.cluster | ✅ 100% | ✅ 指标收集已实现 (v2.17) |
 
 ---
 
@@ -445,6 +455,23 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | CoexistenceConfig struct | ✅ | `src/patterns/coexistence/coexistence.cj` |
 | Coexistences 测试 | ✅ | `src/patterns/coexistence/coexistence_test.cj` (15+ 测试) |
 
+#### Reliability 模块实现详情 (已有)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| DeadLetterReason enum | ✅ | `src/patterns/reliability/reliability.cj` |
+| DeadLetter class | ✅ | `src/patterns/reliability/reliability.cj` |
+| DeadLetterListener interface | ✅ | `src/patterns/reliability/reliability.cj` |
+| DeadLetterChannel class | ✅ | `src/patterns/reliability/reliability.cj` |
+| Acknowledgement enum | ✅ | `src/patterns/reliability/reliability.cj` |
+| AckTracker class | ✅ | `src/patterns/reliability/reliability.cj` |
+| RetryStrategy interface | ✅ | `src/patterns/reliability/reliability.cj` |
+| ExponentialBackoffRetry class | ✅ | `src/patterns/reliability/reliability.cj` |
+| FixedDelayRetry class | ✅ | `src/patterns/reliability/reliability.cj` |
+| ReliableMessageSender class | ✅ | `src/patterns/reliability/reliability.cj` |
+| MessageBuffer class | ✅ | `src/patterns/reliability/reliability.cj` |
+| Reliability 测试 | ✅ | `src/patterns/reliability/reliability_test.cj` (35+ 测试) |
+
 #### 示例程序 (新增)
 
 | 示例 | 描述 | 文件 |
@@ -803,9 +830,36 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.25 Phase 24 完成 (Akka Rate Limiting)
+> **文档状态**: v2.25 Phase 25 完成 (Akka Rate Limiting)
 > **维护者**: CActor Team
-> **下一步**: 实现 Dead Letter 机制 / 完善其他功能
+> **下一步**: Circuit Breaker 增强 / Health Check 完善
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
 > **测试数量**: 20+ 个 Rate Limiting 测试
 > **说明**: Rate Limiting 实现三种限流算法：TokenBucket（支持突发）、SlidingWindow（滑动窗口）、FixedWindow（固定窗口）。
+
+---
+
+## 十一、v2.24-v2.25 功能总结
+
+### 已完成功能
+
+| 版本 | 功能 | 状态 |
+|------|------|------|
+| v2.17 | Cluster Metrics 指标收集 | ✅ |
+| v2.18 | DistributedPubSub 发布订阅 | ✅ |
+| v2.19 | AtLeastOnceDelivery 可靠投递 | ✅ |
+| v2.20 | ClusterReceptionist 服务发现 | ✅ |
+| v2.21 | ClusterClient 外部客户端通信 | ✅ |
+| v2.22 | CoordinatedShutdown 协调关闭 | ✅ |
+| v2.23 | AdaptiveLoadBalancingPool 智能路由 | ✅ |
+| v2.24 | ClusterBootstrap 自动集群引导 | ✅ |
+| v2.25 | Rate Limiting 限流机制 | ✅ |
+
+### 后续可选功能
+
+| 功能 | 优先级 | 说明 |
+|------|--------|------|
+| Circuit Breaker 增强 | P1 | 完善熔断器功能 |
+| Health Check 完善 | P2 | 增强健康检查 |
+| Multi-DC 支持 | P2 | 多数据中心支持 |
+| 限流中间件 | P2 | HTTP/远程限流 |
