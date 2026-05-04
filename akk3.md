@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.34
+> **文档版本**: 2.35
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.34: Coexistence 示例程序)
+> **更新日期**: 2026-05-04 (v2.35: 编译问题修复)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -945,9 +945,21 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 |------|------|
 | EventBus 接口 | 事件总线接口定义 |
 | SubclassificationBasedEventBus | 基于分类的事件总线实现 |
-| ClusterEventBus | 集群事件总线 |
+| ClusterEventBus | 集群事件总线 (使用组合模式) |
 | ClusterEvent | 集群事件类型 |
 | EventBusFactory | 事件总线工厂 |
+
+### 编译问题修复 v2.35
+
+| 修复项 | 文件 | 说明 |
+|--------|------|------|
+| ClusterEventBus 组合模式 | `event_bus.cj` | 改用组合代替继承 |
+| ToString 接口实现 | `event_bus.cj` | ClusterEventType enum 实现 ToString |
+| defer → try/finally | `rate_limiting_middleware.cj` | 仓颉不支持 defer |
+| defer → try/finally | `multi_dc.cj` | 仓颉不支持 defer |
+| HttpResponse builder 模式 | `rate_limiting_middleware.cj` | 修复响应创建方式 |
+| 泛型语法修复 | `multi_dc.cj` | ArrayList<Type> 语法 |
+| 变量声明修复 | `multi_dc.cj` | let → var 用于可变变量 |
 
 ### 后续可选功能
 
