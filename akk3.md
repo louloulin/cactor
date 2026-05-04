@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.22
+> **文档版本**: 2.23
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.22: Akka CoordinatedShutdown)
-> **基于**: akka2.md (v2.21: ClusterClient 已实现)
+> **更新日期**: 2026-05-04 (v2.23: Akka AdaptiveLoadBalancingPool)
+> **基于**: akka2.md (v2.22: CoordinatedShutdown 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -735,3 +735,28 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
 > **测试数量**: 25+ 个 CoordinatedShutdown 测试
 > **说明**: CoordinatedShutdown 实现集群节点的有序协调关闭，支持多阶段关闭和失败处理。
+
+#### Akka AdaptiveLoadBalancingPool 实现详情 (v2.23 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| LoadMetric enum | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| LoadInfo class | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| RoutingDecision class | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| AdaptiveLoadBalancingConfig class | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| AdaptiveLoadBalancingPool class | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| createAdaptiveLoadBalancingPool() | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| createAdaptiveLoadBalancingPoolWithConfig() | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| createDefaultAdaptiveLoadBalancingConfig() | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| createLoadBalancingConfigWithMetrics() | ✅ | `src/distribution/cluster/adaptive_load_balancing.cj` |
+| AdaptiveLoadBalancing 测试 | ✅ | `src/distribution/cluster/adaptive_load_balancing_test.cj` (25+ 测试) |
+| AdaptiveLoadBalancing 示例 | ✅ | `src/examples/load_balancing_demo/main.cj` |
+
+---
+
+> **文档状态**: v2.23 Phase 22 完成 (Akka AdaptiveLoadBalancingPool)
+> **维护者**: CActor Team
+> **下一步**: 实现 ClusterBootstrap / 完善其他功能
+> **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
+> **测试数量**: 25+ 个 AdaptiveLoadBalancing 测试
+> **说明**: AdaptiveLoadBalancingPool 基于集群指标实现智能路由，根据 CPU、内存、堆使用率动态选择最佳节点。
