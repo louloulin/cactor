@@ -103,46 +103,72 @@ public func demonstrateBasicCircuitBreaker(): Unit {
 }
 
 /**
+ * 简单事件监听器实现
+ */
+public class SimpleCircuitBreakerListener <: CircuitBreakerEventListener {
+    public let events: ArrayList<CircuitBreakerEvent>
+
+    public init() {
+        this.events = ArrayList<CircuitBreakerEvent>()
+    }
+
+    public func onStateTransition(event: CircuitBreakerEvent): Unit {
+        events.add(event)
+        let fromStr = match (event.fromState) {
+            case CircuitBreakerState.Closed => "Closed"
+            case CircuitBreakerState.Open => "Open"
+            case CircuitBreakerState.HalfOpen => "HalfOpen"
+        }
+        let toStr = match (event.toState) {
+            case CircuitBreakerState.Closed => "Closed"
+            case CircuitBreakerState.Open => "Open"
+            case CircuitBreakerState.HalfOpen => "HalfOpen"
+        }
+        println("  [断路器事件] ${fromStr} -> ${toStr}")
+    }
+}
+
+/**
  * 演示带事件监听的断路器
  */
 public func demonstrateEventPublishingCircuitBreaker(): Unit {
     println("=== 带事件监听的断路器演示 ===")
 
     let service = MockService()
-    let events = ArrayList<CircuitBreakerEvent>()
+    let listener = SimpleCircuitBreakerListener()
 
-    let listener = object <: CircuitBreakerEventListener {
-        public func onEvent(event: CircuitBreakerEvent): Unit {
-            events.add(event)
-            println("  [断路器事件] ${event}")
-        }
-    }
-
-    let cb = EventPublishingCircuitBreaker(
-        maxFailures: 2,
-        callTimeout: Duration.second,
-        resetTimeout: Duration.second * 3
+    let cb = EventPublishingCircuitBreaker<Int64>(
+        CircuitBreakerConfig(2, 1, Duration.second, Duration.second * 3)
     ).withListener(listener)
 
-    println("初始状态: ${cb.state()}")
+    println("初始状态: Closed")
     println()
 
     // 第一次失败
     println("调用 1 (会失败):")
     service.setFailure(true)
-    let _ = cb.callProtected({ () => service.call() })
+    try {
+        cb.execute({ => service.call() })
+    } catch (_: Exception) {
+        println("  调用失败")
+    }
 
-    // 第二次失败
+    // 第二次失败 - 应该打开断路器
     println("调用 2 (会失败):")
-    let _ = cb.callProtected({ () => service.call() })
-
-    // 第三次失败 - 应该打开断路器
-    println("调用 3 (会失败):")
-    let _ = cb.callProtected({ () => service.call() })
+    try {
+        cb.execute({ => service.call() })
+    } catch (_: Exception) {
+        println("  调用失败")
+    }
 
     println()
-    println("断路器状态: ${cb.state()}")
-    println("收集到的事件数: ${events.size}")
+    let stateStr = match (cb.getState()) {
+        case CircuitBreakerState.Closed => "Closed"
+        case CircuitBreakerState.Open => "Open"
+        case CircuitBreakerState.HalfOpen => "HalfOpen"
+    }
+    println("断路器状态: ${stateStr}")
+    println("收集到的事件数: ${listener.events.size}")
     println()
 }
 
@@ -274,7 +300,7 @@ public func demonstrateCircuitBreakerUtil(): Unit {
 
     println("使用 CircuitBreakerUtil.callProtected:")
 
-    let result = CircuitBreakerUtil.callProtected(cb, { () => service.call() })
+    let result = CircuitBreakerUtil.callProtected(cb, { => service.call() })
     match (result) {
         case CircuitBreakerResult.Success(msg) =>
             println("  结果: 成功 - ${msg}")
