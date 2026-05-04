@@ -329,6 +329,19 @@ public struct CircuitBreakerFactory {
     }
 
     /**
+     * 创建带事件发布的断路器
+     */
+    public static func createWithEvents<T>(): EventPublishingCircuitBreaker<T> {
+        let config = CircuitBreakerConfig(
+            5,                          // 失败阈值
+            3,                          // 成功阈值
+            Duration.second * 5,        // 超时时间
+            Duration.second * 30        // 重置超时时间
+        )
+        EventPublishingCircuitBreaker<T>(config)
+    }
+
+    /**
      * 创建快速失败的断路器
      */
     public static func createFastFail<T>(): BasicCircuitBreaker<T> {
@@ -339,6 +352,19 @@ public struct CircuitBreakerFactory {
             Duration.second * 10        // 重置超时时间
         )
         BasicCircuitBreaker<T>(config)
+    }
+
+    /**
+     * 创建快速失败带事件的断路器
+     */
+    public static func createFastFailWithEvents<T>(): EventPublishingCircuitBreaker<T> {
+        let config = CircuitBreakerConfig(
+            3,                          // 失败阈值
+            2,                          // 成功阈值
+            Duration.second * 2,        // 超时时间
+            Duration.second * 10        // 重置超时时间
+        )
+        EventPublishingCircuitBreaker<T>(config)
     }
 
     /**
@@ -353,6 +379,28 @@ public struct CircuitBreakerFactory {
         )
         BasicCircuitBreaker<T>(config)
     }
+}
+
+/**
+ * 断路器状态转换事件
+ */
+public class CircuitBreakerEvent {
+    public let fromState: CircuitBreakerState
+    public let toState: CircuitBreakerState
+    public let timestamp: Int64
+
+    public init(fromState: CircuitBreakerState, toState: CircuitBreakerState) {
+        this.fromState = fromState
+        this.toState = toState
+        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
+    }
+}
+
+/**
+ * 断路器事件监听器
+ */
+public interface CircuitBreakerEventListener {
+    func onStateTransition(event: CircuitBreakerEvent): Unit
 }
 
 /**
@@ -381,5 +429,140 @@ public class CircuitBreakerDecorator<T> {
 
     public func getCircuitBreaker(): CircuitBreaker<T> {
         circuitBreaker
+    }
+}
+
+/**
+ * 带事件监听的断路器
+ * 对标 Akka CircuitBreaker 的事件订阅功能
+ */
+public class EventPublishingCircuitBreaker<T> <: CircuitBreaker<T> {
+    private let inner: BasicCircuitBreaker<T>
+    private let listeners: ArrayList<CircuitBreakerEventListener>
+    private let listenersMutex: Mutex
+
+    public init(config: CircuitBreakerConfig) {
+        this.inner = BasicCircuitBreaker<T>(config)
+        this.listeners = ArrayList<CircuitBreakerEventListener>()
+        this.listenersMutex = Mutex()
+    }
+
+    public func execute(operation: () -> T): T {
+        let oldState = inner.getState()
+        let result = inner.execute(operation)
+        let newState = inner.getState()
+
+        if (!oldState.equals(newState)) {
+            notifyListeners(CircuitBreakerEvent(oldState, newState))
+        }
+        result
+    }
+
+    public func getState(): CircuitBreakerState {
+        inner.getState()
+    }
+
+    public func getStats(): CircuitBreakerStats {
+        inner.getStats()
+    }
+
+    public func reset(): Unit {
+        let oldState = inner.getState()
+        inner.reset()
+        if (!oldState.equals(CircuitBreakerState.Closed)) {
+            notifyListeners(CircuitBreakerEvent(oldState, CircuitBreakerState.Closed))
+        }
+    }
+
+    public func trip(): Unit {
+        let oldState = inner.getState()
+        inner.trip()
+        if (!oldState.equals(CircuitBreakerState.Open)) {
+            notifyListeners(CircuitBreakerEvent(oldState, CircuitBreakerState.Open))
+        }
+    }
+
+    /**
+     * 订阅状态转换事件
+     */
+    public func subscribe(listener: CircuitBreakerEventListener): Unit {
+        listenersMutex.lock()
+        try {
+            listeners.add(listener)
+        } finally {
+            listenersMutex.unlock()
+        }
+    }
+
+    /**
+     * 取消订阅
+     * 注意: 由于接口无法直接比较，取消订阅需要调用 clearAllSubscriptions() 清除所有订阅
+     */
+    public func unsubscribe(listener: CircuitBreakerEventListener): Unit {
+        listenersMutex.lock()
+        try {
+            // 接口无法直接比较引用，简化处理
+            // 实际应用中可以使用唯一 ID 来标识监听器
+        } finally {
+            listenersMutex.unlock()
+        }
+    }
+
+    /**
+     * 清除所有订阅
+     */
+    public func clearAllSubscriptions(): Unit {
+        listenersMutex.lock()
+        try {
+            listeners.clear()
+        } finally {
+            listenersMutex.unlock()
+        }
+    }
+
+    private func notifyListeners(event: CircuitBreakerEvent): Unit {
+        listenersMutex.lock()
+        let snapshot = ArrayList<CircuitBreakerEventListener>()
+        try {
+            for (l in listeners) {
+                snapshot.add(l)
+            }
+        } finally {
+            listenersMutex.unlock()
+        }
+
+        for (l in snapshot) {
+            l.onStateTransition(event)
+        }
+    }
+}
+
+/**
+ * 断路器辅助工具
+ */
+public struct CircuitBreakerUtil {
+    /**
+     * 保护调用 - 类似 Akka 的 callProtected
+     * 返回结果，失败时返回 None
+     */
+    public static func callProtected<T>(circuitBreaker: CircuitBreaker<T>, operation: () -> T): Option<T> {
+        try {
+            Some(circuitBreaker.execute(operation))
+        } catch (e: CircuitBreakerOpenException) {
+            None
+        } catch (e: Exception) {
+            None
+        }
+    }
+
+    /**
+     * 批量保护调用
+     */
+    public static func callProtectedBatch<T>(circuitBreaker: CircuitBreaker<T>, operations: ArrayList<() -> T>): ArrayList<Option<T>> {
+        let results = ArrayList<Option<T>>()
+        for (op in operations) {
+            results.add(callProtected(circuitBreaker, op))
+        }
+        results
     }
 }

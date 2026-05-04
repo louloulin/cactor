@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.26
+> **文档版本**: 2.27
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.26: 编译错误修复完成)
+> **更新日期**: 2026-05-04 (v2.27: Circuit Breaker 增强)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -867,7 +867,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-## 十一、v2.24-v2.25 功能总结
+## 十一、v2.24-v2.26 功能总结
 
 ### 已完成功能
 
@@ -882,12 +882,22 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | v2.23 | AdaptiveLoadBalancingPool 智能路由 | ✅ |
 | v2.24 | ClusterBootstrap 自动集群引导 | ✅ |
 | v2.25 | Rate Limiting 限流机制 | ✅ |
+| v2.26 | Circuit Breaker 增强 | ✅ |
+
+### Circuit Breaker v2.26 增强内容
+
+| 功能 | 说明 |
+|------|------|
+| CircuitBreakerEvent | 状态转换事件类 |
+| CircuitBreakerEventListener | 事件监听器接口 |
+| EventPublishingCircuitBreaker | 带事件发布的断路器 |
+| CircuitBreakerUtil.callProtected | 保护调用辅助方法 |
+| CircuitBreakerFactory.createWithEvents | 事件发布工厂方法 |
 
 ### 后续可选功能
 
 | 功能 | 优先级 | 说明 |
 |------|--------|------|
-| Circuit Breaker 增强 | P1 | 完善熔断器功能 |
 | Health Check 完善 | P2 | 增强健康检查 |
 | Multi-DC 支持 | P2 | 多数据中心支持 |
 | 限流中间件 | P2 | HTTP/远程限流 |

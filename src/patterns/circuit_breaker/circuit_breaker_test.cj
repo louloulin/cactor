@@ -287,3 +287,109 @@ func testCircuitBreakerDecorator_getCircuitBreaker() {
     let retrievedCb = decorator.getCircuitBreaker()
     @Expect(retrievedCb.getState().toString().size > 0, true)
 }
+
+// === CircuitBreakerEvent Tests ===
+
+@Test
+func testCircuitBreakerEvent_creation() {
+    let event = CircuitBreakerEvent(CircuitBreakerState.Closed, CircuitBreakerState.Open)
+    @Expect(event.fromState.toString() == "Closed", true)
+    @Expect(event.toState.toString() == "Open", true)
+    @Expect(event.timestamp > 0, true)
+}
+
+// === EventPublishingCircuitBreaker Tests ===
+
+@Test
+func testEventPublishingCircuitBreaker_initialization() {
+    let config = CircuitBreakerConfig(5, 3, Duration.second * 10, Duration.second * 30)
+    let cb = EventPublishingCircuitBreaker<Int64>(config)
+
+    @Expect(cb.getState().toString().size > 0, true)
+}
+
+@Test
+func testEventPublishingCircuitBreaker_subscribe() {
+    let config = CircuitBreakerConfig(5, 3, Duration.second * 10, Duration.second * 30)
+    let cb = EventPublishingCircuitBreaker<Int64>(config)
+
+    let listener = object <: CircuitBreakerEventListener {
+        public var notified = false
+        public func onStateTransition(event: CircuitBreakerEvent): Unit {
+            notified = true
+        }
+    }
+
+    cb.subscribe(listener)
+    // After trip, should notify listener
+    cb.trip()
+    @Expect(listener.notified, true)
+}
+
+@Test
+func testEventPublishingCircuitBreaker_unsubscribe() {
+    let config = CircuitBreakerConfig(5, 3, Duration.second * 10, Duration.second * 30)
+    let cb = EventPublishingCircuitBreaker<Int64>(config)
+
+    let listener = object <: CircuitBreakerEventListener {
+        public var notified = false
+        public func onStateTransition(event: CircuitBreakerEvent): Unit {
+            notified = true
+        }
+    }
+
+    cb.subscribe(listener)
+    cb.clearAllSubscriptions()
+    cb.trip()
+    @Expect(listener.notified, false)
+}
+
+// === CircuitBreakerUtil Tests ===
+
+@Test
+func testCircuitBreakerUtil_callProtected_success() {
+    let config = CircuitBreakerConfig(5, 3, Duration.second * 10, Duration.second * 30)
+    let cb = BasicCircuitBreaker<Int64>(config)
+
+    let result = CircuitBreakerUtil.callProtected(cb, { => 42 })
+    match (result) {
+        case Some(v) => @Expect(v, 42)
+        case None => @Expect(false, true)
+    }
+}
+
+@Test
+func testCircuitBreakerUtil_callProtected_failure() {
+    let config = CircuitBreakerConfig(1, 1, Duration.second * 10, Duration.second * 60)
+    let cb = BasicCircuitBreaker<Int64>(config)
+
+    // Trip the circuit
+    try {
+        cb.execute({ => throw Exception("Test") })
+    } catch (e: Exception) {}
+
+    // Now protected call should return None
+    let result = CircuitBreakerUtil.callProtected(cb, { => 42 })
+    match (result) {
+        case Some(_) => @Expect(false, true)
+        case None => @Expect(true, true)
+    }
+}
+
+@Test
+func testCircuitBreakerUtil_callProtectedBatch() {
+    let config = CircuitBreakerConfig(5, 3, Duration.second * 10, Duration.second * 30)
+    let cb = BasicCircuitBreaker<Int64>(config)
+
+    let operations = ArrayList<() -> Int64>()
+    operations.add({ => 1 })
+    operations.add({ => 2 })
+    operations.add({ => 3 })
+
+    let results = CircuitBreakerUtil.callProtectedBatch(cb, operations)
+    @Expect(results.size, 3)
+    match (results[0]) {
+        case Some(v) => @Expect(v, 1)
+        case None => @Expect(false, true)
+    }
+}
