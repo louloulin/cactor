@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.18
+> **文档版本**: 2.19
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.18: Akka DistributedPubSub)
-> **基于**: akka2.md (v2.17: Cluster Metrics 已实现)
+> **更新日期**: 2026-05-04 (v2.19: Akka AtLeastOnceDelivery)
+> **基于**: akka2.md (v2.18: DistributedPubSub 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -634,3 +634,30 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
 > **测试数量**: 25+ 个 DistributedPubSub 测试
 > **说明**: DistributedPubSub 实现集群范围内的发布-订阅消息传递，支持主题管理和分组订阅。
+
+#### Akka AtLeastOnceDelivery 实现详情 (v2.19 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| DeliveryState enum | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| DeliveryEnvelope class | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| DeliveryTracking class | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| ConfirmRequest class | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| DeliveryResult class | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| DeliveryEventHandler interface | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| DeliveryConfig class | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| AtLeastOnceDelivery class | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| createAtLeastOnceDelivery() | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| createAtLeastOnceDeliveryWithConfig() | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| createDefaultDeliveryConfig() | ✅ | `src/distribution/cluster/at_least_once_delivery.cj` |
+| AtLeastOnceDelivery 测试 | ✅ | `src/distribution/cluster/at_least_once_delivery_test.cj` (25+ 测试) |
+| AtLeastOnceDelivery 示例 | ✅ | `src/examples/delivery_demo/main.cj` |
+
+---
+
+> **文档状态**: v2.19 Phase 18 完成 (Akka AtLeastOnceDelivery)
+> **维护者**: CActor Team
+> **下一步**: 实现 ClusterReceptionist / ClusterClient
+> **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
+> **测试数量**: 25+ 个 AtLeastOnceDelivery 测试
+> **说明**: AtLeastOnceDelivery 实现带确认的消息投递，确保消息至少被投递一次，支持重试和确认率统计。
