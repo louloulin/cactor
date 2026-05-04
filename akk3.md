@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.30
+> **文档版本**: 2.31
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.30: Rate Limiting Middleware)
+> **更新日期**: 2026-05-04 (v2.31: Event Bus 事件总线)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -16,7 +16,7 @@
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 (10 warnings) | 2026-05-04 |
 | **单元测试** | ✅ 870+ 测试通过 | 2026-05-04 |
-| **完成度** | ✅ 100% (189/189 特性) | 2026-05-04 |
+| **完成度** | ✅ 100% (190/190 特性) | 2026-05-04 |
 
 ### 1.2 最新修复 (v2.26)
 
@@ -82,7 +82,7 @@
 | Foundation | memory, queue, serialization, network | **100%** |
 | Core | actor, message, supervision, context | **97%** |
 | Runtime | mailbox, dispatcher, scheduler | **93%** |
-| Patterns | ask, backpressure, circuit_breaker, routing, typed, reliability, stash, pipe, scatter-gather | **100%** |
+| Patterns | ask, backpressure, circuit_breaker, routing, typed, reliability, stash, pipe, scatter-gather, eventbus | **100%** |
 | Distribution | remote, cluster, persistence, streaming, projections | **98%** |
 | API | config, public, extensions, http, websocket | **100%** |
 
@@ -123,6 +123,7 @@
 | **Akka DeadLetter** | cactor.patterns.reliability | ✅ 100% | ✅ 死信通道+监听器已实现 |
 | **Akka Rate Limiting** | cactor.foundation | ✅ 100% | ✅ TokenBucket/SlidingWindow/FixedWindow已实现 (v2.25) |
 | **Akka Rate Limiting Middleware** | cactor.api.http | ✅ 100% | ✅ HTTP 限流中间件已实现 (v2.30) |
+| **Akka EventBus** | cactor.patterns.eventbus | ✅ 100% | ✅ 发布-订阅事件总线已实现 (v2.31) |
 | **Akka Cluster Metrics** | cactor.distribution.cluster | ✅ 100% | ✅ 指标收集已实现 (v2.17) |
 
 ---
@@ -860,12 +861,12 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.30 Phase 30 完成 (Rate Limiting Middleware)
+> **文档状态**: v2.31 Phase 31 完成 (Event Bus 事件总线)
 > **维护者**: CActor Team
 > **下一步**: (暂无)
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
-> **测试数量**: 18 个 Rate Limiting Middleware 测试
-> **说明**: Rate Limiting Middleware 实现 HTTP 请求限流中间件，支持全局限流、按客户端限流、基于 IP/Header 的客户端识别。
+> **测试数量**: 30+ 个 Event Bus 测试
+> **说明**: Event Bus 实现基于分类的发布-订阅事件分发机制，对标 Akka EventBus，支持集群事件类型。
 
 ---
 
@@ -888,6 +889,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | v2.28 | Health Check 完善 | ✅ |
 | v2.29 | Multi-DC 多数据中心支持 | ✅ |
 | v2.30 | Rate Limiting Middleware | ✅ |
+| v2.31 | Event Bus 事件总线 | ✅ |
 
 ### Circuit Breaker v2.26 增强内容
 
@@ -932,6 +934,16 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | RateLimitingMiddleware | 限流中间件实现 |
 | RateLimitStats | 限流统计信息 |
 | RateLimitingMiddlewareFactory | 限流中间件工厂 |
+
+### Event Bus v2.31 实现内容
+
+| 功能 | 说明 |
+|------|------|
+| EventBus 接口 | 事件总线接口定义 |
+| SubclassificationBasedEventBus | 基于分类的事件总线实现 |
+| ClusterEventBus | 集群事件总线 |
+| ClusterEvent | 集群事件类型 |
+| EventBusFactory | 事件总线工厂 |
 
 ### 后续可选功能
 
