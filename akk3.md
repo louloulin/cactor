@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.29
+> **文档版本**: 2.30
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.29: Multi-DC 多数据中心支持)
+> **更新日期**: 2026-05-04 (v2.30: Rate Limiting Middleware)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -16,7 +16,7 @@
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 (10 warnings) | 2026-05-04 |
 | **单元测试** | ✅ 870+ 测试通过 | 2026-05-04 |
-| **完成度** | ✅ 100% (188/188 特性) | 2026-05-04 |
+| **完成度** | ✅ 100% (189/189 特性) | 2026-05-04 |
 
 ### 1.2 最新修复 (v2.26)
 
@@ -84,7 +84,7 @@
 | Runtime | mailbox, dispatcher, scheduler | **93%** |
 | Patterns | ask, backpressure, circuit_breaker, routing, typed, reliability, stash, pipe, scatter-gather | **100%** |
 | Distribution | remote, cluster, persistence, streaming, projections | **98%** |
-| API | config, public, extensions, http, websocket | **95%** |
+| API | config, public, extensions, http, websocket | **100%** |
 
 ---
 
@@ -122,6 +122,7 @@
 | **Akka Coexistences** | cactor.patterns.coexistence | ✅ 100% | ✅ 多 ActorSystem 桥接、类型适配、混合路由 |
 | **Akka DeadLetter** | cactor.patterns.reliability | ✅ 100% | ✅ 死信通道+监听器已实现 |
 | **Akka Rate Limiting** | cactor.foundation | ✅ 100% | ✅ TokenBucket/SlidingWindow/FixedWindow已实现 (v2.25) |
+| **Akka Rate Limiting Middleware** | cactor.api.http | ✅ 100% | ✅ HTTP 限流中间件已实现 (v2.30) |
 | **Akka Cluster Metrics** | cactor.distribution.cluster | ✅ 100% | ✅ 指标收集已实现 (v2.17) |
 
 ---
@@ -859,12 +860,12 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-> **文档状态**: v2.29 Phase 29 完成 (Multi-DC 多数据中心支持)
+> **文档状态**: v2.30 Phase 30 完成 (Rate Limiting Middleware)
 > **维护者**: CActor Team
-> **下一步**: 限流中间件
+> **下一步**: (暂无)
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
-> **测试数量**: 23 个 Multi-DC 测试
-> **说明**: Multi-DC 实现多数据中心支持，包括 DC 感知路由策略、故障转移管理、对标 Akka Cluster Multi-Datacenter。
+> **测试数量**: 18 个 Rate Limiting Middleware 测试
+> **说明**: Rate Limiting Middleware 实现 HTTP 请求限流中间件，支持全局限流、按客户端限流、基于 IP/Header 的客户端识别。
 
 ---
 
@@ -886,6 +887,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | v2.26 | Circuit Breaker 事件监听增强 | ✅ |
 | v2.28 | Health Check 完善 | ✅ |
 | v2.29 | Multi-DC 多数据中心支持 | ✅ |
+| v2.30 | Rate Limiting Middleware | ✅ |
 
 ### Circuit Breaker v2.26 增强内容
 
@@ -920,8 +922,19 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | DcAwareRouter | DC 感知路由器 (支持多种路由策略选择目标成员) |
 | DcFailoverManager | DC 故障转移管理器 (检查/执行故障转移、主DC恢复) |
 
+### Rate Limiting Middleware v2.30 实现内容
+
+| 功能 | 说明 |
+|------|------|
+| RateLimitingMiddlewareConfig | 限流中间件配置 |
+| ClientIdentificationStrategy | 客户端标识策略 (IP/Header/IP+Header) |
+| RateLimitResponseConfig | 限流响应配置 |
+| RateLimitingMiddleware | 限流中间件实现 |
+| RateLimitStats | 限流统计信息 |
+| RateLimitingMiddlewareFactory | 限流中间件工厂 |
+
 ### 后续可选功能
 
 | 功能 | 优先级 | 说明 |
 |------|--------|------|
-| 限流中间件 | P2 | HTTP/远程限流 |
+| (暂无) | - | - |
