@@ -33,9 +33,9 @@ public class DemoShutdownHandler <: CoordinatedShutdownEventHandler {
     }
 
     public func onPhaseCompleted(phase: ShutdownPhase, success: Bool): Unit {
-        let event = "${phase} -> ${if (success) "OK" else "FAILED"}"
+        let event = "${phase} -> ${if (success) { "OK" } else { "FAILED" }}"
         phaseCompletedEvents.add(event)
-        println("  [PHASE] Completed: ${phase} - ${if (success) "SUCCESS" else "FAILED"}")
+        println("  [PHASE] Completed: ${phase} - ${if (success) { "SUCCESS" } else { "FAILED" }}")
     }
 
     public func onTaskCompleted(taskName: String, phase: ShutdownPhase): Unit {
@@ -54,7 +54,7 @@ public class DemoShutdownHandler <: CoordinatedShutdownEventHandler {
         println("  Reason: ${result.reason}")
         println("  Total tasks: ${result.totalTasks}")
         println("  Failed tasks: ${result.failedTasks}")
-        println("  Overall: ${if (result.success) "SUCCESS" else "FAILED"}")
+        println("  Overall: ${if (result.success) { "SUCCESS" } else { "FAILED" }}")
     }
 }
 
@@ -260,7 +260,7 @@ public func runFailureHandlingDemo(): Unit {
     let result = cs.run(ShutdownReason.NodeShutdown)
 
     println()
-    println("Result: ${if (result.success) "SUCCESS" else "PARTIAL FAILURE"}")
+    println("Result: ${if (result.success) { "SUCCESS" } else { "PARTIAL FAILURE" }}")
     println("  Completed tasks: ${result.totalTasks - result.failedTasks}")
     println("  Failed tasks: ${result.failedTasks}")
     println()

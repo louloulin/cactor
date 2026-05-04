@@ -14,11 +14,11 @@ import std.time.*
  * 负载指标类型
  */
 public enum LoadMetric {
-    CpuUsage
-    MemoryUsage
-    HeapUsage
-    LoadAverage
-    Custom(name: String)
+    | CpuUsage
+    | MemoryUsage
+    | HeapUsage
+    | LoadAverage
+    | Custom(String)
 }
 
 /**
@@ -108,7 +108,7 @@ public class RoutingDecision {
  */
 public class AdaptiveLoadBalancingConfig {
     public let metrics: ArrayList<LoadMetric>
-    public let weights: HashMap<LoadMetric, Float64>
+    public let weights: HashMap<String, Float64>
     public let virtualNodesFactor: Int64
     public let mixHealthies: Float64
     public let allowUnhealthy: Bool
@@ -117,7 +117,7 @@ public class AdaptiveLoadBalancingConfig {
 
     public init(
         metrics: ArrayList<LoadMetric>,
-        weights: HashMap<LoadMetric, Float64>,
+        weights: HashMap<String, Float64>,
         virtualNodesFactor: Int64,
         mixHealthies: Float64,
         allowUnhealthy: Bool,
@@ -228,7 +228,7 @@ public class AdaptiveLoadBalancingPool {
                         unhealthyNodes.remove(nodeId)
                         nodeWeights.remove(nodeId)
                         Some(info)
-                    case None => None
+                    case None => None<LoadInfo>
                 }
         }
         lock.writeMutex.unlock()
@@ -243,14 +243,12 @@ public class AdaptiveLoadBalancingPool {
         if (healthyNodes.size == 0) {
             // 如果允许使用不健康节点
             if (config.allowUnhealthy && unhealthyNodes.size > 0) {
-                let firstEntry = unhealthyNodes.getIterator().next()
-                match (firstEntry) {
-                    case Some((nodeId, loadInfo)) =>
-                        lock.writeMutex.unlock()
-                        routeCount += 1
-                        lastRouteTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
-                        return Some(RoutingDecision(nodeId, loadInfo.address, loadInfo.compositeScore(), unhealthyNodes.size))
-                    case None => ()
+                // 简化：选择第一个不健康节点
+                for ((nodeId, loadInfo) in unhealthyNodes) {
+                    lock.writeMutex.unlock()
+                    routeCount += 1
+                    lastRouteTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
+                    return Some(RoutingDecision(nodeId, loadInfo.address, loadInfo.compositeScore(), unhealthyNodes.size))
                 }
             }
             lock.writeMutex.unlock()
@@ -294,14 +292,36 @@ public class AdaptiveLoadBalancingPool {
     public func selectMultiple(count: Int64): ArrayList<RoutingDecision> {
         let result = ArrayList<RoutingDecision>()
         lock.readMutex.lock()
-        let nodesCopy = ArrayList<(String, LoadInfo)>()
+        var nodesCopy = ArrayList<(String, LoadInfo)>()
         for ((nodeId, loadInfo) in healthyNodes) {
             nodesCopy.add((nodeId, loadInfo))
         }
         lock.readMutex.unlock()
 
-        // 按负载排序
-        nodesCopy.sortBy({ (a, b) => a.get<1>().compositeScore() < b.get<1>().compositeScore() })
+        // 按负载排序 - 简化版本
+        let sorted = ArrayList<(String, LoadInfo)>()
+        for (item in nodesCopy) {
+            match (item) {
+                case (nid, info) =>
+                    sorted.add(item)
+                case _ => ()
+            }
+        }
+        // 简单的冒泡排序
+        if (sorted.size > 1) {
+            for (i in 0..sorted.size) {
+                for (j in i + 1..sorted.size) {
+                    let scoreI = match (sorted[i]) { case (nid, info) => info.compositeScore() case _ => 0.0 }
+                    let scoreJ = match (sorted[j]) { case (nid, info) => info.compositeScore() case _ => 0.0 }
+                    if (scoreI > scoreJ) {
+                        let temp = sorted[i]
+                        sorted[i] = sorted[j]
+                        sorted[j] = temp
+                    }
+                }
+            }
+        }
+        nodesCopy = sorted
 
         let actualCount = if (count > nodesCopy.size) { nodesCopy.size } else { count }
         for (i in 0..actualCount) {
@@ -518,7 +538,20 @@ public class AdaptiveLoadBalancingPool {
             result.add((nodeId, loadInfo.compositeScore()))
         }
         lock.readMutex.unlock()
-        result.sortBy({ (a, b) => a.get<1>() < b.get<1>() })
+        // 简单排序
+        if (result.size > 1) {
+            for (i in 0..result.size) {
+                for (j in i + 1..result.size) {
+                    let scoreI = match (result[i]) { case (nid, score) => score case _ => 0.0 }
+                    let scoreJ = match (result[j]) { case (nid, score) => score case _ => 0.0 }
+                    if (scoreI > scoreJ) {
+                        let temp = result[i]
+                        result[i] = result[j]
+                        result[j] = temp
+                    }
+                }
+            }
+        }
         result
     }
 
@@ -549,16 +582,16 @@ public class AdaptiveLoadBalancingPool {
  */
 public func createAdaptiveLoadBalancingPool(poolId: String): AdaptiveLoadBalancingPool {
     let metrics = ArrayList<LoadMetric>()
-    metrics.append(LoadMetric.CpuUsage)
-    metrics.append(LoadMetric.MemoryUsage)
-    metrics.append(LoadMetric.HeapUsage)
-    metrics.append(LoadMetric.LoadAverage)
+    metrics.add(LoadMetric.CpuUsage)
+    metrics.add(LoadMetric.MemoryUsage)
+    metrics.add(LoadMetric.HeapUsage)
+    metrics.add(LoadMetric.LoadAverage)
 
-    let weights = HashMap<LoadMetric, Float64>()
-    weights.add(LoadMetric.CpuUsage, 0.4)
-    weights.add(LoadMetric.MemoryUsage, 0.3)
-    weights.add(LoadMetric.HeapUsage, 0.2)
-    weights.add(LoadMetric.LoadAverage, 0.1)
+    let weights = HashMap<String, Float64>()
+    weights.add("CpuUsage", 0.4)
+    weights.add("MemoryUsage", 0.3)
+    weights.add("HeapUsage", 0.2)
+    weights.add("LoadAverage", 0.1)
 
     let config = AdaptiveLoadBalancingConfig(
         metrics,
@@ -585,14 +618,14 @@ public func createAdaptiveLoadBalancingPoolWithConfig(poolId: String, config: Ad
  */
 public func createDefaultAdaptiveLoadBalancingConfig(): AdaptiveLoadBalancingConfig {
     let metrics = ArrayList<LoadMetric>()
-    metrics.append(LoadMetric.CpuUsage)
-    metrics.append(LoadMetric.MemoryUsage)
-    metrics.append(LoadMetric.HeapUsage)
+    metrics.add(LoadMetric.CpuUsage)
+    metrics.add(LoadMetric.MemoryUsage)
+    metrics.add(LoadMetric.HeapUsage)
 
-    let weights = HashMap<LoadMetric, Float64>()
-    weights.add(LoadMetric.CpuUsage, 0.5)
-    weights.add(LoadMetric.MemoryUsage, 0.3)
-    weights.add(LoadMetric.HeapUsage, 0.2)
+    let weights = HashMap<String, Float64>()
+    weights.add("CpuUsage", 0.5)
+    weights.add("MemoryUsage", 0.3)
+    weights.add("HeapUsage", 0.2)
 
     AdaptiveLoadBalancingConfig(
         metrics,
@@ -609,12 +642,18 @@ public func createDefaultAdaptiveLoadBalancingConfig(): AdaptiveLoadBalancingCon
  * 创建自定义指标的负载均衡池配置
  */
 public func createLoadBalancingConfigWithMetrics(metrics: ArrayList<LoadMetric>): AdaptiveLoadBalancingConfig {
-    let weights = HashMap<LoadMetric, Float64>()
+    let weights = HashMap<String, Float64>()
     var totalWeight: Float64 = 1.0
     let weightPerMetric = totalWeight / Float64(metrics.size)
 
     for (metric in metrics) {
-        weights.add(metric, weightPerMetric)
+        weights.add(match(metric) {
+            case LoadMetric.CpuUsage => "CpuUsage"
+            case LoadMetric.MemoryUsage => "MemoryUsage"
+            case LoadMetric.HeapUsage => "HeapUsage"
+            case LoadMetric.LoadAverage => "LoadAverage"
+            case LoadMetric.Custom(s) => s
+        }, weightPerMetric)
     }
 
     AdaptiveLoadBalancingConfig(

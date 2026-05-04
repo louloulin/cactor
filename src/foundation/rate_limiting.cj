@@ -14,8 +14,8 @@ import std.time.*
  * 限流结果
  */
 public enum RateLimitResult {
-    | Allowed(count: Int64)
-    | Rejected(waitTime: Int64)  // 等待时间（纳秒）
+    | Allowed(Int64)
+    | Rejected(Int64)
 }
 
 /**
@@ -137,17 +137,9 @@ public class TokenBucketRateLimiter <: RateLimiter {
     public func acquire(): Bool {
         match (tryAcquire()) {
             case RateLimitResult.Allowed(_) => true
-            case RateLimitResult.Rejected(waitNanos) =>
-                // 简单等待（实际使用应考虑取消）
-                let waitMs = waitNanos / 1_000_000
-                if (waitMs > 0) {
-                    Thread.sleep(Duration.millisecond * waitMs)
-                }
-                // 重试
-                match (tryAcquire()) {
-                    case RateLimitResult.Allowed(_) => true
-                    case _ => false
-                }
+            case RateLimitResult.Rejected(_) =>
+                // 同步等待暂不支持，返回 false
+                false
         }
     }
 

@@ -13,7 +13,7 @@ import std.time.*
 /**
  * 服务信息
  */
-public class ServiceInstance {
+public class ServiceEndpoint {
     public let serviceName: String
     public let host: String
     public let port: Int32
@@ -28,8 +28,8 @@ public class ServiceInstance {
         this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
-    public func withMetadata(key: String, value: String): ServiceInstance {
-        let instance = ServiceInstance(serviceName, host, port)
+    public func withMetadata(key: String, value: String): ServiceEndpoint {
+        let instance = ServiceEndpoint(serviceName, host, port)
         for ((k, v) in metadata) {
             instance.metadata.add(k, v)
         }
@@ -42,7 +42,7 @@ public class ServiceInstance {
     }
 
     public func toString(): String {
-        "ServiceInstance(${serviceName}@${address()})"
+        "ServiceEndpoint(${serviceName}@${address()})"
     }
 }
 
@@ -50,8 +50,8 @@ public class ServiceInstance {
  * 服务发现事件
  */
 public interface ServiceDiscoveryEventHandler {
-    func onServiceRegistered(instance: ServiceInstance): Unit
-    func onServiceUnregistered(instance: ServiceInstance): Unit
+    func onServiceRegistered(instance: ServiceEndpoint): Unit
+    func onServiceUnregistered(instance: ServiceEndpoint): Unit
     func onServicesChanged(serviceName: String): Unit
 }
 
@@ -59,18 +59,18 @@ public interface ServiceDiscoveryEventHandler {
  * 服务注册表
  */
 public class ServiceRegistry {
-    private let services: HashMap<String, ArrayList<ServiceInstance>>
+    private let services: HashMap<String, ArrayList<ServiceEndpoint>>
     private let lock: ReentrantReadWriteMutex
 
     public init() {
-        this.services = HashMap<String, ArrayList<ServiceInstance>>()
+        this.services = HashMap<String, ArrayList<ServiceEndpoint>>()
         this.lock = ReentrantReadWriteMutex()
     }
 
-    public func register(instance: ServiceInstance): Unit {
+    public func register(instance: ServiceEndpoint): Unit {
         lock.writeMutex.lock()
         try {
-            let list = services.get(instance.serviceName).getOrDefault({=> ArrayList<ServiceInstance>()})
+            let list = services.get(instance.serviceName).getOrDefault({=> ArrayList<ServiceEndpoint>()})
             // 检查是否已存在
             var found = false
             var i: Int64 = 0
@@ -106,7 +106,7 @@ public class ServiceRegistry {
                     i += 1
                 }
                 if (removeIdx >= 0) {
-                    let newList = ArrayList<ServiceInstance>()
+                    let newList = ArrayList<ServiceEndpoint>()
                     var j: Int64 = 0
                     while (j < list.size) {
                         if (j != removeIdx) {
@@ -122,18 +122,18 @@ public class ServiceRegistry {
         }
     }
 
-    public func find(serviceName: String): ArrayList<ServiceInstance> {
+    public func find(serviceName: String): ArrayList<ServiceEndpoint> {
         lock.readMutex.lock()
-        let result = services.get(serviceName).getOrDefault({=> ArrayList<ServiceInstance>()})
+        let result = services.get(serviceName).getOrDefault({=> ArrayList<ServiceEndpoint>()})
         lock.readMutex.unlock()
         result
     }
 
-    public func findAll(): HashMap<String, ArrayList<ServiceInstance>> {
+    public func findAll(): HashMap<String, ArrayList<ServiceEndpoint>> {
         lock.readMutex.lock()
-        let result = HashMap<String, ArrayList<ServiceInstance>>()
+        let result = HashMap<String, ArrayList<ServiceEndpoint>>()
         for ((name, list) in services) {
-            let copy = ArrayList<ServiceInstance>()
+            let copy = ArrayList<ServiceEndpoint>()
             for (inst in list) {
                 copy.add(inst)
             }
@@ -167,12 +167,12 @@ public interface ServiceDiscovery {
     /**
      * 发现服务实例
      */
-    func discover(serviceName: String): ArrayList<ServiceInstance>
+    func discover(serviceName: String): ArrayList<ServiceEndpoint>
 
     /**
      * 注册服务
      */
-    func register(instance: ServiceInstance): Unit
+    func register(instance: ServiceEndpoint): Unit
 
     /**
      * 注销服务
@@ -205,11 +205,11 @@ public class SimpleServiceDiscovery <: ServiceDiscovery {
         lock.writeMutex.unlock()
     }
 
-    public func discover(serviceName: String): ArrayList<ServiceInstance> {
+    public func discover(serviceName: String): ArrayList<ServiceEndpoint> {
         registry.find(serviceName)
     }
 
-    public func register(instance: ServiceInstance): Unit {
+    public func register(instance: ServiceEndpoint): Unit {
         registry.register(instance)
         match (eventHandler) {
             case Some(handler) => handler.onServiceRegistered(instance)
@@ -222,7 +222,7 @@ public class SimpleServiceDiscovery <: ServiceDiscovery {
     }
 
     public func unregister(serviceName: String, host: String, port: Int32): Unit {
-        let instance = ServiceInstance(serviceName, host, port)
+        let instance = ServiceEndpoint(serviceName, host, port)
         registry.unregister(serviceName, host, port)
         match (eventHandler) {
             case Some(handler) => handler.onServiceUnregistered(instance)
@@ -253,14 +253,14 @@ public class DnsServiceDiscovery <: ServiceDiscovery {
         this.lock = ReentrantReadWriteMutex()
     }
 
-    public func discover(serviceName: String): ArrayList<ServiceInstance> {
+    public func discover(serviceName: String): ArrayList<ServiceEndpoint> {
         lock.readMutex.lock()
         let instances = registry.find(serviceName)
         lock.readMutex.unlock()
         instances
     }
 
-    public func register(instance: ServiceInstance): Unit {
+    public func register(instance: ServiceEndpoint): Unit {
         registry.register(instance)
     }
 
@@ -276,7 +276,7 @@ public class DnsServiceDiscovery <: ServiceDiscovery {
      * 添加 DNS 解析的服务实例
      */
     public func addFromDns(serviceName: String, host: String, port: Int32): Unit {
-        let instance = ServiceInstance(serviceName, host, port)
+        let instance = ServiceEndpoint(serviceName, host, port)
             .withMetadata("dns", domain)
         registry.register(instance)
     }

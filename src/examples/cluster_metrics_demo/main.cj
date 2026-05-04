@@ -50,11 +50,11 @@ public class LoadSimulatingCollector <: MetricsCollector {
     public func collect(): NodeMetrics {
         let nm = NodeMetrics(nodeId, address)
         // 模拟不同的负载级别
-        nm.addMetric("cpu-usage", baseLoad + (Float64.random() * 0.2))
-        nm.addMetric("memory-usage", 0.4 + (Float64.random() * 0.3))
-        nm.addMetric("heap-used", 512.0 + (Float64.random() * 256.0))
+        nm.addMetric("cpu-usage", baseLoad + 0.1)
+        nm.addMetric("memory-usage", 0.5)
+        nm.addMetric("heap-used", 640.0)
         nm.addMetric("heap-max", 1024.0)
-        nm.addMetric("load-average", 1.0 + (Float64.random() * 2.0))
+        nm.addMetric("load-average", 2.0)
         nm
     }
 }
@@ -121,7 +121,7 @@ public func runNodeMetricsUpdateDemo(): Unit {
     for (nm in snapshot.getAllNodeMetrics()) {
         println("  ${nm.nodeId}:")
         println("    CPU: ${nm.cpuUsage()}, Memory: ${nm.memoryUsage()}")
-        println("    Heap: ${nm.heapUsed()}/${nm.heapMax()} (${nm.heapUsage() * 100}%)")
+        println("    Heap: ${nm.heapUsed()}/${nm.heapMax()} (${nm.heapUsage() * 100.0}%)")
     }
     println()
 }
@@ -135,11 +135,11 @@ public func runLoadBalancingDemo(): Unit {
 
     // 创建不同负载的节点
     let nodes = ArrayList<(String, Float64)>()
-    nodes.append(("server-1", 0.2))
-    nodes.append(("server-2", 0.5))
-    nodes.append(("server-3", 0.1))
-    nodes.append(("server-4", 0.8))
-    nodes.append(("server-5", 0.3))
+    nodes.add(("server-1", 0.2))
+    nodes.add(("server-2", 0.5))
+    nodes.add(("server-3", 0.1))
+    nodes.add(("server-4", 0.8))
+    nodes.add(("server-5", 0.3))
 
     println("Registering nodes with different CPU loads:")
     for ((nodeId, cpuLoad) in nodes) {
@@ -147,7 +147,7 @@ public func runLoadBalancingDemo(): Unit {
             .addMetric("cpu-usage", cpuLoad)
             .addMetric("memory-usage", 0.5)
         manager.updateNodeMetrics(nodeId, nm)
-        println("  ${nodeId}: ${(cpuLoad * 100).toInt64()}% CPU")
+        println("  ${nodeId}: ${Int64(cpuLoad * 100.0)}% CPU")
     }
     println()
 
@@ -171,7 +171,7 @@ public func runLoadBalancingDemo(): Unit {
     println("All registered nodes: ${allIds.size}")
     for (id in allIds) {
         match (manager.getNodeMetrics(id)) {
-            case Some(m) => println("  ${id}: ${(m.cpuUsage() * 100).toInt64()}% CPU")
+            case Some(m) => println("  ${id}: ${Int64(m.cpuUsage() * 100.0)}% CPU")
             case None => ()
         }
     }
@@ -234,8 +234,8 @@ public func runSnapshotDemo(): Unit {
     let hosts = ["app-1", "app-2", "app-3"]
     for (host in hosts) {
         let nm = NodeMetrics(host, Address("cactor", "metrics", host, 2552))
-            .addMetric("cpu-usage", Float64.random() * 0.8)
-            .addMetric("memory-usage", Float64.random() * 0.6 + 0.2)
+            .addMetric("cpu-usage", 0.5)
+            .addMetric("memory-usage", 0.6)
         manager.updateNodeMetrics(host, nm)
     }
 

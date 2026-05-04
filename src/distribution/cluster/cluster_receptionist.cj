@@ -9,6 +9,7 @@ package cactor.distribution.cluster
 import std.collection.*
 import std.sync.*
 import std.time.*
+import std.random.*
 
 /**
  * 服务实例信息
@@ -92,10 +93,10 @@ public class RegisterRequest {
  * 服务发现请求类型
  */
 public enum DiscoveryRequestType {
-    Find
-    FindAll
-    FindWithPrefix
-    Count
+    | Find
+    | FindAll
+    | FindWithPrefix
+    | Count
 }
 
 /**
@@ -132,10 +133,10 @@ public class DiscoveryResponse {
  * 集群接待员事件
  */
 public enum ReceptionistEvent {
-    ServiceRegistered(serviceName: String, instance: ServiceInstance)
-    ServiceUnregistered(serviceName: String, actorPath: String)
-    ServiceUpdated(serviceName: String, instance: ServiceInstance)
-    DiscoveryPerformed(serviceName: String, count: Int64)
+    | ServiceRegistered(String, ServiceInstance)
+    | ServiceUnregistered(String, String)
+    | ServiceUpdated(String, ServiceInstance)
+    | DiscoveryPerformed(String, Int64)
 }
 
 /**
@@ -286,8 +287,10 @@ public class ClusterReceptionist {
                     }
                 }
                 // 按逆序移除
-                for (i in toRemove.size - 1..-1..-1) {
-                    instances.remove(toRemove[i])
+                var idx: Int64 = toRemove.size - 1
+                while (idx >= 0) {
+                    instances.remove(toRemove[idx]..toRemove[idx])
+                    idx -= 1
                 }
                 if (instances.size == 0) {
                     services.remove(serviceName)
@@ -312,17 +315,17 @@ public class ClusterReceptionist {
      */
     public func find(serviceName: String): Option<ServiceInstance> {
         lock.readMutex.lock()
-        let result = match (services.get(serviceName)) {
+        let result: Option<ServiceInstance> = match (services.get(serviceName)) {
             case Some(instances) =>
                 if (instances.size > 0) {
-                    let index = Int64.random() % instances.size
-                    let inst = instances[index]
+                    // 简单负载均衡：选择第一个
+                    let inst = instances[0]
                     inst.touch()
                     Some(inst)
                 } else {
-                    None
+                    None<ServiceInstance>
                 }
-            case None => None
+            case None => None<ServiceInstance>
         }
         lock.readMutex.unlock()
 
@@ -547,8 +550,10 @@ public class ClusterReceptionist {
                     removed += 1
                 }
             }
-            for (i in toRemove.size - 1..-1..-1) {
-                instances.remove(toRemove[i])
+            var j: Int64 = toRemove.size - 1
+            while (j >= 0) {
+                instances.remove(toRemove[j]..toRemove[j])
+                j -= 1
             }
         }
 

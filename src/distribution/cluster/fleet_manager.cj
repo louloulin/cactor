@@ -13,7 +13,7 @@ import std.time.*
 /**
  * 节点健康状态
  */
-public enum NodeHealth {
+public enum NodeHealth <: ToString {
     | Healthy
     | Degraded
     | Unhealthy
@@ -23,6 +23,15 @@ public enum NodeHealth {
         match (this) {
             case Healthy => true
             case _ => false
+        }
+    }
+
+    public func toString(): String {
+        match (this) {
+            case Healthy => "Healthy"
+            case Degraded => "Degraded"
+            case Unhealthy => "Unhealthy"
+            case Unknown => "Unknown"
         }
     }
 
@@ -104,13 +113,13 @@ public class FleetNode {
  * Fleet 事件
  */
 public enum FleetEvent {
-    | NodeJoined(nodeId: String, address: Address)
-    | NodeUp(nodeId: String, address: Address)
-    | NodeLeft(nodeId: String)
-    | NodeDown(nodeId: String)
-    | NodeRemoved(nodeId: String)
-    | HealthChanged(nodeId: String, health: NodeHealth)
-    | VersionChanged(nodeId: String, version: Int64)
+    | NodeJoined(String, Address)
+    | NodeUp(String, Address)
+    | NodeLeft(String)
+    | NodeDown(String)
+    | NodeRemoved(String)
+    | HealthChanged(String, NodeHealth)
+    | VersionChanged(String, Int64)
 
     public func toString(): String {
         match (this) {

@@ -9,6 +9,7 @@ package cactor.distribution.cluster
 import std.collection.*
 import std.sync.*
 import std.time.*
+import std.convert.*
 
 /**
  * 引导状态
@@ -18,7 +19,7 @@ public enum BootstrapState {
     | Discovering
     | Joining
     | Done
-    | Failed(reason: String)
+    | Failed(String)
 }
 
 /**
@@ -134,16 +135,16 @@ public class BootstrapResult {
  * 引导事件
  */
 public enum BootstrapEvent {
-    | BootstrapStarted(nodeId: String)
-    | DiscoveryStarted(method: BootstrapDiscoveryMethod)
-    | ContactPointFound(nodeId: String, address: String)
-    | ContactPointReachable(nodeId: String, address: String)
-    | ContactPointUnreachable(nodeId: String, address: String)
-    | JoiningCluster(nodeId: String, targetAddress: String)
-    | ClusterJoined(nodeId: String, members: ArrayList<String>)
-    | BootstrapFailed(nodeId: String, reason: String)
-    | RetryAttempt(attempt: Int64, maxAttempts: Int64)
-    | StateChanged(from: BootstrapState, to: BootstrapState)
+    | BootstrapStarted(String)
+    | DiscoveryStarted(BootstrapDiscoveryMethod)
+    | ContactPointFound(String, String)
+    | ContactPointReachable(String, String)
+    | ContactPointUnreachable(String, String)
+    | JoiningCluster(String, String)
+    | ClusterJoined(String, ArrayList<String>)
+    | BootstrapFailed(String, String)
+    | RetryAttempt(Int64, Int64)
+    | StateChanged(BootstrapState, BootstrapState)
 }
 
 /**
@@ -328,10 +329,10 @@ public class ClusterBootstrap {
             lock.writeMutex.lock()
             joinedAddress = target.address()
             clusterMembers = ArrayList<String>()
-            clusterMembers.append(nodeId)
+            clusterMembers.add(nodeId)
             for ((_, cp) in contactPointsMap) {
                 if (cp.isReachable && cp.nodeId != nodeId) {
-                    clusterMembers.append(cp.nodeId)
+                    clusterMembers.add(cp.nodeId)
                 }
             }
             let oldState = state
@@ -415,11 +416,12 @@ public class ClusterBootstrap {
      */
     public func checkReachability(address: String): Bool {
         lock.readMutex.lock()
-        match (contactPointsMap.get(address)) {
+        let result = match (contactPointsMap.get(address)) {
             case Some(cp) => cp.isReachable
             case None => false
         }
         lock.readMutex.unlock()
+        result
     }
 
     /**

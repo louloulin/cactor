@@ -26,12 +26,12 @@ public class MetricValue {
         this.tags = HashMap<String, String>()
     }
 
-    public func withTag(key: String, value: String): MetricValue {
-        let mv = MetricValue(name, value)
+    public func withTag(key: String, val: String): MetricValue {
+        let mv = MetricValue(name, this.value)
         for ((k, v) in tags) {
             mv.tags.add(k, v)
         }
-        mv.tags.add(key, value)
+        mv.tags.add(key, val)
         mv
     }
 
@@ -280,7 +280,7 @@ public class ClusterMetricsManager {
     public func getLeastLoadedNode(metricName: String): Option<String> {
         lock.readMutex.lock()
         var leastNodeId: Option<String> = None
-        var leastValue: Float64 = Float64.MaxValue
+        var leastValue: Float64 = 1e18
         for ((nodeId, nm) in snapshot.nodeMetrics) {
             let mv = nm.getMetric(metricName)
             match (mv) {

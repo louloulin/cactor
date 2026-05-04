@@ -74,7 +74,7 @@ public func runBasicDeliveryDemo(): Unit {
     println("After confirmation:")
     println("  Pending: ${delivery.pendingCount()}")
     println("  Confirmed: ${delivery.confirmedCount()}")
-    println("  Confirmation rate: ${(delivery.confirmationRate() * 100).toInt64()}%")
+    println("  Confirmation rate: ${Int64(delivery.confirmationRate() * 100.0)}%")
     println()
 }
 
@@ -90,7 +90,7 @@ public func runBatchDeliveryDemo(): Unit {
     println("Creating batch of messages...")
     let payloads = ArrayList<String>()
     for (i in 1..11) {
-        payloads.append("Batch item ${i}")
+        payloads.add("Batch item ${i}")
     }
 
     println("Sending batch of ${payloads.size} messages...")
@@ -112,7 +112,7 @@ public func runBatchDeliveryDemo(): Unit {
     println("After partial confirmations:")
     println("  Pending: ${delivery.pendingCount()}")
     println("  Confirmed: ${delivery.confirmedCount()}")
-    println("  Confirmation rate: ${(delivery.confirmationRate() * 100).toInt64()}%")
+    println("  Confirmation rate: ${Int64(delivery.confirmationRate() * 100.0)}%")
     println()
 }
 
@@ -194,7 +194,7 @@ public func runConfirmationDemo(): Unit {
     println("  Pending: ${delivery.pendingCount()}")
     println("  Confirmed: ${delivery.confirmedCount()}")
     println("  Total sent: ${delivery.totalSent()}")
-    println("  Confirmation rate: ${(delivery.confirmationRate() * 100).toInt64()}%")
+    println("  Confirmation rate: ${Int64(delivery.confirmationRate() * 100.0)}%")
     println()
 }
 

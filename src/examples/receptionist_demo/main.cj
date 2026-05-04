@@ -85,10 +85,10 @@ public func runBatchRegistrationDemo(): Unit {
 
     println("Creating batch registrations...")
     let registrations = ArrayList<RegisterRequest>()
-    registrations.append(RegisterRequest("service-a", "/user/sa1", "node-1", Address("cactor", "test", "host", 2552)))
-    registrations.append(RegisterRequest("service-a", "/user/sa2", "node-1", Address("cactor", "test", "host", 2552)))
-    registrations.append(RegisterRequest("service-b", "/user/sb1", "node-1", Address("cactor", "test", "host", 2552)))
-    registrations.append(RegisterRequest("service-c", "/user/sc1", "node-1", Address("cactor", "test", "host", 2552)))
+    registrations.add(RegisterRequest("service-a", "/user/sa1", "node-1", Address("cactor", "test", "host", 2552)))
+    registrations.add(RegisterRequest("service-a", "/user/sa2", "node-1", Address("cactor", "test", "host", 2552)))
+    registrations.add(RegisterRequest("service-b", "/user/sb1", "node-1", Address("cactor", "test", "host", 2552)))
+    registrations.add(RegisterRequest("service-c", "/user/sc1", "node-1", Address("cactor", "test", "host", 2552)))
 
     println("Registering ${registrations.size} services...")
     let count = receptionist.registerAll(registrations)

@@ -13,11 +13,20 @@ import std.time.*
 /**
  * 投递状态
  */
-public enum DeliveryState {
-    Pending
-    Sent
-    Confirmed
-    ConfirmedStale
+public enum DeliveryState <: ToString {
+    | Pending
+    | Sent
+    | Confirmed
+    | ConfirmedStale
+
+    public func toString(): String {
+        match (this) {
+            case Pending => "Pending"
+            case Sent => "Sent"
+            case Confirmed => "Confirmed"
+            case ConfirmedStale => "ConfirmedStale"
+        }
+    }
 }
 
 /**
@@ -63,7 +72,7 @@ public class DeliveryEnvelope {
      * 检查是否需要重试
      */
     public func needsRetry(retryInterval: Duration): Bool {
-        if (state == DeliveryState.Confirmed) {
+        if (match(state) { case DeliveryState.Confirmed => true case _ => false }) {
             return false
         }
         let now = DateTime.now().toUnixTimeStamp().toMilliseconds()
@@ -196,9 +205,9 @@ public class AtLeastOnceDelivery {
     private var messageIdCounter: Int64
     private let pendingDeliveries: HashMap<Int64, DeliveryEnvelope>
     private let confirmedDeliveries: HashMap<Int64, DeliveryTracking>
-    private var totalSent: Int64
-    private var totalConfirmed: Int64
-    private var totalFailed: Int64
+    private var ______sentCount: Int64
+    private var ______confirmedCount: Int64
+    private var ______failedCount: Int64
 
     public init(destination: String, config: DeliveryConfig) {
         this.destination = destination
@@ -208,9 +217,9 @@ public class AtLeastOnceDelivery {
         this.messageIdCounter = 0
         this.pendingDeliveries = HashMap<Int64, DeliveryEnvelope>()
         this.confirmedDeliveries = HashMap<Int64, DeliveryTracking>()
-        this.totalSent = 0
-        this.totalConfirmed = 0
-        this.totalFailed = 0
+        this.______sentCount = 0
+        this.______confirmedCount = 0
+        this.______failedCount = 0
     }
 
     /**
@@ -232,7 +241,7 @@ public class AtLeastOnceDelivery {
         let messageId = messageIdCounter
         let envelope = DeliveryEnvelope(messageId, destination, payload)
         pendingDeliveries.add(messageId, envelope)
-        totalSent += 1
+        ______sentCount += 1
         lock.writeMutex.unlock()
 
         match (eventHandler) {
@@ -282,7 +291,7 @@ public class AtLeastOnceDelivery {
                 let tracking = DeliveryTracking(envelope)
                 confirmedDeliveries.add(messageId, tracking)
                 pendingDeliveries.remove(messageId)
-                totalConfirmed += 1
+                ______confirmedCount += 1
             case None => ()
         }
         lock.writeMutex.unlock()
@@ -354,7 +363,7 @@ public class AtLeastOnceDelivery {
         lock.writeMutex.lock()
         var count: Int64 = 0
         for ((_, envelope) in pendingDeliveries) {
-            if (envelope.state != DeliveryState.Confirmed && envelope.sendCount >= config.maxRetries) {
+            if (match(envelope.state) { case DeliveryState.Confirmed => false case _ => true } && envelope.sendCount >= config.maxRetries) {
                 match (eventHandler) {
                     case Some(handler) =>
                         handler.onMessageMaxRetries(envelope.messageId, envelope.destination, "Max retries exceeded")
@@ -400,7 +409,7 @@ public class AtLeastOnceDelivery {
     /**
      * 获取已确认消息数量
      */
-    public func confirmedCount(): Int64 {
+    public func getConfirmedCountValue(): Int64 {
         lock.readMutex.lock()
         let count = confirmedDeliveries.size
         lock.readMutex.unlock()
@@ -408,11 +417,32 @@ public class AtLeastOnceDelivery {
     }
 
     /**
-     * 获取总发送数
+     * 获取总发送数（别名）
      */
     public func totalSent(): Int64 {
+        getSentCount()
+    }
+
+    /**
+     * 获取总确认数（别名）
+     */
+    public func confirmedCount(): Int64 {
+        getConfirmedCount()
+    }
+
+    /**
+     * 获取总失败数（别名）
+     */
+    public func totalFailed(): Int64 {
+        getFailedCount()
+    }
+
+    /**
+     * 获取总发送数
+     */
+    public func getSentCount(): Int64 {
         lock.readMutex.lock()
-        let count = totalSent
+        let count = ______sentCount
         lock.readMutex.unlock()
         count
     }
@@ -420,9 +450,9 @@ public class AtLeastOnceDelivery {
     /**
      * 获取总确认数
      */
-    public func totalConfirmed(): Int64 {
+    public func getConfirmedCount(): Int64 {
         lock.readMutex.lock()
-        let count = totalConfirmed
+        let count = ______confirmedCount
         lock.readMutex.unlock()
         count
     }
@@ -430,9 +460,9 @@ public class AtLeastOnceDelivery {
     /**
      * 获取总失败数
      */
-    public func totalFailed(): Int64 {
+    public func getFailedCount(): Int64 {
         lock.readMutex.lock()
-        let count = totalFailed
+        let count = ______failedCount
         lock.readMutex.unlock()
         count
     }
@@ -441,10 +471,10 @@ public class AtLeastOnceDelivery {
      * 获取确认率
      */
     public func confirmationRate(): Float64 {
-        if (totalSent == 0) {
+        if (______sentCount == 0) {
             return 1.0
         }
-        Float64(totalConfirmed) / Float64(totalSent)
+        Float64(______confirmedCount) / Float64(______sentCount)
     }
 
     /**
@@ -488,7 +518,7 @@ public class AtLeastOnceDelivery {
      */
     public func getDeliveryState(messageId: Int64): Option<DeliveryState> {
         lock.readMutex.lock()
-        let result = match (pendingDeliveries.get(messageId)) {
+        let result: Option<DeliveryState> = match (pendingDeliveries.get(messageId)) {
             case Some(e) => Some(e.state)
             case None =>
                 match (confirmedDeliveries.get(messageId)) {
@@ -508,7 +538,7 @@ public class AtLeastOnceDelivery {
         let existed = pendingDeliveries.get(messageId).isSome()
         if (existed) {
             pendingDeliveries.remove(messageId)
-            totalFailed += 1
+            ______failedCount += 1
         }
         lock.writeMutex.unlock()
         existed

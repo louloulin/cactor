@@ -103,9 +103,9 @@ public func runBasicBootstrapDemo(): Unit {
     println("=== Basic Cluster Bootstrap Demo ===")
 
     let seedNodes = ArrayList<String>()
-    seedNodes.append("seed-node-1:2552")
-    seedNodes.append("seed-node-2:2552")
-    seedNodes.append("seed-node-3:2552")
+    seedNodes.add("seed-node-1:2552")
+    seedNodes.add("seed-node-2:2552")
+    seedNodes.add("seed-node-3:2552")
 
     let config = createBootstrapConfigWithSeedNodes(seedNodes)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
@@ -144,9 +144,9 @@ public func runConfigBasedDiscoveryDemo(): Unit {
     println("=== Config-Based Discovery Demo ===")
 
     let contactPoints = ArrayList<String>()
-    contactPoints.append("192.168.1.10:2552")
-    contactPoints.append("192.168.1.11:2552")
-    contactPoints.append("192.168.1.12:2552")
+    contactPoints.add("192.168.1.10:2552")
+    contactPoints.add("192.168.1.11:2552")
+    contactPoints.add("192.168.1.12:2552")
 
     let config = createBootstrapConfigWithContactPoints(contactPoints)
     let bootstrap = createClusterBootstrapWithConfig("config-node-1", config)
@@ -157,7 +157,7 @@ public func runConfigBasedDiscoveryDemo(): Unit {
     let result = bootstrap.start()
 
     println()
-    println("Result: ${if (result.success) "SUCCESS" else "FAILED"}")
+    println("Result: ${if (result.success) { "SUCCESS" } else { "FAILED" }}")
     match (result.failureReason) {
         case Some(reason) => println("  Reason: ${reason}")
         case None => ()
@@ -172,8 +172,8 @@ public func runDnsDiscoveryDemo(): Unit {
     println("=== DNS-Based Discovery Demo ===")
 
     let fallbackPoints = ArrayList<String>()
-    fallbackPoints.append("dns-seed-1:2552")
-    fallbackPoints.append("dns-seed-2:2552")
+    fallbackPoints.add("dns-seed-1:2552")
+    fallbackPoints.add("dns-seed-2:2552")
 
     let config = createBootstrapConfigWithDns("my-cluster", fallbackPoints)
     let bootstrap = createClusterBootstrapWithConfig("dns-node-1", config)
@@ -190,7 +190,7 @@ public func runDnsDiscoveryDemo(): Unit {
     let result = bootstrap.start()
 
     println()
-    println("Result: ${if (result.success) "SUCCESS" else "FAILED"}")
+    println("Result: ${if (result.success) { "SUCCESS" } else { "FAILED" }}")
     println()
 }
 
@@ -215,7 +215,7 @@ public func runKubernetesDiscoveryDemo(): Unit {
     let result = bootstrap.start()
 
     println()
-    println("Result: ${if (result.success) "SUCCESS" else "FAILED"}")
+    println("Result: ${if (result.success) { "SUCCESS" } else { "FAILED" }}")
     println()
 }
 
@@ -226,9 +226,9 @@ public func runReachabilityDemo(): Unit {
     println("=== Node Reachability Management Demo ===")
 
     let seedNodes = ArrayList<String>()
-    seedNodes.append("node-a:2552")
-    seedNodes.append("node-b:2552")
-    seedNodes.append("node-c:2552")
+    seedNodes.add("node-a:2552")
+    seedNodes.add("node-b:2552")
+    seedNodes.add("node-c:2552")
 
     let config = createBootstrapConfigWithSeedNodes(seedNodes)
     let bootstrap = createClusterBootstrapWithConfig("node-monitor", config)
@@ -261,7 +261,7 @@ public func runReachabilityDemo(): Unit {
     let result = bootstrap.start()
 
     println()
-    println("Final result: ${if (result.success) "SUCCESS" else "FAILED"}")
+    println("Final result: ${if (result.success) { "SUCCESS" } else { "FAILED" }}")
     println()
 }
 
@@ -272,8 +272,8 @@ public func runRetryDemo(): Unit {
     println("=== Retry Mechanism Demo ===")
 
     let seedNodes = ArrayList<String>()
-    seedNodes.append("flaky-node:2552")
-    seedNodes.append("stable-node:2552")
+    seedNodes.add("flaky-node:2552")
+    seedNodes.add("stable-node:2552")
 
     // 短超时和少重试次数配置
     let contactPoints = ArrayList<String>()
@@ -301,7 +301,7 @@ public func runRetryDemo(): Unit {
     let result = bootstrap.start()
 
     println()
-    println("Result: ${if (result.success) "SUCCESS" else "FAILED"}")
+    println("Result: ${if (result.success) { "SUCCESS" } else { "FAILED" }}")
     println("Attempts: ${result.attemptCount}")
 
     match (result.failureReason) {
@@ -315,7 +315,7 @@ public func runRetryDemo(): Unit {
     let retryResult = bootstrap.start()
 
     println()
-    println("Retry result: ${if (retryResult.success) "SUCCESS" else "FAILED"}")
+    println("Retry result: ${if (retryResult.success) { "SUCCESS" } else { "FAILED" }}")
     println()
 }
 

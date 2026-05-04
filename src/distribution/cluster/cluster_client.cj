@@ -66,13 +66,13 @@ public class ClusterContactPoint {
  * 客户端消息类型
  */
 public enum ClientMessageType {
-    Connect
-    Disconnect
-    Send
-    Subscribe
-    Unsubscribe
-    Ack
-    Nack
+    | Connect
+    | Disconnect
+    | Send
+    | Subscribe
+    | Unsubscribe
+    | Ack
+    | Nack
 }
 
 /**
@@ -99,23 +99,33 @@ public class ClientEnvelope {
 /**
  * 客户端连接状态
  */
-public enum ClientConnectionState {
-    Disconnected
-    Connecting
-    Connected
-    Reconnecting
-    Failed
+public enum ClientConnectionState <: ToString {
+    | Disconnected
+    | Connecting
+    | Connected
+    | Reconnecting
+    | Failed
+
+    public func toString(): String {
+        match (this) {
+            case Disconnected => "Disconnected"
+            case Connecting => "Connecting"
+            case Connected => "Connected"
+            case Reconnecting => "Reconnecting"
+            case Failed => "Failed"
+        }
+    }
 }
 
 /**
  * 集群客户端事件
  */
 public enum ClusterClientEvent {
-    Connected(nodeId: String)
-    Disconnected(nodeId: String)
-    MessageSent(destination: String, messageId: Int64)
-    MessageReceived(from: String, payload: String)
-    ConnectionFailed(reason: String)
+    | Connected(String)
+    | Disconnected(String)
+    | MessageSent(String, Int64)
+    | MessageReceived(String, String)
+    | ConnectionFailed(String)
 }
 
 /**
@@ -182,9 +192,9 @@ public class ClusterClient {
     private var eventHandler: Option<ClusterClientEventHandler>
     private let pendingMessages: HashMap<Int64, ClientEnvelope>
     private var messageIdCounter: Int64
-    private var totalSent: Int64
-    private var totalReceived: Int64
-    private var totalFailed: Int64
+    private var sentCount: Int64
+    private var receivedCount: Int64
+    private var failedCount: Int64
 
     public init(clientId: String, config: ClusterClientConfig) {
         this.clientId = clientId
@@ -196,9 +206,9 @@ public class ClusterClient {
         this.eventHandler = None
         this.pendingMessages = HashMap<Int64, ClientEnvelope>()
         this.messageIdCounter = 0
-        this.totalSent = 0
-        this.totalReceived = 0
-        this.totalFailed = 0
+        this.sentCount = 0
+        this.receivedCount = 0
+        this.failedCount = 0
     }
 
     /**
@@ -253,7 +263,7 @@ public class ClusterClient {
             connectionState = ClientConnectionState.Connected
         } else {
             connectionState = ClientConnectionState.Failed
-            totalFailed += 1
+            failedCount += 1
         }
         lock.writeMutex.unlock()
 
@@ -304,7 +314,7 @@ public class ClusterClient {
         let messageId = messageIdCounter
         let envelope = ClientEnvelope(ClientMessageType.Send, destinationPath, payload, clientId)
         pendingMessages.add(messageId, envelope)
-        totalSent += 1
+        sentCount += 1
         lock.writeMutex.unlock()
 
         match (eventHandler) {
@@ -370,7 +380,10 @@ public class ClusterClient {
      */
     public func isConnected(): Bool {
         lock.readMutex.lock()
-        let connected = connectionState == ClientConnectionState.Connected
+        let connected = match (connectionState) {
+            case ClientConnectionState.Connected => true
+            case _ => false
+        }
         lock.readMutex.unlock()
         connected
     }
@@ -425,7 +438,7 @@ public class ClusterClient {
      */
     public func totalSent(): Int64 {
         lock.readMutex.lock()
-        let count = totalSent
+        let count = sentCount
         lock.readMutex.unlock()
         count
     }
@@ -435,7 +448,7 @@ public class ClusterClient {
      */
     public func totalReceived(): Int64 {
         lock.readMutex.lock()
-        let count = totalReceived
+        let count = receivedCount
         lock.readMutex.unlock()
         count
     }
@@ -445,7 +458,7 @@ public class ClusterClient {
      */
     public func totalFailed(): Int64 {
         lock.readMutex.lock()
-        let count = totalFailed
+        let count = failedCount
         lock.readMutex.unlock()
         count
     }
@@ -491,7 +504,7 @@ public class ClusterClient {
      */
     public func recordReceive(payload: String, from: String): Unit {
         lock.writeMutex.lock()
-        totalReceived += 1
+        receivedCount += 1
         lock.writeMutex.unlock()
 
         match (eventHandler) {
@@ -526,8 +539,10 @@ public class ClusterClient {
                 removed += 1
             }
         }
-        for (i in toRemove.size - 1..-1..-1) {
-            contactPoints.remove(toRemove[i])
+        var idx: Int64 = toRemove.size - 1
+        while (idx >= 0) {
+            contactPoints.remove(toRemove[idx]..toRemove[idx])
+            idx -= 1
         }
         lock.writeMutex.unlock()
         removed

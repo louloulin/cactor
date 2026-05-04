@@ -15,13 +15,13 @@ import std.time.*
  * 用于在集群中传递 pub/sub 消息
  */
 public enum PubSubMessageType {
-    PublishMsg
-    SendMsg
-    SendToAllMsg
-    SubscribeMsg
-    UnsubscribeMsg
-    PutMsg
-    GetMsg
+    | PublishMsg
+    | SendMsg
+    | SendToAllMsg
+    | SubscribeMsg
+    | UnsubscribeMsg
+    | PutMsg
+    | GetMsg
 }
 
 /**
@@ -232,7 +232,7 @@ public class DistributedPubSubMediator {
     private let nodes: HashMap<String, NodeRegistration>
     private let lock: ReentrantReadWriteMutex
     private var eventHandler: Option<PubSubEventHandler>
-    private var messageCount: Int64
+    private var msgCount: Int64
 
     public init(nodeId: String) {
         this.nodeId = nodeId
@@ -240,7 +240,7 @@ public class DistributedPubSubMediator {
         this.nodes = HashMap<String, NodeRegistration>()
         this.lock = ReentrantReadWriteMutex()
         this.eventHandler = None
-        this.messageCount = 0
+        this.msgCount = 0
     }
 
     /**
@@ -340,7 +340,7 @@ public class DistributedPubSubMediator {
      */
     public func publish(topic: String, payload: String, sender: String): ArrayList<String> {
         lock.writeMutex.lock()
-        messageCount += 1
+        msgCount += 1
         let receivers = ArrayList<String>()
         match (topics.get(topic)) {
             case Some(topicManager) =>
@@ -374,7 +374,7 @@ public class DistributedPubSubMediator {
             }
         }
         lock.readMutex.unlock()
-        messageCount += 1
+        msgCount += 1
         result
     }
 
@@ -393,7 +393,7 @@ public class DistributedPubSubMediator {
             case None => ()
         }
         lock.readMutex.unlock()
-        messageCount += 1
+        msgCount += 1
         receivers
     }
 
@@ -461,7 +461,7 @@ public class DistributedPubSubMediator {
      */
     public func messageCount(): Int64 {
         lock.readMutex.lock()
-        let count = messageCount
+        let count = msgCount
         lock.readMutex.unlock()
         count
     }

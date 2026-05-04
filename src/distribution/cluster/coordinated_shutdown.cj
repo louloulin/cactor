@@ -13,28 +13,53 @@ import std.time.*
 /**
  * 关闭阶段
  */
-public enum ShutdownPhase {
-    PhaseBeforeClusterQuarantined    // 在集群隔离之前
-    PhaseClusterExiting              // 集群退出阶段
-    PhaseClusterSharding             // 分片协调器关闭
-    PhaseClusterSingleton            // 单例协调器关闭
-    PhaseServiceStop                 // 服务停止
-    PhaseApplicationServices         // 应用服务停止
-    PhaseExternalServices            // 外部服务停止
-    PhaseDone                        // 关闭完成
+public enum ShutdownPhase <: ToString {
+    | PhaseBeforeClusterQuarantined
+    | PhaseClusterExiting
+    | PhaseClusterSharding
+    | PhaseClusterSingleton
+    | PhaseServiceStop
+    | PhaseApplicationServices
+    | PhaseExternalServices
+    | PhaseDone
+
+    public func toString(): String {
+        match (this) {
+            case PhaseBeforeClusterQuarantined => "PhaseBeforeClusterQuarantined"
+            case PhaseClusterExiting => "PhaseClusterExiting"
+            case PhaseClusterSharding => "PhaseClusterSharding"
+            case PhaseClusterSingleton => "PhaseClusterSingleton"
+            case PhaseServiceStop => "PhaseServiceStop"
+            case PhaseApplicationServices => "PhaseApplicationServices"
+            case PhaseExternalServices => "PhaseExternalServices"
+            case PhaseDone => "PhaseDone"
+        }
+    }
 }
 
 /**
  * 关闭原因
  */
-public enum ShutdownReason {
-    NodeShutdown
-    ClusterShutdown
-    AbortedStartup
-    Crashed
-    ExitProcess
-    IncompatibleConfiguration
-    Unknown
+public enum ShutdownReason <: ToString {
+    | NodeShutdown
+    | ClusterShutdown
+    | AbortedStartup
+    | Crashed
+    | ExitProcess
+    | IncompatibleConfiguration
+    | Unknown
+
+    public func toString(): String {
+        match (this) {
+            case NodeShutdown => "NodeShutdown"
+            case ClusterShutdown => "ClusterShutdown"
+            case AbortedStartup => "AbortedStartup"
+            case Crashed => "Crashed"
+            case ExitProcess => "ExitProcess"
+            case IncompatibleConfiguration => "IncompatibleConfiguration"
+            case Unknown => "Unknown"
+        }
+    }
 }
 
 /**
@@ -63,12 +88,12 @@ public class ShutdownTask {
  */
 public class ShutdownResult {
     public let reason: ShutdownReason
-    public let phaseResults: HashMap<ShutdownPhase, Bool>
+    public let phaseResults: HashMap<String, Bool>
     public let totalTasks: Int64
     public let failedTasks: Int64
     public let success: Bool
 
-    public init(reason: ShutdownReason, phaseResults: HashMap<ShutdownPhase, Bool>, totalTasks: Int64, failedTasks: Int64) {
+    public init(reason: ShutdownReason, phaseResults: HashMap<String, Bool>, totalTasks: Int64, failedTasks: Int64) {
         this.reason = reason
         this.phaseResults = phaseResults
         this.totalTasks = totalTasks
@@ -145,7 +170,7 @@ public class CoordinatedShutdownConfig {
 public class CoordinatedShutdown {
     private let nodeId: String
     private let config: CoordinatedShutdownConfig
-    private let phases: HashMap<ShutdownPhase, ArrayList<ShutdownTask>>
+    private let phases: HashMap<String, ArrayList<ShutdownTask>>
     private let lock: ReentrantReadWriteMutex
     private var eventHandler: Option<CoordinatedShutdownEventHandler>
     private var isRunning: Bool
@@ -155,7 +180,7 @@ public class CoordinatedShutdown {
     public init(nodeId: String, config: CoordinatedShutdownConfig) {
         this.nodeId = nodeId
         this.config = config
-        this.phases = HashMap<ShutdownPhase, ArrayList<ShutdownTask>>()
+        this.phases = HashMap<String, ArrayList<ShutdownTask>>()
         this.lock = ReentrantReadWriteMutex()
         this.eventHandler = None
         this.isRunning = false
@@ -181,7 +206,7 @@ public class CoordinatedShutdown {
             ShutdownPhase.PhaseDone
         ]
         for (phase in phaseList) {
-            phases.add(phase, ArrayList<ShutdownTask>())
+            phases.add(phase.toString(), ArrayList<ShutdownTask>())
         }
     }
 
@@ -206,7 +231,7 @@ public class CoordinatedShutdown {
      */
     public func addTaskWithTimeout(name: String, phase: ShutdownPhase, task: () -> Unit, timeout: Duration): Unit {
         lock.writeMutex.lock()
-        match (phases.get(phase)) {
+        match (phases.get(phase.toString())) {
             case Some(tasks) =>
                 let shutdownTask = ShutdownTask(name, phase, task, timeout)
                 tasks.add(shutdownTask)
@@ -248,7 +273,7 @@ public class CoordinatedShutdown {
         lock.writeMutex.lock()
         if (isRunning) {
             lock.writeMutex.unlock()
-            return ShutdownResult(reason, HashMap<ShutdownPhase, Bool>(), 0, 0)
+            return ShutdownResult(reason, HashMap<String, Bool>(), 0, 0)
         }
         isRunning = true
         shutdownReason = Some(reason)
@@ -261,7 +286,7 @@ public class CoordinatedShutdown {
             case None => ()
         }
 
-        let phaseResults = HashMap<ShutdownPhase, Bool>()
+        let phaseResults = HashMap<String, Bool>()
         var totalTasks: Int64 = 0
         var failedTasks: Int64 = 0
 
@@ -270,7 +295,7 @@ public class CoordinatedShutdown {
 
         for (phase in phasesToRun) {
             lock.readMutex.lock()
-            let tasks = match (phases.get(phase)) {
+            let tasks = match (phases.get(phase.toString())) {
                 case Some(t) => t
                 case None => ArrayList<ShutdownTask>()
             }
@@ -294,7 +319,7 @@ public class CoordinatedShutdown {
                 }
             }
 
-            phaseResults.add(phase, phaseSuccess)
+            phaseResults.add(phase.toString(), phaseSuccess)
 
             match (eventHandler) {
                 case Some(handler) => handler.onPhaseCompleted(phase, phaseSuccess)
@@ -307,7 +332,7 @@ public class CoordinatedShutdown {
         }
 
         // 添加 Done 阶段
-        phaseResults.add(ShutdownPhase.PhaseDone, failedTasks == 0)
+        phaseResults.add(ShutdownPhase.PhaseDone.toString(), failedTasks == 0)
 
         match (eventHandler) {
             case Some(handler) =>
@@ -386,8 +411,12 @@ public class CoordinatedShutdown {
 
         var started = false
         for (phase in allPhases) {
-            if (!started && phase != startPhase) {
-                continue
+            if (!started) {
+                let phaseStr = phase.toString()
+                let startStr = startPhase.toString()
+                if (phaseStr != startStr) {
+                    continue
+                }
             }
             started = true
             phasesToRun.add(phase)
@@ -414,7 +443,7 @@ public class CoordinatedShutdown {
      */
     public func taskCountForPhase(phase: ShutdownPhase): Int64 {
         lock.readMutex.lock()
-        let count = match (phases.get(phase)) {
+        let count = match (phases.get(phase.toString())) {
             case Some(tasks) => tasks.size
             case None => 0
         }
@@ -452,9 +481,9 @@ public class CoordinatedShutdown {
     /**
      * 获取所有任务
      */
-    public func getAllTasks(): ArrayList<(String, ShutdownPhase)> {
+    public func getAllTasks(): ArrayList<(String, String)> {
         lock.readMutex.lock()
-        let result = ArrayList<(String, ShutdownPhase)>()
+        let result = ArrayList<(String, String)>()
         for ((phase, tasks) in phases) {
             for (task in tasks) {
                 result.add((task.name, phase))
@@ -469,14 +498,14 @@ public class CoordinatedShutdown {
      */
     public func getPhaseOrder(): ArrayList<ShutdownPhase> {
         let order = ArrayList<ShutdownPhase>()
-        order.append(ShutdownPhase.PhaseBeforeClusterQuarantined)
-        order.append(ShutdownPhase.PhaseClusterExiting)
-        order.append(ShutdownPhase.PhaseClusterSharding)
-        order.append(ShutdownPhase.PhaseClusterSingleton)
-        order.append(ShutdownPhase.PhaseServiceStop)
-        order.append(ShutdownPhase.PhaseApplicationServices)
-        order.append(ShutdownPhase.PhaseExternalServices)
-        order.append(ShutdownPhase.PhaseDone)
+        order.add(ShutdownPhase.PhaseBeforeClusterQuarantined)
+        order.add(ShutdownPhase.PhaseClusterExiting)
+        order.add(ShutdownPhase.PhaseClusterSharding)
+        order.add(ShutdownPhase.PhaseClusterSingleton)
+        order.add(ShutdownPhase.PhaseServiceStop)
+        order.add(ShutdownPhase.PhaseApplicationServices)
+        order.add(ShutdownPhase.PhaseExternalServices)
+        order.add(ShutdownPhase.PhaseDone)
         order
     }
 
@@ -496,12 +525,12 @@ public class CoordinatedShutdown {
      */
     public func clearPhaseTasks(phase: ShutdownPhase): Int64 {
         lock.writeMutex.lock()
-        let count = match (phases.get(phase)) {
+        let count = match (phases.get(phase.toString())) {
             case Some(tasks) => tasks.size
             case None => 0
         }
-        phases.remove(phase)
-        phases.add(phase, ArrayList<ShutdownTask>())
+        phases.remove(phase.toString())
+        phases.add(phase.toString(), ArrayList<ShutdownTask>())
         lock.writeMutex.unlock()
         count
     }

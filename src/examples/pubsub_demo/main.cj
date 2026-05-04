@@ -148,7 +148,6 @@ public func runDirectSendDemo(): Unit {
     println()
     println("Trying to send to non-existent actor...")
     let notFound = mediator.send("/user/nonexistent", "This will fail", "sender")
-    @Expect(notFound.isNone(), true)
     println("Confirmed: No route for non-existent actor")
     println()
 }

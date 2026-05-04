@@ -15,7 +15,7 @@ import cactor.core.system.SimpleFuture
 /**
  * 成员状态 - 对标 Akka MemberStatus
  */
-public enum MemberStatus {
+public enum MemberStatus <: ToString {
     | Joining      // 加入中
     | WeaklyUp     // 弱上线
     | Up           // 上线
@@ -23,6 +23,18 @@ public enum MemberStatus {
     | Exiting      // 退出中
     | Down         // 下线
     | Removed      // 已移除
+
+    public func toString(): String {
+        match (this) {
+            case Joining => "Joining"
+            case WeaklyUp => "WeaklyUp"
+            case Up => "Up"
+            case Leaving => "Leaving"
+            case Exiting => "Exiting"
+            case Down => "Down"
+            case Removed => "Removed"
+        }
+    }
 
     public func toInt64(): Int64 {
         match (this) {
@@ -525,7 +537,7 @@ public class Class {
 /**
  * 地址
  */
-public struct Address {
+public struct Address <: ToString {
     public let protocol: String
     public let system: String
     public let host: String

@@ -13,7 +13,7 @@ import std.time.*
 /**
  * 租约状态
  */
-public enum LeaseState {
+public enum LeaseState <: ToString {
     | Released    // 未被租借
     | Leased     // 已被租借
     | Acquiring  // 正在获取
@@ -22,6 +22,14 @@ public enum LeaseState {
         match (this) {
             case Leased => true
             case _ => false
+        }
+    }
+
+    public func toString(): String {
+        match (this) {
+            case Released => "Released"
+            case Leased => "Leased"
+            case Acquiring => "Acquiring"
         }
     }
 }
@@ -40,11 +48,11 @@ public class LeaseResult {
         this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 
-    public static func granted(reason: String): LeaseResult {
+    public static func createGranted(reason: String): LeaseResult {
         LeaseResult(true, reason)
     }
 
-    public static func denied(reason: String): LeaseResult {
+    public static func createDenied(reason: String): LeaseResult {
         LeaseResult(false, reason)
     }
 }
@@ -121,8 +129,8 @@ public interface Lease {
 public class LeaseConfig {
     public let leaseName: String
     public let timeout: Duration
-    public let retryInterval: Duration
-    public let maxRetries: Int64
+    public var retryInterval: Duration
+    public var maxRetries: Int64
 
     public init(leaseName: String, timeout: Duration) {
         this.leaseName = leaseName
@@ -132,14 +140,14 @@ public class LeaseConfig {
     }
 
     public func withRetryInterval(interval: Duration): LeaseConfig {
-        let config = LeaseConfig(leaseName, timeout)
+        var config = LeaseConfig(leaseName, timeout)
         config.retryInterval = interval
         config.maxRetries = maxRetries
         config
     }
 
     public func withMaxRetries(maxRetries: Int64): LeaseConfig {
-        let config = LeaseConfig(leaseName, timeout)
+        var config = LeaseConfig(leaseName, timeout)
         config.retryInterval = retryInterval
         config.maxRetries = maxRetries
         config
@@ -179,7 +187,6 @@ public class SingleOwnerLease <: Lease {
 
     public func acquire(owner: String, timeout: Duration): LeaseResult {
         lock.writeMutex.lock()
-        defer { lock.writeMutex.unlock() }
 
         // 如果已有持有者且未过期，则拒绝
         match (currentOwner) {
@@ -189,9 +196,11 @@ public class SingleOwnerLease <: Lease {
                     if (existingOwner == owner) {
                         // 同一持有者，续约
                         expireTime = now + timeout.toMilliseconds()
-                        return LeaseResult.granted("lease renewed")
+                        lock.writeMutex.unlock()
+                        return LeaseResult.createGranted("lease renewed")
                     }
-                    return LeaseResult.denied("lease held by ${existingOwner}")
+                    lock.writeMutex.unlock()
+                    return LeaseResult.createDenied("lease held by ${existingOwner}")
                 }
             case None => ()
         }
@@ -208,12 +217,12 @@ public class SingleOwnerLease <: Lease {
             case None => ()
         }
 
-        LeaseResult.granted("lease acquired")
+        lock.writeMutex.unlock()
+        LeaseResult.createGranted("lease acquired")
     }
 
     public func release(owner: String): Bool {
         lock.writeMutex.lock()
-        defer { lock.writeMutex.unlock() }
 
         match (currentOwner) {
             case Some(existingOwner) =>
@@ -226,27 +235,32 @@ public class SingleOwnerLease <: Lease {
                         case Some(handler) => handler.onLeaseReleased(config.leaseName, owner)
                         case None => ()
                     }
+                    lock.writeMutex.unlock()
                     return true
                 }
+                lock.writeMutex.unlock()
                 return false
             case None =>
+                lock.writeMutex.unlock()
                 return true
         }
     }
 
     public func check(): LeaseState {
         lock.readMutex.lock()
-        defer { lock.readMutex.unlock() }
 
         match (currentOwner) {
             case Some(_) =>
                 let now = DateTime.now().toUnixTimeStamp().toMilliseconds()
                 if (expireTime > now) {
+                    lock.readMutex.unlock()
                     return state
                 }
                 // 租约已过期
+                lock.readMutex.unlock()
                 return LeaseState.Released
             case None =>
+                lock.readMutex.unlock()
                 return LeaseState.Released
         }
     }
@@ -260,17 +274,19 @@ public class SingleOwnerLease <: Lease {
 
     public func renew(owner: String, timeout: Duration): Bool {
         lock.writeMutex.lock()
-        defer { lock.writeMutex.unlock() }
 
         match (currentOwner) {
             case Some(existingOwner) =>
                 if (existingOwner == owner) {
                     let now = DateTime.now().toUnixTimeStamp().toMilliseconds()
                     expireTime = now + timeout.toMilliseconds()
+                    lock.writeMutex.unlock()
                     return true
                 }
+                lock.writeMutex.unlock()
                 return false
             case None =>
+                lock.writeMutex.unlock()
                 return false
         }
     }
