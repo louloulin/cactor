@@ -278,7 +278,7 @@ func testAdaptiveLoadBalancingConfig_creation() {
     )
     @Expect(config.virtualNodesFactor, 20)
     @Expect(config.mixHealthies, 0.9)
-    @Expect(config.允许Unhealthy, true)
+    @Expect(config.allowUnhealthy, true)
 }
 
 @Test

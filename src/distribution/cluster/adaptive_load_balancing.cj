@@ -111,7 +111,7 @@ public class AdaptiveLoadBalancingConfig {
     public let weights: HashMap<LoadMetric, Float64>
     public let virtualNodesFactor: Int64
     public let mixHealthies: Float64
-    public let允许Unhealthy: Bool
+    public let allowUnhealthy: Bool
     public let unsafeMode: Bool
     public let throttleInterval: Duration
 
@@ -128,7 +128,7 @@ public class AdaptiveLoadBalancingConfig {
         this.weights = weights
         this.virtualNodesFactor = virtualNodesFactor
         this.mixHealthies = mixHealthies
-        this.允许Unhealthy = allowUnhealthy
+        this.allowUnhealthy = allowUnhealthy
         this.unsafeMode = unsafeMode
         this.throttleInterval = throttleInterval
     }
@@ -168,7 +168,7 @@ public class AdaptiveLoadBalancingPool {
         if (loadInfo.compositeScore() < 0.7) {
             healthyNodes.add(nodeId, loadInfo)
         } else {
-            if (config.允许Unhealthy) {
+            if (config.allowUnhealthy) {
                 unhealthyNodes.add(nodeId, loadInfo)
             }
         }
@@ -204,7 +204,7 @@ public class AdaptiveLoadBalancingPool {
             healthyNodes.add(nodeId, loadInfo)
             unhealthyNodes.remove(nodeId)
         } else {
-            if (config.允许Unhealthy) {
+            if (config.allowUnhealthy) {
                 unhealthyNodes.add(nodeId, loadInfo)
                 healthyNodes.remove(nodeId)
             }
@@ -242,7 +242,7 @@ public class AdaptiveLoadBalancingPool {
         lock.writeMutex.lock()
         if (healthyNodes.size == 0) {
             // 如果允许使用不健康节点
-            if (config.允许Unhealthy && unhealthyNodes.size > 0) {
+            if (config.allowUnhealthy && unhealthyNodes.size > 0) {
                 let firstEntry = unhealthyNodes.getIterator().next()
                 match (firstEntry) {
                     case Some((nodeId, loadInfo)) =>
@@ -259,7 +259,7 @@ public class AdaptiveLoadBalancingPool {
 
         // 找到负载最低的节点
         var bestNodeId: Option<String> = None
-        var bestScore: Float64 = Float64.MaxValue
+        var bestScore: Float64 = 999999999.0
 
         for ((nodeId, loadInfo) in healthyNodes) {
             let score = loadInfo.compositeScore()
@@ -325,7 +325,7 @@ public class AdaptiveLoadBalancingPool {
         }
 
         var bestNodeId: Option<String> = None
-        var bestValue: Float64 = Float64.MaxValue
+        var bestValue: Float64 = 999999999.0
 
         for ((nodeId, loadInfo) in healthyNodes) {
             let value = loadInfo.getMetric(metric)
@@ -432,7 +432,7 @@ public class AdaptiveLoadBalancingPool {
     public func getMostLoadedNode(): Option<LoadInfo> {
         lock.readMutex.lock()
         var worstNodeId: Option<String> = None
-        var worstScore: Float64 = Float64.MinValue
+        var worstScore: Float64 = -999999999.0
 
         for ((nodeId, loadInfo) in healthyNodes) {
             let score = loadInfo.compositeScore()
@@ -459,7 +459,7 @@ public class AdaptiveLoadBalancingPool {
     public func getLeastLoadedNode(): Option<LoadInfo> {
         lock.readMutex.lock()
         var bestNodeId: Option<String> = None
-        var bestScore: Float64 = Float64.MaxValue
+        var bestScore: Float64 = 999999999.0
 
         for ((nodeId, loadInfo) in healthyNodes) {
             let score = loadInfo.compositeScore()
