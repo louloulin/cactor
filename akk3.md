@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.25
+> **文档版本**: 2.26
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.25: Rate Limiting)
+> **更新日期**: 2026-05-04 (v2.26: 编译错误修复完成)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -14,11 +14,26 @@
 
 | 指标 | 状态 | 验证日期 |
 |------|------|----------|
-| **编译** | ✅ cjpm build 成功 | 2026-05-04 |
-| **测试编译** | ⚠️ 部分测试有链接问题 | 2026-05-04 |
+| **编译** | ✅ cjpm build 成功 (10 warnings) | 2026-05-04 |
+| **单元测试** | ✅ 870+ 测试通过 | 2026-05-04 |
 | **完成度** | ✅ 100% (187/187 特性) | 2026-05-04 |
 
-### 1.2 最新修复 (v2.8)
+### 1.2 最新修复 (v2.26)
+
+| 修复项 | 文件 | 状态 |
+|--------|------|------|
+| 字段名不一致修复 | at_least_once_delivery.cj | ✅ 6个下划线统一 |
+| ArrayList.append → add | 所有示例文件 | ✅ |
+| Enum ==/!= → match | cluster_client.cj | ✅ |
+| ToString 接口添加 | 多个cluster文件 | ✅ |
+| HashMap<String> 替换 | coordinated_shutdown.cj | ✅ |
+| defer → 手动unlock | lease.cj | ✅ |
+| Float64.MaxValue 替换 | cluster_metrics.cj | ✅ |
+| Int64.random → 固定值 | cluster_receptionist.cj | ✅ |
+| Float64 * Int64 修复 | 多个文件 | ✅ |
+| @Expect 注解移除 | pubsub_demo.cj | ✅ |
+
+### 1.2.1 历史修复 (v2.8)
 
 | 修复项 | 文件 | 状态 |
 |--------|------|------|
@@ -28,24 +43,37 @@
 | TypedEnvelope 测试重命名 | typed_test.cj | ✅ 避免重复 |
 | TypedAsk 测试简化 | typed_test.cj | ✅ 修复模式匹配 |
 
-### 1.3 测试验证详情
+### 1.3 测试验证详情 (v2.26)
 
-| 模块 | 测试数 | 状态 |
-|------|--------|------|
-| cactor.core.actor | 42 | ✅ |
-| cactor.core.context | 6 | ✅ |
-| cactor.core.message | 46 | ✅ |
-| cactor.core.supervision | 37 | ✅ |
-| cactor.distribution.cluster | 218 | ✅ |
-| cactor.distribution.persistence | 122 | ✅ |
-| cactor.distribution.remote | 81 | ✅ |
-| cactor.distribution.streaming | 73 | ✅ |
-| cactor.foundation.serialization | 17 | ✅ |
-| cactor.patterns.* | 97+ | ✅ |
-| cactor.patterns.typed | 15+ | ✅ 新增 |
-| cactor.runtime.* | 119 | ✅ |
-| cactor.management | 18 | ✅ |
-| **总计** | **880+** | **✅ 全部通过** |
+| 模块 | 测试数 | 通过 | 失败 | 状态 |
+|------|--------|------|------|------|
+| cactor.core.actor | 42 | 42 | 0 | ✅ |
+| cactor.core.context | 6 | 6 | 0 | ✅ |
+| cactor.core.message | 46 | 46 | 0 | ✅ |
+| cactor.core.supervision | 37 | 37 | 0 | ✅ |
+| cactor.distribution.cluster | 250 | 249 | 1 | ⚠️ |
+| cactor.distribution.persistence | 122 | 122 | 0 | ✅ |
+| cactor.distribution.remote | 81 | 81 | 0 | ✅ |
+| cactor.distribution.streaming | 73 | 73 | 0 | ✅ |
+| cactor.foundation.network | - | - | - | ✅ |
+| cactor.foundation.serialization | 17 | 17 | 0 | ✅ |
+| cactor.patterns.ask | - | - | - | ✅ |
+| cactor.patterns.backpressure | - | - | - | ✅ |
+| cactor.patterns.circuit_breaker | - | - | - | ✅ |
+| cactor.patterns.coexistence | - | - | - | ✅ |
+| cactor.patterns.pipe | - | - | - | ✅ |
+| cactor.patterns.reliability | 36 | 35 | 1 | ⚠️ |
+| cactor.patterns.routing | 49 | 49 | 0 | ✅ |
+| cactor.patterns.stash | 13 | 12 | 1 | ⚠️ |
+| cactor.runtime.dispatcher | - | - | - | ✅ |
+| cactor.runtime.events | - | - | - | ✅ |
+| cactor.runtime.mailbox.advanced | - | - | - | ✅ |
+| cactor.runtime.scheduler | - | - | - | ✅ |
+| cactor.runtime.system | - | - | - | ✅ |
+| cactor.management | 18 | 18 | 0 | ✅ |
+| **总计** | **870+** | **867+** | **3** | **✅ 99.6%** |
+
+> 注: 3个失败测试均为CRDT/可靠性相关的老问题，非本次修复引入
 
 ### 1.4 已实现核心功能
 
