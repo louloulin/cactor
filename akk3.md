@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.19
+> **文档版本**: 2.20
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.19: Akka AtLeastOnceDelivery)
-> **基于**: akka2.md (v2.18: DistributedPubSub 已实现)
+> **更新日期**: 2026-05-04 (v2.20: Akka ClusterReceptionist)
+> **基于**: akka2.md (v2.19: AtLeastOnceDelivery 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -661,3 +661,29 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
 > **测试数量**: 25+ 个 AtLeastOnceDelivery 测试
 > **说明**: AtLeastOnceDelivery 实现带确认的消息投递，确保消息至少被投递一次，支持重试和确认率统计。
+
+#### Akka ClusterReceptionist 实现详情 (v2.20 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| ServiceInstance class | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| RegisterRequest class | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| DiscoveryRequest class | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| DiscoveryResponse class | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| ReceptionistEvent enum | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| ReceptionistEventHandler interface | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| ReceptionistConfig class | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| ClusterReceptionist class | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| createClusterReceptionist() | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| createDefaultReceptionistConfig() | ✅ | `src/distribution/cluster/cluster_receptionist.cj` |
+| ClusterReceptionist 测试 | ✅ | `src/distribution/cluster/cluster_receptionist_test.cj` (25+ 测试) |
+| ClusterReceptionist 示例 | ✅ | `src/examples/receptionist_demo/main.cj` |
+
+---
+
+> **文档状态**: v2.20 Phase 19 完成 (Akka ClusterReceptionist)
+> **维护者**: CActor Team
+> **下一步**: 实现 ClusterClient / 完善集群管理功能
+> **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
+> **测试数量**: 25+ 个 ClusterReceptionist 测试
+> **说明**: ClusterReceptionist 实现集群范围的服务注册和发现，支持服务前缀搜索和元数据更新。
