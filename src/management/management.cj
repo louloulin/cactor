@@ -39,23 +39,68 @@ public class ManagementConfig {
 // ============================================================================
 
 /**
+ * 健康检查严重程度
+ */
+public enum HealthSeverity <: ToString {
+    | Healthy      // 健康
+    | Degraded     // 降级
+    | Unhealthy    // 不健康
+
+    public func toString(): String {
+        match (this) {
+            case Healthy => "Healthy"
+            case Degraded => "Degraded"
+            case Unhealthy => "Unhealthy"
+        }
+    }
+}
+
+/**
  * 健康检查结果
  */
 public class HealthResult {
     public let status: String
+    public let severity: HealthSeverity
     public let timestamp: Int64
     public let details: HashMap<String, String>
 
     public init(status: String) {
         this.status = status
+        this.severity = match (status) {
+            case "UP" => HealthSeverity.Healthy
+            case "DOWN" => HealthSeverity.Unhealthy
+            case _ => HealthSeverity.Degraded
+        }
+        this.timestamp = 0
+        this.details = HashMap<String, String>()
+    }
+
+    public init(status: String, severity: HealthSeverity) {
+        this.status = status
+        this.severity = severity
         this.timestamp = 0
         this.details = HashMap<String, String>()
     }
 
     public init(status: String, details: HashMap<String, String>) {
         this.status = status
+        this.severity = match (status) {
+            case "UP" => HealthSeverity.Healthy
+            case "DOWN" => HealthSeverity.Unhealthy
+            case _ => HealthSeverity.Degraded
+        }
         this.timestamp = 0
         this.details = details
+    }
+
+    /**
+     * 是否健康
+     */
+    public func isHealthy(): Bool {
+        match (severity) {
+            case HealthSeverity.Healthy => true
+            case _ => false
+        }
     }
 }
 
@@ -89,6 +134,248 @@ public class SimpleHealthCheck <: HealthCheck {
         } else {
             HealthResult("DOWN")
         }
+    }
+}
+
+/**
+ * 组合健康检查 - 聚合多个健康检查
+ */
+public class CompositeHealthCheck <: HealthCheck {
+    private let checkName: String
+    private let checks: ArrayList<HealthCheck>
+    private let failFast: Bool
+
+    public init(name: String, failFast: Bool) {
+        this.checkName = name
+        this.checks = ArrayList<HealthCheck>()
+        this.failFast = failFast
+    }
+
+    public func name(): String {
+        checkName
+    }
+
+    /**
+     * 添加子检查
+     */
+    public func addCheck(check: HealthCheck): CompositeHealthCheck {
+        checks.add(check)
+        this
+    }
+
+    public func check(): HealthResult {
+        let details = HashMap<String, String>()
+        var worstSeverity = HealthSeverity.Healthy
+
+        for (c in checks) {
+            let result = c.check()
+            let _ = details.add(c.name(), result.status)
+
+            // Track worst severity
+            match (result.severity) {
+                case HealthSeverity.Unhealthy =>
+                    worstSeverity = HealthSeverity.Unhealthy
+                    if (failFast) {
+                        return HealthResult("DOWN", details)
+                    }
+                case HealthSeverity.Degraded =>
+                    if (match (worstSeverity) {
+                        case HealthSeverity.Healthy => true
+                        case _ => false
+                    }) {
+                        worstSeverity = HealthSeverity.Degraded
+                    }
+                case HealthSeverity.Healthy => ()
+            }
+        }
+
+        let status = match (worstSeverity) {
+            case HealthSeverity.Healthy => "UP"
+            case HealthSeverity.Degraded => "DEGRADED"
+            case HealthSeverity.Unhealthy => "DOWN"
+        }
+        HealthResult(status, details)
+    }
+}
+
+/**
+ * 集群健康检查
+ * 检查集群成员状态和可达性
+ */
+public class ClusterHealthCheck <: HealthCheck {
+    private let endpoint: ClusterEndpoint
+    private let minMembers: Int64
+
+    public init(endpoint: ClusterEndpoint, minMembers: Int64) {
+        this.endpoint = endpoint
+        this.minMembers = minMembers
+    }
+
+    public init(endpoint: ClusterEndpoint) {
+        this.endpoint = endpoint
+        this.minMembers = 1
+    }
+
+    public func name(): String {
+        "ClusterHealthCheck"
+    }
+
+    public func check(): HealthResult {
+        let members = endpoint.getClusterMembers()
+        let memberCount = members.size
+        let details = HashMap<String, String>()
+        let _ = details.add("memberCount", memberCount.toString())
+
+        if (memberCount < minMembers) {
+            HealthResult("DOWN", details)
+        } else if (memberCount < 3) {
+            HealthResult("DEGRADED", details)
+        } else {
+            HealthResult("UP", details)
+        }
+    }
+}
+
+/**
+ * Liveness 健康检查
+ * 简单的存活探针
+ */
+public class LivenessHealthCheck <: HealthCheck {
+    private let isAlive: Bool
+
+    public init(isAlive: Bool) {
+        this.isAlive = isAlive
+    }
+
+    public func name(): String {
+        "LivenessHealthCheck"
+    }
+
+    public func check(): HealthResult {
+        if (isAlive) {
+            HealthResult("UP")
+        } else {
+            HealthResult("DOWN")
+        }
+    }
+}
+
+/**
+ * 健康检查注册表
+ * 管理所有已注册的健康检查
+ */
+public class HealthCheckRegistry {
+    private let checks: HashMap<String, HealthCheck>
+    private let mutex: Mutex
+
+    public init() {
+        this.checks = HashMap<String, HealthCheck>()
+        this.mutex = Mutex()
+    }
+
+    /**
+     * 注册健康检查
+     */
+    public func register(name: String, check: HealthCheck): Unit {
+        mutex.lock()
+        try {
+            checks.add(name, check)
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    /**
+     * 注销健康检查
+     */
+    public func unregister(name: String): Bool {
+        mutex.lock()
+        try {
+            checks.remove(name).isSome()
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    /**
+     * 获取检查
+     */
+    public func get(name: String): Option<HealthCheck> {
+        mutex.lock()
+        try {
+            checks.get(name)
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    /**
+     * 获取所有检查名称
+     */
+    public func getCheckNames(): ArrayList<String> {
+        mutex.lock()
+        try {
+            let names = ArrayList<String>()
+            for ((name, _) in checks) {
+                names.add(name)
+            }
+            names
+        } finally {
+            mutex.unlock()
+        }
+    }
+
+    /**
+     * 执行所有检查
+     */
+    public func checkAll(): ArrayList<(String, HealthResult)> {
+        mutex.lock()
+        let snapshot = ArrayList<(String, HealthCheck)>()
+        try {
+            for ((name, check) in checks) {
+                snapshot.add((name, check))
+            }
+        } finally {
+            mutex.unlock()
+        }
+
+        let results = ArrayList<(String, HealthResult)>()
+        for ((name, check) in snapshot) {
+            results.add((name, check.check()))
+        }
+        results
+    }
+
+    /**
+     * 获取整体健康状态
+     */
+    public func getOverallHealth(): HealthResult {
+        let results = checkAll()
+        let details = HashMap<String, String>()
+
+        var worstSeverity = HealthSeverity.Healthy
+        for ((name, result) in results) {
+            let _ = details.add(name, result.status)
+            match (result.severity) {
+                case HealthSeverity.Unhealthy =>
+                    worstSeverity = HealthSeverity.Unhealthy
+                case HealthSeverity.Degraded =>
+                    if (match (worstSeverity) {
+                        case HealthSeverity.Healthy => true
+                        case _ => false
+                    }) {
+                        worstSeverity = HealthSeverity.Degraded
+                    }
+                case HealthSeverity.Healthy => ()
+            }
+        }
+
+        let status = match (worstSeverity) {
+            case HealthSeverity.Healthy => "UP"
+            case HealthSeverity.Degraded => "DEGRADED"
+            case HealthSeverity.Unhealthy => "DOWN"
+        }
+        HealthResult(status, details)
     }
 }
 

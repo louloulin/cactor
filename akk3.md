@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.27
+> **文档版本**: 2.28
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.27: Circuit Breaker 增强)
+> **更新日期**: 2026-05-04 (v2.28: Health Check 增强)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -867,7 +867,7 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 
 ---
 
-## 十一、v2.24-v2.26 功能总结
+## 十一、v2.24-v2.28 功能总结
 
 ### 已完成功能
 
@@ -882,7 +882,8 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | v2.23 | AdaptiveLoadBalancingPool 智能路由 | ✅ |
 | v2.24 | ClusterBootstrap 自动集群引导 | ✅ |
 | v2.25 | Rate Limiting 限流机制 | ✅ |
-| v2.26 | Circuit Breaker 增强 | ✅ |
+| v2.26 | Circuit Breaker 事件监听增强 | ✅ |
+| v2.28 | Health Check 完善 | ✅ |
 
 ### Circuit Breaker v2.26 增强内容
 
@@ -894,10 +895,19 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 | CircuitBreakerUtil.callProtected | 保护调用辅助方法 |
 | CircuitBreakerFactory.createWithEvents | 事件发布工厂方法 |
 
+### Health Check v2.28 增强内容
+
+| 功能 | 说明 |
+|------|------|
+| HealthSeverity enum | 健康严重程度 (Healthy/Degraded/Unhealthy) |
+| CompositeHealthCheck | 组合多个健康检查，支持 failFast |
+| ClusterHealthCheck | 集群可达性检查 |
+| LivenessHealthCheck | 简单存活探针 |
+| HealthCheckRegistry | 健康检查注册表，支持注册/注销/批量检查 |
+
 ### 后续可选功能
 
 | 功能 | 优先级 | 说明 |
 |------|--------|------|
-| Health Check 完善 | P2 | 增强健康检查 |
 | Multi-DC 支持 | P2 | 多数据中心支持 |
 | 限流中间件 | P2 | HTTP/远程限流 |
