@@ -1,9 +1,9 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.20
+> **文档版本**: 2.21
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.20: Akka ClusterReceptionist)
-> **基于**: akka2.md (v2.19: AtLeastOnceDelivery 已实现)
+> **更新日期**: 2026-05-04 (v2.21: Akka ClusterClient)
+> **基于**: akka2.md (v2.20: ClusterReceptionist 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
 ---
@@ -687,3 +687,32 @@ Phase 3 (HTTP层):       ░░░░░░░░░░░░████  3周
 > **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
 > **测试数量**: 25+ 个 ClusterReceptionist 测试
 > **说明**: ClusterReceptionist 实现集群范围的服务注册和发现，支持服务前缀搜索和元数据更新。
+
+#### Akka ClusterClient 实现详情 (v2.21 新增)
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| ClusterContactPoint class | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClientMessageType enum | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClientEnvelope class | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClientConnectionState enum | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClusterClientEvent enum | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClusterClientEventHandler interface | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClusterClientConfig class | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClusterClient class | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClusterClientSettings class | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| createClusterClient() | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| createClusterClientWithConfig() | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| createDefaultClusterClientConfig() | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| createDefaultClusterClientSettings() | ✅ | `src/distribution/cluster/cluster_client.cj` |
+| ClusterClient 测试 | ✅ | `src/distribution/cluster/cluster_client_test.cj` (25+ 测试) |
+| ClusterClient 示例 | ✅ | `src/examples/cluster_client_demo/main.cj` |
+
+---
+
+> **文档状态**: v2.21 Phase 20 完成 (Akka ClusterClient)
+> **维护者**: CActor Team
+> **下一步**: 完善集群管理功能 / 添加示例
+> **编译状态**: ⚠️ SDK 链接问题 (宏包 lSystem 缺失)
+> **测试数量**: 25+ 个 ClusterClient 测试
+> **说明**: ClusterClient 允许外部系统与集群中的 Actor 通信，支持连接管理、批量发送和自动重连。
