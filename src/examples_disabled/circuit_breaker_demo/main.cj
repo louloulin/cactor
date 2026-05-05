@@ -360,7 +360,7 @@ public func demonstrateFactory(): Unit {
 /**
  * 运行所有演示
  */
-main(): Unit {
+main(args: Array<String>): Unit {
     println("========================================")
     println("   CActor Circuit Breaker 断路器演示")
     println("========================================")
