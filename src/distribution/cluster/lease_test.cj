@@ -28,14 +28,14 @@ func testLeaseState_acquiring() {
 
 @Test
 func testLeaseResult_granted() {
-    let result = LeaseResult.granted("test")
+    let result = LeaseResult(true, "test")
     @Expect(result.granted, true)
     @Expect(result.reason, "test")
 }
 
 @Test
 func testLeaseResult_denied() {
-    let result = LeaseResult.denied("conflict")
+    let result = LeaseResult(false, "conflict")
     @Expect(result.granted, false)
     @Expect(result.reason, "conflict")
 }

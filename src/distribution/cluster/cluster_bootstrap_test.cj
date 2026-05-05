@@ -78,8 +78,8 @@ func testContactPoint_touch() {
 @Test
 func testBootstrapConfig_creation() {
     let contactPoints = ArrayList<String>()
-    contactPoints.append("host1:2552")
-    contactPoints.append("host2:2552")
+    contactPoints.add("host1:2552")
+    contactPoints.add("host2:2552")
 
     let config = BootstrapConfig(
         BootstrapDiscoveryMethod.ConfigBased,
@@ -92,7 +92,10 @@ func testBootstrapConfig_creation() {
         10,
         Duration.second * 10
     )
-    @Expect(config.discoveryMethod, BootstrapDiscoveryMethod.ConfigBased)
+    match (config.discoveryMethod) {
+        case BootstrapDiscoveryMethod.ConfigBased => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
     @Expect(config.contactPoints.size, 2)
     @Expect(config.maxRetryAttempts, 10)
 }
@@ -102,8 +105,8 @@ func testBootstrapConfig_creation() {
 @Test
 func testBootstrapResult_success() {
     let members = ArrayList<String>()
-    members.append("node-1")
-    members.append("node-2")
+    members.add("node-1")
+    members.add("node-2")
 
     let result = BootstrapResult(
         true,
@@ -143,7 +146,10 @@ func testBootstrapResult_failure() {
 func testClusterBootstrap_creation() {
     let bootstrap = createClusterBootstrap("node-1")
     @Expect(bootstrap.getNodeId(), "node-1")
-    @Expect(bootstrap.getState(), BootstrapState.Idle)
+    match (bootstrap.getState()) {
+        case BootstrapState.Idle => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
 }
 
 @Test
@@ -159,8 +165,8 @@ func testClusterBootstrap_startWithNoContactPoints() {
 @Test
 func testClusterBootstrap_addContactPoints() {
     let contactPoints = ArrayList<String>()
-    contactPoints.append("localhost:2552")
-    contactPoints.append("localhost:2553")
+    contactPoints.add("localhost:2552")
+    contactPoints.add("localhost:2553")
 
     let config = createBootstrapConfigWithContactPoints(contactPoints)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
@@ -171,7 +177,7 @@ func testClusterBootstrap_addContactPoints() {
 @Test
 func testClusterBootstrap_markReachable() {
     let contactPoints = ArrayList<String>()
-    contactPoints.append("localhost:2552")
+    contactPoints.add("localhost:2552")
 
     let config = createBootstrapConfigWithContactPoints(contactPoints)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
@@ -187,7 +193,7 @@ func testClusterBootstrap_markReachable() {
 @Test
 func testClusterBootstrap_markUnreachable() {
     let contactPoints = ArrayList<String>()
-    contactPoints.append("localhost:2552")
+    contactPoints.add("localhost:2552")
 
     let config = createBootstrapConfigWithContactPoints(contactPoints)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
@@ -203,8 +209,8 @@ func testClusterBootstrap_markUnreachable() {
 @Test
 func testClusterBootstrap_seedNodeCount() {
     let seedNodes = ArrayList<String>()
-    seedNodes.append("seed1:2552")
-    seedNodes.append("seed2:2552")
+    seedNodes.add("seed1:2552")
+    seedNodes.add("seed2:2552")
 
     let config = createBootstrapConfigWithSeedNodes(seedNodes)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
@@ -215,8 +221,8 @@ func testClusterBootstrap_seedNodeCount() {
 @Test
 func testClusterBootstrap_getContactPoints() {
     let contactPoints = ArrayList<String>()
-    contactPoints.append("host1:2552")
-    contactPoints.append("host2:2552")
+    contactPoints.add("host1:2552")
+    contactPoints.add("host2:2552")
 
     let config = createBootstrapConfigWithContactPoints(contactPoints)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
@@ -228,7 +234,7 @@ func testClusterBootstrap_getContactPoints() {
 @Test
 func testClusterBootstrap_reset() {
     let contactPoints = ArrayList<String>()
-    contactPoints.append("localhost:2552")
+    contactPoints.add("localhost:2552")
 
     let config = createBootstrapConfigWithContactPoints(contactPoints)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
@@ -237,7 +243,10 @@ func testClusterBootstrap_reset() {
     @Expect(bootstrap.reachableCount(), 1)
 
     bootstrap.reset()
-    @Expect(bootstrap.getState(), BootstrapState.Idle)
+    match (bootstrap.getState()) {
+        case BootstrapState.Idle => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
     @Expect(bootstrap.reachableCount(), 0)
     @Expect(bootstrap.getAttemptCount(), 0)
 }
@@ -272,9 +281,12 @@ func testClusterBootstrap_getElapsedTime() {
 @Test
 func testCreateBootstrapConfigWithContactPoints() {
     let contactPoints = ArrayList<String>()
-    contactPoints.append("host:2552")
+    contactPoints.add("host:2552")
     let config = createBootstrapConfigWithContactPoints(contactPoints)
-    @Expect(config.discoveryMethod, BootstrapDiscoveryMethod.ConfigBased)
+    match (config.discoveryMethod) {
+        case BootstrapDiscoveryMethod.ConfigBased => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
     @Expect(config.contactPoints.size, 1)
 }
 
@@ -282,14 +294,20 @@ func testCreateBootstrapConfigWithContactPoints() {
 func testCreateBootstrapConfigWithDns() {
     let contactPoints = ArrayList<String>()
     let config = createBootstrapConfigWithDns("my-service", contactPoints)
-    @Expect(config.discoveryMethod, BootstrapDiscoveryMethod.DnsBased)
+    match (config.discoveryMethod) {
+        case BootstrapDiscoveryMethod.DnsBased => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
     @Expect(config.dnsServiceName, "my-service")
 }
 
 @Test
 func testCreateBootstrapConfigWithKubernetes() {
     let config = createBootstrapConfigWithKubernetes("default", "my-app", "client")
-    @Expect(config.discoveryMethod, BootstrapDiscoveryMethod.KubernetesApi)
+    match (config.discoveryMethod) {
+        case BootstrapDiscoveryMethod.KubernetesApi => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
     @Expect(config.kubernetesNamespace, "default")
     @Expect(config.kubernetesPortName, "client")
 }
@@ -297,10 +315,13 @@ func testCreateBootstrapConfigWithKubernetes() {
 @Test
 func testCreateBootstrapConfigWithSeedNodes() {
     let seedNodes = ArrayList<String>()
-    seedNodes.append("seed1:2552")
-    seedNodes.append("seed2:2552")
+    seedNodes.add("seed1:2552")
+    seedNodes.add("seed2:2552")
     let config = createBootstrapConfigWithSeedNodes(seedNodes)
-    @Expect(config.discoveryMethod, BootstrapDiscoveryMethod.StaticList)
+    match (config.discoveryMethod) {
+        case BootstrapDiscoveryMethod.StaticList => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
     @Expect(config.contactPoints.size, 2)
 }
 
@@ -317,8 +338,8 @@ func testClusterBootstrap_setEventHandler() {
 @Test
 func testClusterBootstrap_startCallsDiscovery() {
     let seedNodes = ArrayList<String>()
-    seedNodes.append("localhost:2552")
-    seedNodes.append("localhost:2553")
+    seedNodes.add("localhost:2552")
+    seedNodes.add("localhost:2553")
     let config = createBootstrapConfigWithSeedNodes(seedNodes)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
     let handler = TestBootstrapHandler()
@@ -395,7 +416,7 @@ class TestBootstrapHandler <: BootstrapEventHandler {
 func testClusterBootstrap_invalidAddress() {
     // 测试无效地址（没有端口）
     let contactPoints = ArrayList<String>()
-    contactPoints.append("invalid-address")  // 格式不正确
+    contactPoints.add("invalid-address")  // 格式不正确
     let config = createBootstrapConfigWithContactPoints(contactPoints)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
     @Expect(bootstrap.contactPointCount(), 0)  // 无效地址不应该被添加
@@ -404,8 +425,8 @@ func testClusterBootstrap_invalidAddress() {
 @Test
 func testClusterBootstrap_duplicateContactPoint() {
     let contactPoints = ArrayList<String>()
-    contactPoints.append("localhost:2552")
-    contactPoints.append("localhost:2552")  // 重复
+    contactPoints.add("localhost:2552")
+    contactPoints.add("localhost:2552")  // 重复
     let config = createBootstrapConfigWithContactPoints(contactPoints)
     let bootstrap = createClusterBootstrapWithConfig("node-1", config)
     @Expect(bootstrap.contactPointCount(), 1)  // 只有一个

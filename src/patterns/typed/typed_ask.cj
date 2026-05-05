@@ -276,7 +276,7 @@ public class AskResult<T> {
     /**
      * 创建成功结果
      */
-    public static func success<T>(value: T): AskResult<T> {
+    public static func success(value: T): AskResult<T> {
         let result = AskResult<T>(value, true)
         result
     }
@@ -284,7 +284,7 @@ public class AskResult<T> {
     /**
      * 创建失败结果
      */
-    public static func failure<T>(msg: String): AskResult<T> {
+    public static func failure(msg: String): AskResult<T> {
         AskResult<T>(msg)
     }
 

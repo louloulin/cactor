@@ -10,6 +10,7 @@ import std.unittest.*
 import std.unittest.testmacro.*
 import cactor.core.actor.{ActorPath, ActorAddress}
 import cactor.core.message.Message
+import cactor.foundation.network.NetworkAddress
 
 /**
  * 测试消息
@@ -42,7 +43,7 @@ func testAddressNoHost(): Unit {
 
 @Test
 func testRemoteEnvelope(): Unit {
-    let path = ActorPath("user", Array<String>())
+    let path = ActorPath("user", "/test/actor")
     let msg = SimpleMessage("hello")
     let envelope = RemoteEnvelope.create(path, msg, Some(path))
     @Assert(envelope.senderOption.isSome())
@@ -50,7 +51,7 @@ func testRemoteEnvelope(): Unit {
 
 @Test
 func testRemoteEnvelopeNoSender(): Unit {
-    let path = ActorPath("user", Array<String>())
+    let path = ActorPath("user", "/test/actor")
     let msg = SimpleMessage("hello")
     let envelope = RemoteEnvelope.create(path, msg, None)
     @Assert(envelope.senderOption.isNone())

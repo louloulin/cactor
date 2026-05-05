@@ -248,7 +248,7 @@ func testHealthResult_withSeverity() {
 }
 
 @Test
-func testHealthResult_withDetails() {
+func testHealthResult_withDetailsMap() {
     let details = HashMap<String, String>()
     let _ = details.add("key", "value")
     let result = HealthResult("DOWN", details)

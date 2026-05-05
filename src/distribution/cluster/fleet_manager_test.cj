@@ -46,22 +46,34 @@ func testNodeHealth_unknown() {
 func testFleetNode_creation() {
     let node = createNode("node-1", "host1", 2552)
     @Expect(node.nodeId, "node-1")
-    @Expect(node.status, MemberStatus.Joining)
-    @Expect(node.health, NodeHealth.Unknown)
+    match (node.status) {
+        case MemberStatus.Joining => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
+    match (node.health) {
+        case NodeHealth.Unknown => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
 }
 
 @Test
 func testFleetNode_withStatus() {
     let node = createNode("node-1", "host1", 2552)
     let updated = node.withStatus(MemberStatus.Up)
-    @Expect(updated.status, MemberStatus.Up)
+    match (updated.status) {
+        case MemberStatus.Up => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
 }
 
 @Test
 func testFleetNode_withHealth() {
     let node = createNode("node-1", "host1", 2552)
     let updated = node.withHealth(NodeHealth.Healthy)
-    @Expect(updated.health, NodeHealth.Healthy)
+    match (updated.health) {
+        case NodeHealth.Healthy => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
 }
 
 @Test
@@ -121,7 +133,10 @@ func testFleetManager_nodeUp() {
     manager.nodeUp(node)
     let updated = manager.getNode("node-1")
     match (updated) {
-        case Some(n) => @Expect(n.status, MemberStatus.Up)
+        case Some(n) => match (n.status) {
+            case MemberStatus.Up => @Expect(true, true)
+            case _ => @Expect(false, true)
+        }
         case None => ()
     }
 }
@@ -135,7 +150,10 @@ func testFleetManager_nodeLeft() {
     manager.nodeLeft("node-1")
     let updated = manager.getNode("node-1")
     match (updated) {
-        case Some(n) => @Expect(n.status, MemberStatus.Leaving)
+        case Some(n) => match (n.status) {
+            case MemberStatus.Leaving => @Expect(true, true)
+            case _ => @Expect(false, true)
+        }
         case None => ()
     }
 }
@@ -149,7 +167,10 @@ func testFleetManager_nodeDown() {
     manager.nodeDown("node-1")
     let updated = manager.getNode("node-1")
     match (updated) {
-        case Some(n) => @Expect(n.status, MemberStatus.Down)
+        case Some(n) => match (n.status) {
+            case MemberStatus.Down => @Expect(true, true)
+            case _ => @Expect(false, true)
+        }
         case None => ()
     }
 }
@@ -202,7 +223,10 @@ func testFleetManager_updateHealth() {
     manager.updateHealth("node-1", NodeHealth.Healthy)
     let node = manager.getNode("node-1")
     match (node) {
-        case Some(n) => @Expect(n.health, NodeHealth.Healthy)
+        case Some(n) => match (n.health) {
+            case NodeHealth.Healthy => @Expect(true, true)
+            case _ => @Expect(false, true)
+        }
         case None => ()
     }
 }

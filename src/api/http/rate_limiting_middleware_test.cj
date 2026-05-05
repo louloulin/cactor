@@ -78,7 +78,7 @@ func testRateLimitingMiddleware_disabled() {
     )
     let middleware = RateLimitingMiddleware(config)
     let request = createTestRequest("192.168.1.1")
-    @Expect(middleware.handleRequest(request) == None, true)
+    @Expect(middleware.handleRequest(request).isNone(), true)
 }
 
 @Test
@@ -110,13 +110,16 @@ func testRateLimitingMiddleware_rejected() {
 
     // First request should be allowed
     let result1 = middleware.handleRequest(request)
-    @Expect(result1 == None, true)
+    @Expect(result1.isNone(), true)
 
     // Second request should be rejected
     let result2 = middleware.handleRequest(request)
     match (result2) {
         case Some(response) =>
-            @Expect(response.status == HttpStatus.TooManyRequests, true)
+            match (response.status) {
+                case HttpStatus.TooManyRequests => @Expect(true, true)
+                case _ => @Expect(false, true)
+            }
         case None =>
             @Expect(false, true)
     }
@@ -137,12 +140,12 @@ func testRateLimitingMiddleware_perClient() {
     // Client 1
     let request1 = createTestRequest("192.168.1.1")
     let result1 = middleware.handleRequest(request1)
-    @Expect(result1 == None, true)
+    @Expect(result1.isNone(), true)
 
     // Client 2 should be allowed (different client)
     let request2 = createTestRequest("192.168.1.2")
     let result2 = middleware.handleRequest(request2)
-    @Expect(result2 == None, true)
+    @Expect(result2.isNone(), true)
 }
 
 @Test
@@ -168,7 +171,7 @@ func testRateLimitingMiddleware_headerBased() {
     )
 
     let result1 = middleware.handleRequest(request1)
-    @Expect(result1 == None, true)
+    @Expect(result1.isNone(), true)
 
     // Same header should be rejected
     let request2 = HttpRequest(
@@ -189,7 +192,10 @@ func testRateLimitingMiddleware_createRejectedResponse() {
     let middleware = RateLimitingMiddleware()
     let response = middleware.createRejectedResponse()
 
-    @Expect(response.status == HttpStatus.TooManyRequests, true)
+    match (response.status) {
+        case HttpStatus.TooManyRequests => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
     match (response.headers.get("Retry-After")) {
         case Some(value) => @Expect(value.size > 0, true)
         case None => @Expect(false, true)

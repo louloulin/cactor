@@ -95,6 +95,7 @@ public enum HttpStatus {
     | Conflict
     | PayloadTooLarge
     | UnsupportedMediaType
+    | TooManyRequests
     | InternalServerError
     | NotImplemented
     | BadGateway
@@ -123,6 +124,7 @@ public enum HttpStatus {
             case Conflict => 409
             case PayloadTooLarge => 413
             case UnsupportedMediaType => 415
+            case TooManyRequests => 429
             case InternalServerError => 500
             case NotImplemented => 501
             case BadGateway => 502
@@ -153,6 +155,7 @@ public enum HttpStatus {
             case Conflict => "Conflict"
             case PayloadTooLarge => "Payload Too Large"
             case UnsupportedMediaType => "Unsupported Media Type"
+            case TooManyRequests => "Too Many Requests"
             case InternalServerError => "Internal Server Error"
             case NotImplemented => "Not Implemented"
             case BadGateway => "Bad Gateway"

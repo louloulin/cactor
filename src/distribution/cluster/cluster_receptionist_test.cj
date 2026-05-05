@@ -16,7 +16,7 @@ func createReceptionist(): ClusterReceptionist {
 // === ServiceInstance Tests ===
 
 @Test
-func testServiceInstance_creation() {
+func testReceptionistServiceInstance_creation() {
     let instance = ServiceInstance("user-service", "/user/actor1", "node-1", Address("cactor", "test", "host", 2552))
     @Expect(instance.serviceName, "user-service")
     @Expect(instance.actorPath, "/user/actor1")
@@ -25,7 +25,7 @@ func testServiceInstance_creation() {
 }
 
 @Test
-func testServiceInstance_withMetadata() {
+func testReceptionistServiceInstance_withMetadata() {
     let instance = ServiceInstance("user-service", "/user/actor1", "node-1", Address("cactor", "test", "host", 2552))
         .withMetadata("version", "1.0")
         .withMetadata("env", "production")
@@ -60,14 +60,20 @@ func testRegisterRequest_creation() {
 @Test
 func testDiscoveryRequest_find() {
     let req = DiscoveryRequest(DiscoveryRequestType.Find, "user-service")
-    @Expect(req.requestType, DiscoveryRequestType.Find)
+    match (req.requestType) {
+        case DiscoveryRequestType.Find => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
     @Expect(req.serviceName, "user-service")
 }
 
 @Test
 func testDiscoveryRequest_findAll() {
     let req = DiscoveryRequest(DiscoveryRequestType.FindAll, "user-service")
-    @Expect(req.requestType, DiscoveryRequestType.FindAll)
+    match (req.requestType) {
+        case DiscoveryRequestType.FindAll => @Expect(true, true)
+        case _ => @Expect(false, true)
+    }
 }
 
 // === DiscoveryResponse Tests ===
@@ -102,9 +108,9 @@ func testClusterReceptionist_register() {
 func testClusterReceptionist_registerAll() {
     let receptionist = createReceptionist()
     let registrations = ArrayList<RegisterRequest>()
-    registrations.append(RegisterRequest("service-a", "/user/a1", "node-1", Address("cactor", "test", "host", 2552)))
-    registrations.append(RegisterRequest("service-a", "/user/a2", "node-1", Address("cactor", "test", "host", 2552)))
-    registrations.append(RegisterRequest("service-b", "/user/b1", "node-1", Address("cactor", "test", "host", 2552)))
+    registrations.add(RegisterRequest("service-a", "/user/a1", "node-1", Address("cactor", "test", "host", 2552)))
+    registrations.add(RegisterRequest("service-a", "/user/a2", "node-1", Address("cactor", "test", "host", 2552)))
+    registrations.add(RegisterRequest("service-b", "/user/b1", "node-1", Address("cactor", "test", "host", 2552)))
     let count = receptionist.registerAll(registrations)
     @Expect(count, 3)
     @Expect(receptionist.serviceCount(), 2)
@@ -316,7 +322,8 @@ func testClusterReceptionist_eventHandler_unregistered() {
     receptionist.register("user-service", "/user/actor1")
     receptionist.unregister("user-service", "/user/actor1")
     @Expect(handler.unregisteredEvents.size, 1)
-    @Expect(handler.unregisteredEvents[0].get<0>(), "user-service")
+    let (svcName, actorPath) = handler.unregisteredEvents[0]
+    @Expect(svcName, "user-service")
 }
 
 @Test

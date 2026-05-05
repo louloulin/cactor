@@ -7,33 +7,33 @@ package cactor.distribution.cluster
 import std.collection.*
 import std.time.*
 
-// === ServiceInstance Tests ===
+// === ServiceEndpoint Tests ===
 
 @Test
-func testServiceInstance_creation() {
-    let instance = ServiceInstance("test-service", "localhost", 8080)
-    @Expect(instance.serviceName, "test-service")
-    @Expect(instance.host, "localhost")
-    @Expect(instance.port, 8080)
+func testServiceEndpoint_creation() {
+    let endpoint = ServiceEndpoint("test-service", "localhost", 8080)
+    @Expect(endpoint.serviceName, "test-service")
+    @Expect(endpoint.host, "localhost")
+    @Expect(endpoint.port, 8080)
 }
 
 @Test
-func testServiceInstance_address() {
-    let instance = ServiceInstance("test-service", "localhost", 8080)
-    @Expect(instance.address(), "localhost:8080")
+func testServiceEndpoint_address() {
+    let endpoint = ServiceEndpoint("test-service", "localhost", 8080)
+    @Expect(endpoint.address(), "localhost:8080")
 }
 
 @Test
-func testServiceInstance_withMetadata() {
-    let instance = ServiceInstance("test-service", "localhost", 8080)
-    let withMeta = instance.withMetadata("version", "1.0")
+func testServiceEndpoint_withMetadata() {
+    let endpoint = ServiceEndpoint("test-service", "localhost", 8080)
+    let withMeta = endpoint.withMetadata("version", "1.0")
     @Expect(withMeta.metadata.contains("version"), true)
 }
 
 @Test
-func testServiceInstance_toString() {
-    let instance = ServiceInstance("test-service", "localhost", 8080)
-    let str = instance.toString()
+func testServiceEndpoint_toString() {
+    let endpoint = ServiceEndpoint("test-service", "localhost", 8080)
+    let str = endpoint.toString()
     @Expect(str.contains("test-service"), true)
     @Expect(str.contains("localhost"), true)
 }
@@ -43,8 +43,8 @@ func testServiceInstance_toString() {
 @Test
 func testServiceRegistry_register() {
     let registry = ServiceRegistry()
-    let instance = ServiceInstance("test-service", "localhost", 8080)
-    registry.register(instance)
+    let endpoint = ServiceEndpoint("test-service", "localhost", 8080)
+    registry.register(endpoint)
 
     let found = registry.find("test-service")
     @Expect(found.size, 1)
@@ -53,9 +53,9 @@ func testServiceRegistry_register() {
 @Test
 func testServiceRegistry_registerMultiple() {
     let registry = ServiceRegistry()
-    registry.register(ServiceInstance("test-service", "node1", 8080))
-    registry.register(ServiceInstance("test-service", "node2", 8080))
-    registry.register(ServiceInstance("test-service", "node3", 8080))
+    registry.register(ServiceEndpoint("test-service", "node1", 8080))
+    registry.register(ServiceEndpoint("test-service", "node2", 8080))
+    registry.register(ServiceEndpoint("test-service", "node3", 8080))
 
     let found = registry.find("test-service")
     @Expect(found.size, 3)
@@ -64,8 +64,8 @@ func testServiceRegistry_registerMultiple() {
 @Test
 func testServiceRegistry_unregister() {
     let registry = ServiceRegistry()
-    registry.register(ServiceInstance("test-service", "localhost", 8080))
-    registry.register(ServiceInstance("test-service", "localhost", 8081))
+    registry.register(ServiceEndpoint("test-service", "localhost", 8080))
+    registry.register(ServiceEndpoint("test-service", "localhost", 8081))
 
     registry.unregister("test-service", "localhost", 8080)
 
@@ -83,9 +83,9 @@ func testServiceRegistry_findNotExists() {
 @Test
 func testServiceRegistry_getServiceNames() {
     let registry = ServiceRegistry()
-    registry.register(ServiceInstance("service-a", "localhost", 8080))
-    registry.register(ServiceInstance("service-b", "localhost", 8081))
-    registry.register(ServiceInstance("service-a", "localhost", 8082))
+    registry.register(ServiceEndpoint("service-a", "localhost", 8080))
+    registry.register(ServiceEndpoint("service-b", "localhost", 8081))
+    registry.register(ServiceEndpoint("service-a", "localhost", 8082))
 
     let names = registry.getServiceNames()
     @Expect(names.size, 2)
@@ -94,7 +94,7 @@ func testServiceRegistry_getServiceNames() {
 @Test
 func testServiceRegistry_clear() {
     let registry = ServiceRegistry()
-    registry.register(ServiceInstance("test-service", "localhost", 8080))
+    registry.register(ServiceEndpoint("test-service", "localhost", 8080))
     registry.clear()
 
     let found = registry.find("test-service")
@@ -108,11 +108,11 @@ class TestDiscoveryHandler <: ServiceDiscoveryEventHandler {
     public let unregistered = ArrayList<String>()
     public let changed = ArrayList<String>()
 
-    public func onServiceRegistered(instance: ServiceInstance): Unit {
+    public func onServiceRegistered(instance: ServiceEndpoint): Unit {
         registered.add(instance.serviceName)
     }
 
-    public func onServiceUnregistered(instance: ServiceInstance): Unit {
+    public func onServiceUnregistered(instance: ServiceEndpoint): Unit {
         unregistered.add(instance.serviceName)
     }
 
@@ -124,9 +124,9 @@ class TestDiscoveryHandler <: ServiceDiscoveryEventHandler {
 @Test
 func testSimpleServiceDiscovery_register() {
     let discovery = createSimpleServiceDiscovery()
-    let instance = ServiceInstance("test-service", "localhost", 8080)
+    let endpoint = ServiceEndpoint("test-service", "localhost", 8080)
 
-    discovery.register(instance)
+    discovery.register(endpoint)
 
     let found = discovery.discover("test-service")
     @Expect(found.size, 1)
@@ -135,9 +135,9 @@ func testSimpleServiceDiscovery_register() {
 @Test
 func testSimpleServiceDiscovery_unregister() {
     let discovery = createSimpleServiceDiscovery()
-    let instance = ServiceInstance("test-service", "localhost", 8080)
+    let endpoint = ServiceEndpoint("test-service", "localhost", 8080)
 
-    discovery.register(instance)
+    discovery.register(endpoint)
     discovery.unregister("test-service", "localhost", 8080)
 
     let found = discovery.discover("test-service")
@@ -147,8 +147,8 @@ func testSimpleServiceDiscovery_unregister() {
 @Test
 func testSimpleServiceDiscovery_getServiceNames() {
     let discovery = createSimpleServiceDiscovery()
-    discovery.register(ServiceInstance("service-a", "localhost", 8080))
-    discovery.register(ServiceInstance("service-b", "localhost", 8081))
+    discovery.register(ServiceEndpoint("service-a", "localhost", 8080))
+    discovery.register(ServiceEndpoint("service-b", "localhost", 8081))
 
     let names = discovery.getServiceNames()
     @Expect(names.size, 2)
@@ -160,8 +160,8 @@ func testSimpleServiceDiscovery_eventHandler() {
     let handler = TestDiscoveryHandler()
     discovery.setEventHandler(handler)
 
-    let instance = ServiceInstance("test-service", "localhost", 8080)
-    discovery.register(instance)
+    let endpoint = ServiceEndpoint("test-service", "localhost", 8080)
+    discovery.register(endpoint)
 
     @Expect(handler.registered.size, 1)
     @Expect(handler.changed.size, 1)
