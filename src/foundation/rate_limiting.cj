@@ -121,13 +121,13 @@ public class TokenBucketRateLimiter <: RateLimiter {
     private func tryAcquireWithLock(count: Int64): RateLimitResult {
         lock.writeMutex.lock()
         refillTokens()
-        totalRequests += 1
+        totalRequests += count
         if (tokens >= Float64(count)) {
             tokens -= Float64(count)
             lock.writeMutex.unlock()
             RateLimitResult.Allowed(count)
         } else {
-            rejectedRequests += 1
+            rejectedRequests += count
             let waitNanos = Int64((Float64(count) - tokens) * 1_000_000_000.0 / config.requestsPerSecond)
             lock.writeMutex.unlock()
             RateLimitResult.Rejected(waitNanos)
