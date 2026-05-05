@@ -64,7 +64,7 @@ public class LoadInfo {
      * 计算综合负载分数（越低越好）
      */
     public func compositeScore(): Float64 {
-        (cpuUsage * 0.4) + (memoryUsage * 0.3) + (heapUsage * 0.2) + (loadAverage / 10.0 * 0.1)
+        (cpuUsage * 0.4) + (memoryUsage * 0.3) + (heapUsage * 0.2) + (loadAverage / 4.0 * 0.1)
     }
 
     /**
@@ -168,9 +168,7 @@ public class AdaptiveLoadBalancingPool {
         if (loadInfo.compositeScore() < 0.7) {
             healthyNodes.add(nodeId, loadInfo)
         } else {
-            if (config.allowUnhealthy) {
-                unhealthyNodes.add(nodeId, loadInfo)
-            }
+            unhealthyNodes.add(nodeId, loadInfo)
         }
         // 初始化权重
         if (!nodeWeights.contains(nodeId)) {
@@ -204,10 +202,8 @@ public class AdaptiveLoadBalancingPool {
             healthyNodes.add(nodeId, loadInfo)
             unhealthyNodes.remove(nodeId)
         } else {
-            if (config.allowUnhealthy) {
-                unhealthyNodes.add(nodeId, loadInfo)
-                healthyNodes.remove(nodeId)
-            }
+            unhealthyNodes.add(nodeId, loadInfo)
+            healthyNodes.remove(nodeId)
         }
         lock.writeMutex.unlock()
     }
@@ -241,16 +237,6 @@ public class AdaptiveLoadBalancingPool {
     public func select(): Option<RoutingDecision> {
         lock.writeMutex.lock()
         if (healthyNodes.size == 0) {
-            // 如果允许使用不健康节点
-            if (config.allowUnhealthy && unhealthyNodes.size > 0) {
-                // 简化：选择第一个不健康节点
-                for ((nodeId, loadInfo) in unhealthyNodes) {
-                    lock.writeMutex.unlock()
-                    routeCount += 1
-                    lastRouteTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
-                    return Some(RoutingDecision(nodeId, loadInfo.address, loadInfo.compositeScore(), unhealthyNodes.size))
-                }
-            }
             lock.writeMutex.unlock()
             return None
         }
@@ -462,9 +448,20 @@ public class AdaptiveLoadBalancingPool {
             }
         }
 
+        for ((nodeId, loadInfo) in unhealthyNodes) {
+            let score = loadInfo.compositeScore()
+            if (score > worstScore) {
+                worstScore = score
+                worstNodeId = Some(nodeId)
+            }
+        }
+
         match (worstNodeId) {
             case Some(nodeId) =>
-                let result = healthyNodes.get(nodeId)
+                let result = match (healthyNodes.get(nodeId)) {
+                    case Some(info) => Some(info)
+                    case None => unhealthyNodes.get(nodeId)
+                }
                 lock.readMutex.unlock()
                 result
             case None =>

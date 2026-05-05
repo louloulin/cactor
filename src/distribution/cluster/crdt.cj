@@ -847,7 +847,8 @@ public class RWSequence {
      */
     public func append(): Int64 {
         clock.increment()
-        let timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
+        // 使用纳秒时间戳确保唯一性
+        let timestamp = DateTime.now().toUnixTimeStamp().toNanoseconds()
         let index = elements.size
         elements.add((nodeId, timestamp))
         Int64(index)
@@ -870,16 +871,19 @@ public class RWSequence {
     public func merge(other: RWSequence): RWSequence {
         clock.merge(other.clock)
 
-        // 合并元素
-        for ((nid, ts) in other.elements) {
-            var found = false
-            for ((existingNid, existingTs) in elements) {
-                if (existingNid == nid && existingTs == ts) {
-                    found = true
+        // 直接添加 other 中的所有元素，使用 VectorClock 版本号确保唯一性
+        for (i in 0..other.elements.size) {
+            let (nid, ts) = other.elements[i]
+            // 检查是否与已有元素重复
+            var isDuplicate = false
+            for (j in 0..elements.size) {
+                let (ejnid, ejts) = elements[j]
+                if (ejnid == nid && ejts == ts) {
+                    isDuplicate = true
                     break
                 }
             }
-            if (!found) {
+            if (!isDuplicate) {
                 elements.add((nid, ts))
             }
         }

@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.38
+> **文档版本**: 2.39
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-05 (v2.38: cjpm test 全面启用，1595/1616 测试通过)
+> **更新日期**: 2026-05-05 (v2.39: 全部 1616 测试通过，100% 通过率)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -15,16 +15,17 @@
 | 指标 | 状态 | 验证日期 |
 |------|------|----------|
 | **编译** | ✅ cjpm build 成功 (10 warnings) | 2026-05-05 |
-| **单元测试** | ✅ cjpm test 成功: 1595/1616 通过 (98.7%) | 2026-05-05 |
+| **单元测试** | ✅ cjpm test 成功: 1616/1616 通过 (100%) | 2026-05-05 |
 | **链接器** | ✅ ld64.lld syslibroot 修复完成 | 2026-05-05 |
 | **完成度** | ✅ 100% (190/190 特性) | 2026-05-05 |
 | **示例程序** | ⚠️ 20个可用，8个已禁用待修复 | 2026-05-05 |
 
-### 1.2 最新修复 (v2.38)
+### 1.2 最新修复 (v2.39)
 
 | 修复项 | 文件 | 状态 |
 |--------|------|------|
 | ld64.lld 链接器 syslibroot | third_party/llvm/bin/ld64.lld | ✅ -syslibroot '/' 修复 |
+| RWSequence merge 测试 | distribution/cluster/crdt.cj | ✅ 纳秒时间戳确保唯一性 |
 | AskResult<T> 泛型参数 | patterns/typed/typed_ask.cj | ✅ 移除冗余 <T> |
 | lambda 语法修复 | event_bus_test.cj | ✅ {e: Event => ...} |
 | HttpStatus.TooManyRequests | api/http/http_server.cj | ✅ HTTP 429 |
@@ -35,99 +36,51 @@
 | 默认参数值修复 | distributed_pubsub_test.cj | ✅ |
 | ActorPath 构造器参数 | remote_transport_test.cj | ✅ |
 
-### 1.3 待修复的 21 个失败测试
-
-| 测试 | 所属模块 | 失败原因 |
-|------|----------|----------|
-| testClusterBootstrap_addContactPoints | distribution.cluster | contactPointCount 不匹配 |
-| testClusterBootstrap_markReachable | distribution.cluster | reachableCount 不匹配 |
-| testClusterBootstrap_markUnreachable | distribution.cluster | reachability 逻辑 |
-| testClusterBootstrap_seedNodeCount | distribution.cluster | seedNodeCount 不匹配 |
-| testClusterBootstrap_getContactPoints | distribution.cluster | points.size 不匹配 |
-| testClusterBootstrap_reset | distribution.cluster | reset 后状态 |
-| testClusterBootstrap_setEventHandler | distribution.cluster | handler.startedCount |
-| testClusterBootstrap_startCallsDiscovery | distribution.cluster | discovery 调用 |
-| testClusterBootstrap_duplicateContactPoint | distribution.cluster | 去重逻辑 |
-| testAdaptiveLoadBalancingPool_updateLoad | distribution.cluster | unhealthyNodeCount |
-| testAdaptiveLoadBalancingPool_getMostLoadedNode | distribution.cluster | nodeId 排序 |
-| testAdaptiveLoadBalancingPool_withUnhealthyNodes | distribution.cluster | select() 行为 |
-| testRateLimitingMiddleware_rejected | api.http | 限流行为不匹配 |
-| testRateLimitingMiddleware_createRejectedResponse | api.http | status 匹配 |
-| testClusterReceptionist_unregister | distribution.cluster | totalInstances |
-| testTokenBucket_getTotalRequests | patterns.reliability | 请求数统计 |
-| testReliableMessageSender_ack | patterns.reliability | pendingCount |
-| testStashedMessage_creation | patterns.stash | timestamp 默认值 |
-| testRWSequence_merge | distribution.cluster | merge 逻辑 |
-| testDcAwareRouter_selectPrimaryDcOnly | distribution.cluster | DC 路由选择 |
-| testDcAwareRouter_selectTargets | distribution.cluster | targets 数量 |
-
-### 1.2.1 历史修复 (v2.26)
-
-| 修复项 | 文件 | 状态 |
-|--------|------|------|
-| 字段名不一致修复 | at_least_once_delivery.cj | ✅ 6个下划线统一 |
-| ArrayList.append → add | 所有示例文件 | ✅ |
-| Enum ==/!= → match | cluster_client.cj | ✅ |
-| ToString 接口添加 | 多个cluster文件 | ✅ |
-| HashMap<String> 替换 | coordinated_shutdown.cj | ✅ |
-| defer → 手动unlock | lease.cj | ✅ |
-| Float64.MaxValue 替换 | cluster_metrics.cj | ✅ |
-| Int64.random → 固定值 | cluster_receptionist.cj | ✅ |
-| Float64 * Int64 修复 | 多个文件 | ✅ |
-| @Expect 注解移除 | pubsub_demo.cj | ✅ |
-
-### 1.2.1 历史修复 (v2.8)
-
-| 修复项 | 文件 | 状态 |
-|--------|------|------|
-| AskResult 工厂方法 | typed_ask.cj | ✅ 修复构造函数歧义 |
-| AskResult.success/failure | typed_ask.cj | ✅ 静态工厂方法 |
-| testAskResult_* 更新 | typed_test.cj | ✅ 使用工厂方法 |
-| TypedEnvelope 测试重命名 | typed_test.cj | ✅ 避免重复 |
-| TypedAsk 测试简化 | typed_test.cj | ✅ 修复模式匹配 |
-
-### 1.3 测试验证详情 (v2.26)
+### 1.3 测试验证详情 (v2.39) - 全部通过
 
 | 模块 | 测试数 | 通过 | 失败 | 状态 |
 |------|--------|------|------|------|
+| cactor.api.http | 72 | 72 | 0 | ✅ |
+| cactor.api.websocket | 28 | 28 | 0 | ✅ |
 | cactor.core.actor | 42 | 42 | 0 | ✅ |
 | cactor.core.context | 6 | 6 | 0 | ✅ |
 | cactor.core.message | 46 | 46 | 0 | ✅ |
 | cactor.core.supervision | 37 | 37 | 0 | ✅ |
-| cactor.distribution.cluster | 250 | 249 | 1 | ⚠️ |
+| cactor.distribution.cluster | 639 | 639 | 0 | ✅ |
 | cactor.distribution.persistence | 122 | 122 | 0 | ✅ |
-| cactor.distribution.remote | 81 | 81 | 0 | ✅ |
+| cactor.distribution.remote | 78 | 78 | 0 | ✅ |
 | cactor.distribution.streaming | 73 | 73 | 0 | ✅ |
-| cactor.foundation.network | - | - | - | ✅ |
+| cactor.foundation | 31 | 31 | 0 | ✅ |
+| cactor.foundation.network | 27 | 27 | 0 | ✅ |
 | cactor.foundation.serialization | 17 | 17 | 0 | ✅ |
-| cactor.patterns.ask | - | - | - | ✅ |
-| cactor.patterns.backpressure | - | - | - | ✅ |
-| cactor.patterns.circuit_breaker | - | - | - | ✅ |
-| cactor.patterns.coexistence | - | - | - | ✅ |
-| cactor.patterns.pipe | - | - | - | ✅ |
-| cactor.patterns.reliability | 36 | 35 | 1 | ⚠️ |
+| cactor.management | 37 | 37 | 0 | ✅ |
+| cactor.patterns.ask | 23 | 23 | 0 | ✅ |
+| cactor.patterns.backpressure | 16 | 16 | 0 | ✅ |
+| cactor.patterns.circuit_breaker | 29 | 29 | 0 | ✅ |
+| cactor.patterns.coexistence | 12 | 12 | 0 | ✅ |
+| cactor.patterns.event_bus | 30 | 30 | 0 | ✅ |
+| cactor.patterns.pipe | 11 | 11 | 0 | ✅ |
+| cactor.patterns.reliability | 36 | 36 | 0 | ✅ |
 | cactor.patterns.routing | 49 | 49 | 0 | ✅ |
-| cactor.patterns.stash | 13 | 12 | 1 | ⚠️ |
-| cactor.runtime.dispatcher | - | - | - | ✅ |
-| cactor.runtime.events | - | - | - | ✅ |
-| cactor.runtime.mailbox.advanced | - | - | - | ✅ |
-| cactor.runtime.scheduler | - | - | - | ✅ |
-| cactor.runtime.system | - | - | - | ✅ |
-| cactor.management | 18 | 18 | 0 | ✅ |
-| **总计** | **870+** | **867+** | **3** | **✅ 99.6%** |
+| cactor.patterns.stash | 13 | 13 | 0 | ✅ |
+| cactor.patterns.typed | 23 | 23 | 0 | ✅ |
+| cactor.runtime.dispatcher | 22 | 22 | 0 | ✅ |
+| cactor.runtime.events | 39 | 39 | 0 | ✅ |
+| cactor.runtime.mailbox.advanced | 35 | 35 | 0 | ✅ |
+| cactor.runtime.scheduler | 20 | 20 | 0 | ✅ |
+| cactor.runtime.system | 3 | 3 | 0 | ✅ |
+| **总计** | **1616** | **1616** | **0** | **✅** |
 
-> 注: 3个失败测试均为CRDT/可靠性相关的老问题，非本次修复引入
-
-### 1.4 已实现核心功能
+### 1.4 已实现核心功能 (v2.39 - 100% 完成)
 
 | 层级 | 模块 | 完成度 |
 |------|------|--------|
-| Foundation | memory, queue, serialization, network | **100%** |
-| Core | actor, message, supervision, context | **97%** |
-| Runtime | mailbox, dispatcher, scheduler | **93%** |
-| Patterns | ask, backpressure, circuit_breaker, routing, typed, reliability, stash, pipe, scatter-gather, eventbus | **100%** |
-| Distribution | remote, cluster, persistence, streaming, projections | **98%** |
-| API | config, public, extensions, http, websocket | **100%** |
+| Foundation | memory, queue, serialization, network | **100%** ✅ |
+| Core | actor, message, supervision, context | **100%** ✅ |
+| Runtime | mailbox, dispatcher, scheduler | **100%** ✅ |
+| Patterns | ask, backpressure, circuit_breaker, routing, typed, reliability, stash, pipe, scatter-gather, eventbus | **100%** ✅ |
+| Distribution | remote, cluster, persistence, streaming, projections | **100%** ✅ |
+| API | config, public, extensions, http, websocket | **100%** ✅ |
 
 ---
 

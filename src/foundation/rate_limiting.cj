@@ -121,9 +121,9 @@ public class TokenBucketRateLimiter <: RateLimiter {
     private func tryAcquireWithLock(count: Int64): RateLimitResult {
         lock.writeMutex.lock()
         refillTokens()
+        totalRequests += 1
         if (tokens >= Float64(count)) {
             tokens -= Float64(count)
-            totalRequests += 1
             lock.writeMutex.unlock()
             RateLimitResult.Allowed(count)
         } else {
@@ -281,11 +281,11 @@ public class SlidingWindowRateLimiter <: RateLimiter {
         }
 
         // 检查是否允许
+        totalRequests += count
         if (Int64(timestamps.size) + count <= maxRequests) {
             for (k in 0..count) {
                 timestamps.add(now)
             }
-            totalRequests += count
             lock.writeMutex.unlock()
             RateLimitResult.Allowed(count)
         } else {
@@ -403,9 +403,9 @@ public class FixedWindowRateLimiter <: RateLimiter {
             windowStart = now
         }
 
+        totalRequests += requestedCount
         if (count + requestedCount <= maxRequests) {
             count += requestedCount
-            totalRequests += requestedCount
             lock.writeMutex.unlock()
             RateLimitResult.Allowed(requestedCount)
         } else {

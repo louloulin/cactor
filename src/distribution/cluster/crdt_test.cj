@@ -768,16 +768,27 @@ func testRWSequence_merge() {
     let seq1 = RWSequence("node1")
     let seq2 = RWSequence("node2")
 
-    seq1.append()
-    seq1.append()
+    let _ = seq1.append()
+    let _ = seq1.append()
 
-    seq2.append()
-    seq2.append()
-    seq2.append()
+    let _ = seq2.append()
+    let _ = seq2.append()
+    let _ = seq2.append()
 
+    // Check sizes before
+    let s1b = seq1.size()
+    let s2b = seq2.size()
+
+    // Assertions on pre-merge sizes
+    @Expect(s1b >= 2, true)
+    @Expect(s2b >= 3, true)
+
+    // Do merge
     seq1.merge(seq2)
 
-    @Expect(seq1.size() >= 4, true)
+    // Check sizes after
+    let s1a = seq1.size()
+    @Expect(s1a >= 4, true)
 }
 
 // === CRDT Comprehensive Tests ===

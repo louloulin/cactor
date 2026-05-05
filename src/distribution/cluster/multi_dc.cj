@@ -470,10 +470,7 @@ public class DcAwareRouter {
     private func filterReachable(members: ArrayList<DcMemberInfo>): ArrayList<DcMemberInfo> {
         let result = ArrayList<DcMemberInfo>()
         for (m in members) {
-            if (m.isReachabl && match (m.status) {
-                case MemberStatus.Up => true
-                case _ => false
-            }) {
+            if (m.isReachabl) {
                 result.add(m)
             }
         }

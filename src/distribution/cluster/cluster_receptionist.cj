@@ -289,7 +289,7 @@ public class ClusterReceptionist {
                 // 按逆序移除
                 var idx: Int64 = toRemove.size - 1
                 while (idx >= 0) {
-                    instances.remove(toRemove[idx]..toRemove[idx])
+                    instances.remove(toRemove[idx]..toRemove[idx] + 1)
                     idx -= 1
                 }
                 if (instances.size == 0) {

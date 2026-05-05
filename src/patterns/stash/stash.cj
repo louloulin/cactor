@@ -19,7 +19,7 @@ public class StashedMessage {
 
     public init(message: Message) {
         this.message = message
-        this.timestamp = 0
+        this.timestamp = DateTime.now().toUnixTimeStamp().toMilliseconds()
     }
 }
 

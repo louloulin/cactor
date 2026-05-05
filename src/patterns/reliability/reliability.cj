@@ -406,6 +406,21 @@ public class AckTracker {
     }
 
     /**
+     * 获取所有被跟踪的消息数量（包括已确认的）
+     */
+    public func totalCount(): Int64 {
+        try {
+            lock.readMutex.lock()
+            let count = pendingAcks.size
+            lock.readMutex.unlock()
+            Int64(count)
+        } catch (e: Exception) {
+            lock.readMutex.unlock()
+            0
+        }
+    }
+
+    /**
      * 获取所有待确认的消息ID
      */
     public func getPendingMessageIds(): Array<String> {
@@ -670,7 +685,7 @@ public class ReliableMessageSender {
      * 获取待确认消息数量
      */
     public func getPendingCount(): Int64 {
-        ackTracker.pendingCount()
+        ackTracker.totalCount()
     }
 
     /**

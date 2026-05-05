@@ -227,7 +227,7 @@ public class RateLimitingMiddleware {
         let _ = headers.add("X-RateLimit-Limit", config.requestsPerSecond.toString())
         let _ = headers.add("X-RateLimit-Remaining", "0")
 
-        HttpResponse(HttpStatus.ServiceUnavailable)
+        HttpResponse(HttpStatus.TooManyRequests)
             .withHeader("Content-Type", "application/json")
             .withHeader("Retry-After", config.responseConfig.retryAfterSeconds.toString())
             .withHeader("X-RateLimit-Limit", config.requestsPerSecond.toString())

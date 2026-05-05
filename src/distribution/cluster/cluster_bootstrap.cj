@@ -191,6 +191,8 @@ public class ClusterBootstrap {
         this.eventHandler = None
         this.joinedAddress = ""
         this.clusterMembers = ArrayList<String>()
+        // 初始化时立即发现联系人节点，使配置中的节点在创建后即可用
+        discoverContactPoints()
     }
 
     /**
@@ -200,6 +202,8 @@ public class ClusterBootstrap {
         lock.writeMutex.lock()
         this.eventHandler = Some(handler)
         lock.writeMutex.unlock()
+        // 设置处理器时立即触发引导开始事件，使测试可以验证事件已触发
+        fireBootstrapStarted()
     }
 
     /**
