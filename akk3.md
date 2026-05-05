@@ -1,8 +1,8 @@
 # CActor v8.0 改造计划 - Akka 功能差距分析
 
-> **文档版本**: 2.37
+> **文档版本**: 2.38
 > **创建日期**: 2026-05-03
-> **更新日期**: 2026-05-04 (v2.37: event_bus_demo 修复完成)
+> **更新日期**: 2026-05-05 (v2.38: cjpm test 全面启用，1595/1616 测试通过)
 > **基于**: akka2.md (v2.24: ClusterBootstrap 已实现)
 > **目标**: 分析与 Akka 的功能差距，制定 v8.0 改造计划
 
@@ -14,19 +14,52 @@
 
 | 指标 | 状态 | 验证日期 |
 |------|------|----------|
-| **编译** | ✅ cjpm build 成功 (10 warnings) | 2026-05-04 |
-| **单元测试** | ✅ 870+ 测试通过 | 2026-05-04 |
-| **完成度** | ✅ 100% (190/190 特性) | 2026-05-04 |
-| **示例程序** | ⚠️ 20个可用，8个已禁用待修复 | 2026-05-04 |
+| **编译** | ✅ cjpm build 成功 (10 warnings) | 2026-05-05 |
+| **单元测试** | ✅ cjpm test 成功: 1595/1616 通过 (98.7%) | 2026-05-05 |
+| **链接器** | ✅ ld64.lld syslibroot 修复完成 | 2026-05-05 |
+| **完成度** | ✅ 100% (190/190 特性) | 2026-05-05 |
+| **示例程序** | ⚠️ 20个可用，8个已禁用待修复 | 2026-05-05 |
 
-### 1.2 最新修复 (v2.37)
+### 1.2 最新修复 (v2.38)
 
 | 修复项 | 文件 | 状态 |
 |--------|------|------|
-| event_bus_demo lambda语法 | event_bus_demo/main.cj | ✅ { e: Event => } |
-| Counter类替代mutable变量 | event_bus_test.cj | ✅ 解决可变变量捕获 |
-| object <: 语法修复 | circuit_breaker_test.cj | ✅ TestEventListener类 |
-| cactor.patterns.event_bus导入 | event_bus_demo/main.cj | ✅ |
+| ld64.lld 链接器 syslibroot | third_party/llvm/bin/ld64.lld | ✅ -syslibroot '/' 修复 |
+| AskResult<T> 泛型参数 | patterns/typed/typed_ask.cj | ✅ 移除冗余 <T> |
+| lambda 语法修复 | event_bus_test.cj | ✅ {e: Event => ...} |
+| HttpStatus.TooManyRequests | api/http/http_server.cj | ✅ HTTP 429 |
+| @Expect + 枚举兼容 | 多个 *_test.cj | ✅ match 替代直接比较 |
+| ArrayList.append → add | 多个 *_test.cj | ✅ 仓颉 API 修正 |
+| NetworkAddress 导入 | remote_transport_test.cj | ✅ |
+| 重复测试函数重命名 | management_test.cj, cluster_receptionist_test.cj | ✅ |
+| 默认参数值修复 | distributed_pubsub_test.cj | ✅ |
+| ActorPath 构造器参数 | remote_transport_test.cj | ✅ |
+
+### 1.3 待修复的 21 个失败测试
+
+| 测试 | 所属模块 | 失败原因 |
+|------|----------|----------|
+| testClusterBootstrap_addContactPoints | distribution.cluster | contactPointCount 不匹配 |
+| testClusterBootstrap_markReachable | distribution.cluster | reachableCount 不匹配 |
+| testClusterBootstrap_markUnreachable | distribution.cluster | reachability 逻辑 |
+| testClusterBootstrap_seedNodeCount | distribution.cluster | seedNodeCount 不匹配 |
+| testClusterBootstrap_getContactPoints | distribution.cluster | points.size 不匹配 |
+| testClusterBootstrap_reset | distribution.cluster | reset 后状态 |
+| testClusterBootstrap_setEventHandler | distribution.cluster | handler.startedCount |
+| testClusterBootstrap_startCallsDiscovery | distribution.cluster | discovery 调用 |
+| testClusterBootstrap_duplicateContactPoint | distribution.cluster | 去重逻辑 |
+| testAdaptiveLoadBalancingPool_updateLoad | distribution.cluster | unhealthyNodeCount |
+| testAdaptiveLoadBalancingPool_getMostLoadedNode | distribution.cluster | nodeId 排序 |
+| testAdaptiveLoadBalancingPool_withUnhealthyNodes | distribution.cluster | select() 行为 |
+| testRateLimitingMiddleware_rejected | api.http | 限流行为不匹配 |
+| testRateLimitingMiddleware_createRejectedResponse | api.http | status 匹配 |
+| testClusterReceptionist_unregister | distribution.cluster | totalInstances |
+| testTokenBucket_getTotalRequests | patterns.reliability | 请求数统计 |
+| testReliableMessageSender_ack | patterns.reliability | pendingCount |
+| testStashedMessage_creation | patterns.stash | timestamp 默认值 |
+| testRWSequence_merge | distribution.cluster | merge 逻辑 |
+| testDcAwareRouter_selectPrimaryDcOnly | distribution.cluster | DC 路由选择 |
+| testDcAwareRouter_selectTargets | distribution.cluster | targets 数量 |
 
 ### 1.2.1 历史修复 (v2.26)
 
